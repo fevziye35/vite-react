@@ -26,8 +26,7 @@ export function LoginPage() {
             if (isSignUp) {
                 const { success, error } = await register(email, password);
                 if (success) {
-                    setSuccessMessage('Hesap oluşturuldu! Lütfen onaylamak için e-postanızı kontrol edin, ardından giriş yapın.');
-                    setIsSignUp(false);
+                    navigate('/');
                 } else {
                     setError(error || 'Kayıt başarısız oldu');
                 }

@@ -3,13 +3,17 @@ import { useAuth } from '../../context/AuthContext';
 import { type ReactElement } from 'react';
 
 export function ProtectedRoute({ children }: { children: ReactElement }) {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, isLoading } = useAuth();
     const location = useLocation();
 
-    // Ideally we would have a loading state in auth context too, 
-    // but for this mock implementation we can check user existence directly
-    // If you add real async auth check, uncomment below:
-    // if (isLoading) return <LoadingScreen />
+    // Show loading spinner while checking authentication
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-gray-900">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
+            </div>
+        );
+    }
 
     if (!isAuthenticated) {
         return <Navigate to="/login" state={{ from: location }} replace />;
@@ -17,3 +21,4 @@ export function ProtectedRoute({ children }: { children: ReactElement }) {
 
     return children;
 }
+

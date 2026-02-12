@@ -129,6 +129,19 @@ create table public.meetings (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- TASKS
+create table public.tasks (
+  id uuid default uuid_generate_v4() primary key,
+  title text not null,
+  description text,
+  due_date date,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  priority text check (priority in ('urgent', 'medium', 'low')) default 'medium',
+  assigned_to text,
+  status text check (status in ('pending', 'in_progress', 'completed')) default 'pending',
+  link text
+);
+
 -- ENABLE ROW LEVEL SECURITY (RLS)
 -- For simplicity, we will enable public read/write access for now, 
 -- BUT for a real team app you should restrict this.
@@ -139,6 +152,7 @@ alter table public.offer_items enable row level security;
 alter table public.deals enable row level security;
 alter table public.logistics_offers enable row level security;
 alter table public.meetings enable row level security;
+alter table public.tasks enable row level security;
 
 -- CREATE POLICIES (Allow everything for authenticated users for now)
 create policy "Allow all access for authenticated users" on public.customers for all using (true);
@@ -148,9 +162,11 @@ create policy "Allow all access for authenticated users" on public.offer_items f
 create policy "Allow all access for authenticated users" on public.deals for all using (true);
 create policy "Allow all access for authenticated users" on public.logistics_offers for all using (true);
 create policy "Allow all access for authenticated users" on public.meetings for all using (true);
+create policy "Allow all access for authenticated users" on public.tasks for all using (true);
 
 -- SEED DATA
 insert into public.products (product_name, category, unit_type, base_unit_price, packaging_options, origin_country)
 values 
 ('Palm Oil CP10', 'Oil', 'kg', 0.85, '["Jerry Can 20L", "Flexibag"]', 'Malaysia'),
 ('Canned Tuna', 'Food', 'carton', 25.0, '["48x170g"]', 'Thailand');
+

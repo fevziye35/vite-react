@@ -1,11 +1,25 @@
-import { supabase } from '../lib/supabase';
+import axios from 'axios';
 import type { Product, Customer, Offer, LogisticsOffer, LogisticsCompany } from '../types';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+// Create axios instance with auth header
+const api = axios.create({
+    baseURL: API_URL,
+});
+
+// Add auth token to requests
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
 
 // --- HELPERS ---
 
-
-// Data Mappers
+// Data Mappers (from snake_case API to camelCase frontend)
 const mapProduct = (p: any): Product => ({
     ...p,
     productName: p.product_name,
@@ -71,7 +85,7 @@ const mapLogistics = (l: any): LogisticsOffer => ({
     carrier: l.carrier,
     transitTime: l.transit_time,
     freeTime: l.free_time,
-    customFields: l.custom_fields && typeof l.custom_fields === 'string' ? JSON.parse(l.custom_fields) : (l.custom_fields || {})
+    customFields: l.custom_fields || {}
 });
 
 const mapLogisticsCompany = (l: any): LogisticsCompany => ({
@@ -85,23 +99,20 @@ const mapLogisticsCompany = (l: any): LogisticsCompany => ({
     officeAddress: l.office_address,
     notes: l.notes,
     meetingStatus: l.meeting_status,
-    customFields: l.custom_fields && typeof l.custom_fields === 'string' ? JSON.parse(l.custom_fields) : (l.custom_fields || {})
+    customFields: l.custom_fields || {}
 });
 
 // --- SERVICES ---
 
-
-
 export const productService = {
     getAll: async () => {
-        const { data, error } = await supabase.from('products').select('*');
-        if (error) throw error;
+        const { data } = await api.get('/api/products');
         return data.map(mapProduct);
     },
     create: async (product: Omit<Product, 'id'> | Product) => {
         if ('id' in product && product.id) {
             // Update
-            const { data, error } = await supabase.from('products').update({
+            const { data } = await api.put(`/api/products/${product.id}`, {
                 product_name: product.productName,
                 brand: product.brand,
                 grade: product.grade,
@@ -115,12 +126,11 @@ export const productService = {
                 default_container_load_20ft: product.defaultContainerLoad20ft,
                 default_container_load_40ft: product.defaultContainerLoad40ft,
                 notes: product.notes
-            }).eq('id', product.id).select().single();
-            if (error) throw error;
+            });
             return mapProduct(data);
         } else {
             // Insert
-            const { data, error } = await supabase.from('products').insert({
+            const { data } = await api.post('/api/products', {
                 product_name: product.productName,
                 brand: product.brand,
                 grade: product.grade,
@@ -134,8 +144,7 @@ export const productService = {
                 default_container_load_20ft: product.defaultContainerLoad20ft,
                 default_container_load_40ft: product.defaultContainerLoad40ft,
                 notes: product.notes
-            }).select().single();
-            if (error) throw error;
+            });
             return mapProduct(data);
         }
     }
@@ -143,12 +152,11 @@ export const productService = {
 
 export const customerService = {
     getAll: async () => {
-        const { data, error } = await supabase.from('customers').select('*').order('created_at', { ascending: false });
-        if (error) throw error;
+        const { data } = await api.get('/api/customers');
         return data.map(mapCustomer);
     },
     create: async (customer: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>) => {
-        const { data, error } = await supabase.from('customers').insert({
+        const { data } = await api.post('/api/customers', {
             company_name: customer.companyName,
             contact_person: customer.contactPerson,
             email: customer.email,
@@ -159,12 +167,11 @@ export const customerService = {
             preferred_incoterm: customer.preferredIncoterm,
             notes: customer.notes,
             tags: customer.tags
-        }).select().single();
-        if (error) throw error;
+        });
         return mapCustomer(data);
     },
     update: async (id: string, updates: any) => {
-        const { data, error } = await supabase.from('customers').update({
+        const { data } = await api.put(`/api/customers/${id}`, {
             company_name: updates.companyName,
             contact_person: updates.contactPerson,
             email: updates.email,
@@ -175,31 +182,26 @@ export const customerService = {
             preferred_incoterm: updates.preferredIncoterm,
             notes: updates.notes,
             tags: updates.tags
-        }).eq('id', id).select().single();
-        if (error) throw error;
+        });
         return mapCustomer(data);
     },
     delete: async (id: string) => {
-        const { error } = await supabase.from('customers').delete().eq('id', id);
-        if (error) throw error;
+        await api.delete(`/api/customers/${id}`);
         return true;
     }
 };
 
 export const offerService = {
     getAll: async () => {
-        const { data, error } = await supabase.from('offers').select('*, customers(*)').order('created_at', { ascending: false });
-        if (error) throw error;
+        const { data } = await api.get('/api/offers');
         return data.map(mapOffer);
     },
     getById: async (id: string) => {
-        const { data, error } = await supabase.from('offers').select('*, customers(*), offer_items(*)').eq('id', id).single();
-        if (error) throw error;
+        const { data } = await api.get(`/api/offers/${id}`);
         return mapOffer(data);
     },
     create: async (offer: any) => {
-        const { data: offerData, error: offerError } = await supabase.from('offers').insert({
-            offer_number: `OFF-${Date.now()}`,
+        const { data } = await api.post('/api/offers', {
             customer_id: offer.customerId,
             contact_person: offer.contactPerson,
             email: offer.email,
@@ -216,14 +218,8 @@ export const offerService = {
             insurance_cost: offer.insuranceCost,
             other_costs: offer.otherCosts,
             total_amount: offer.totalAmount,
-            expected_margin: offer.expectedMargin
-        }).select().single();
-
-        if (offerError) throw offerError;
-
-        if (offer.items && offer.items.length > 0) {
-            const itemsToInsert = offer.items.map((i: any) => ({
-                offer_id: offerData.id,
+            expected_margin: offer.expectedMargin,
+            items: offer.items?.map((i: any) => ({
                 product_id: i.productId,
                 description: i.description,
                 packaging: i.packaging,
@@ -231,55 +227,47 @@ export const offerService = {
                 unit_price: i.unitPrice,
                 discount: i.discount,
                 total: i.total
-            }));
-            const { error: itemsError } = await supabase.from('offer_items').insert(itemsToInsert);
-            if (itemsError) throw itemsError;
-        }
-        return mapOffer(offerData);
+            }))
+        });
+        return mapOffer(data);
     },
     update: async (id: string, updates: any) => {
-        const { data, error } = await supabase.from('offers').update({
-            status: updates.status,
-            // Add other fields as needed
-        }).eq('id', id).select().single();
-        if (error) throw error;
+        const { data } = await api.put(`/api/offers/${id}`, {
+            status: updates.status
+        });
         return mapOffer(data);
     }
 };
 
 export const logisticsService = {
     getAll: async () => {
-        const { data, error } = await supabase.from('logistics_offers').select('*').order('id', { ascending: false });
-        if (error) throw error;
+        const { data } = await api.get('/api/logistics_offers');
         return data.map(mapLogistics);
     },
     create: async (logistics: any) => {
-        // Build insert object with only defined values
-        const insertData: any = {};
-        if (logistics.providerName) insertData.provider_name = logistics.providerName;
-        if (logistics.originPort) insertData.origin_port = logistics.originPort;
-        if (logistics.destinationCountry) insertData.destination_country = logistics.destinationCountry;
-        if (logistics.destinationPort) insertData.destination_port = logistics.destinationPort;
-        if (logistics.containerType) insertData.container_type = logistics.containerType;
-        if (logistics.price !== undefined && logistics.price !== '') insertData.price = Number(logistics.price);
-        if (logistics.currency) insertData.currency = logistics.currency;
-        if (logistics.validityDate) insertData.validity_date = logistics.validityDate;
-        if (logistics.notes) insertData.notes = logistics.notes;
-        if (logistics.contactPerson) insertData.contact_person = logistics.contactPerson;
-        if (logistics.phone) insertData.phone = logistics.phone;
-        if (logistics.email) insertData.email = logistics.email;
-        if (logistics.carrier) insertData.carrier = logistics.carrier;
-        if (logistics.transitTime) insertData.transit_time = logistics.transitTime;
-        if (logistics.freeTime) insertData.free_time = logistics.freeTime;
-        if (logistics.description) insertData.description = logistics.description;
-        insertData.custom_fields = logistics.customFields || {};
-
-        const { data, error } = await supabase.from('logistics_offers').insert(insertData).select().single();
-        if (error) throw error;
+        const { data } = await api.post('/api/logistics_offers', {
+            provider_name: logistics.providerName,
+            origin_port: logistics.originPort,
+            destination_country: logistics.destinationCountry,
+            destination_port: logistics.destinationPort,
+            container_type: logistics.containerType,
+            price: logistics.price !== undefined && logistics.price !== '' ? Number(logistics.price) : null,
+            currency: logistics.currency,
+            validity_date: logistics.validityDate,
+            notes: logistics.notes,
+            contact_person: logistics.contactPerson,
+            phone: logistics.phone,
+            email: logistics.email,
+            carrier: logistics.carrier,
+            transit_time: logistics.transitTime,
+            free_time: logistics.freeTime,
+            description: logistics.description,
+            custom_fields: logistics.customFields || {}
+        });
         return mapLogistics(data);
     },
     update: async (id: string, updates: any) => {
-        const { data, error } = await supabase.from('logistics_offers').update({
+        const { data } = await api.put(`/api/logistics_offers/${id}`, {
             provider_name: updates.providerName,
             origin_port: updates.originPort,
             destination_country: updates.destinationCountry,
@@ -295,27 +283,23 @@ export const logisticsService = {
             carrier: updates.carrier,
             transit_time: updates.transitTime,
             free_time: updates.freeTime,
-            custom_fields: updates.customFields ? JSON.stringify(updates.customFields) : undefined
-        }).eq('id', id).select().single();
-
-        if (error) throw error;
+            custom_fields: updates.customFields
+        });
         return mapLogistics(data);
     },
     delete: async (id: string) => {
-        const { error } = await supabase.from('logistics_offers').delete().eq('id', id);
-        if (error) throw error;
+        await api.delete(`/api/logistics_offers/${id}`);
         return true;
     }
 };
 
 export const logisticsCompanyService = {
     getAll: async () => {
-        const { data, error } = await supabase.from('logistics_companies').select('*');
-        if (error) throw error;
+        const { data } = await api.get('/api/logistics_companies');
         return data.map(mapLogisticsCompany);
     },
     create: async (company: any) => {
-        const { data, error } = await supabase.from('logistics_companies').insert({
+        const { data } = await api.post('/api/logistics_companies', {
             company_name: company.companyName,
             contact_person: company.contactPerson,
             phone: company.phone,
@@ -325,13 +309,12 @@ export const logisticsCompanyService = {
             office_address: company.officeAddress,
             notes: company.notes,
             meeting_status: company.meetingStatus,
-            custom_fields: JSON.stringify(company.customFields || {})
-        }).select().single();
-        if (error) throw error;
+            custom_fields: company.customFields || {}
+        });
         return mapLogisticsCompany(data);
     },
     update: async (id: string, updates: any) => {
-        const { data, error } = await supabase.from('logistics_companies').update({
+        const { data } = await api.put(`/api/logistics_companies/${id}`, {
             company_name: updates.companyName,
             contact_person: updates.contactPerson,
             phone: updates.phone,
@@ -341,29 +324,28 @@ export const logisticsCompanyService = {
             office_address: updates.officeAddress,
             notes: updates.notes,
             meeting_status: updates.meetingStatus,
-            custom_fields: updates.customFields ? JSON.stringify(updates.customFields) : undefined
-        }).eq('id', id).select().single();
-        if (error) throw error;
+            custom_fields: updates.customFields
+        });
         return mapLogisticsCompany(data);
     },
     delete: async (id: string) => {
-        await supabase.from('logistics_companies').delete().eq('id', id);
+        await api.delete(`/api/logistics_companies/${id}`);
         return true;
     }
 };
 
 export const dealService = {
     getAll: async () => {
-        const { data, error } = await supabase.from('deals').select('*');
-        if (error) throw error;
+        const { data } = await api.get('/api/deals');
         return data.map((d: any) => ({
             ...d,
-            items: d.items && typeof d.items === 'string' ? JSON.parse(d.items) : (d.items || []),
+            targetProducts: d.target_products,
+            items: d.items || [],
             offerId: d.offer_id
         }));
     },
     create: async (deal: any) => {
-        const { data, error } = await supabase.from('deals').insert({
+        const { data } = await api.post('/api/deals', {
             title: deal.title,
             customer_id: deal.customerId,
             target_products: deal.targetProducts,
@@ -376,28 +358,24 @@ export const dealService = {
             assigned_to: deal.assignedTo,
             notes: deal.notes,
             offer_id: deal.offerId,
-            items: deal.items ? JSON.stringify(deal.items) : null
-        }).select().single();
-
-        if (error) throw error;
-        return { ...data, items: data.items ? JSON.parse(data.items) : [] };
+            items: deal.items
+        });
+        return { ...data, items: data.items || [] };
     },
     update: async (id: string, updates: any) => {
-        const { data, error } = await supabase.from('deals').update({
+        const { data } = await api.put(`/api/deals/${id}`, {
             stage: updates.stage,
             probability: updates.probability,
             expected_revenue: updates.expectedRevenue,
             notes: updates.notes
-        }).eq('id', id).select().single();
-        if (error) throw error;
+        });
         return data;
     }
 };
 
 export const meetingService = {
     getAll: async () => {
-        const { data, error } = await supabase.from('meetings').select('*, customers(company_name)').order('date', { ascending: true });
-        if (error) throw error;
+        const { data } = await api.get('/api/meetings');
         return data.map((m: any) => ({
             ...m,
             customerId: m.customer_id,
@@ -409,31 +387,30 @@ export const meetingService = {
         }));
     },
     create: async (meeting: any) => {
-        const { data, error } = await supabase.from('meetings').insert({
+        const { data } = await api.post('/api/meetings', {
             title: meeting.title,
             customer_id: meeting.customerId,
             date: meeting.date,
             type: meeting.type,
             notes: meeting.notes,
             outcome: meeting.outcome
-        }).select().single();
-        if (error) throw error;
+        });
         return data;
     }
 };
 
 const mapProforma = (p: any): any => ({
     id: p.id,
-    proformaNumber: p.proforma_number || p.number,
-    date: p.date || p.issueDate,
-    customerId: p.customer_id || p.customerId,
-    customerName: p.customer_name, // Mocks might need this if not fetching rels
+    proformaNumber: p.proforma_number,
+    date: p.date,
+    customerId: p.customer_id,
+    customerName: p.customer_name,
     customerAddress: p.customer_address,
     companyName: p.company_name,
     companyAddress: p.company_address,
     companyContact: p.company_contact,
-    items: p.items && typeof p.items === 'string' ? JSON.parse(p.items) : (p.items || []),
-    totalPrice: p.total_price || p.amount,
+    items: p.items || [],
+    totalPrice: p.total_price,
     firstPaymentAmount: p.first_payment_amount,
     finalPaymentAmount: p.final_payment_amount,
     currency: p.currency,
@@ -449,32 +426,27 @@ const mapProforma = (p: any): any => ({
     swiftCode: p.swift_code,
     iban: p.iban,
     status: p.status,
-    createdAt: p.created_at || p.createdAt
+    createdAt: p.created_at
 });
 
 export const proformaService = {
     getAll: async () => {
-        const { data, error } = await supabase.from('proformas').select('*').order('created_at', { ascending: false });
-        if (error) throw error;
+        const { data } = await api.get('/api/proformas');
         return data ? data.map(mapProforma) : [];
     },
     create: async (proforma: any) => {
-        const { data, error } = await supabase.from('proformas').insert({
+        const { data } = await api.post('/api/proformas', {
             proforma_number: proforma.number,
             customer_id: proforma.customerId,
             offer_id: proforma.offerId,
-            amount: proforma.amount,
+            total_price: proforma.amount,
             status: proforma.status,
-            issue_date: proforma.issueDate,
-            due_date: proforma.dueDate,
+            date: proforma.issueDate,
             items: proforma.items
-        }).select().single();
-
-        if (error) throw error;
+        });
         return data;
     },
     convertFromOffer: async (offer: any) => {
-        // Create a proforma based on the offer
         const proforma = {
             number: `PI-${Date.now()}`,
             customerId: offer.customerId,
@@ -482,8 +454,8 @@ export const proformaService = {
             amount: offer.totalAmount,
             status: 'Draft',
             issueDate: new Date().toISOString(),
-            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // +30 days
-            items: JSON.stringify(offer.items || []) // Copy items!
+            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            items: offer.items || []
         };
         return proformaService.create(proforma);
     }
@@ -491,8 +463,7 @@ export const proformaService = {
 
 export const shipmentService = {
     getAll: async () => {
-        const { data, error } = await supabase.from('shipments').select('*').order('created_at', { ascending: false });
-        if (error) throw error;
+        const { data } = await api.get('/api/shipments');
         return data.map((s: any) => ({
             ...s,
             proformaId: s.proforma_id,
@@ -506,7 +477,7 @@ export const shipmentService = {
         }));
     },
     create: async (shipment: any) => {
-        const { data, error } = await supabase.from('shipments').insert({
+        const { data } = await api.post('/api/shipments', {
             proforma_id: shipment.proformaId,
             customer_id: shipment.customerId,
             booking_reference: shipment.bookingReference,
@@ -519,12 +490,11 @@ export const shipmentService = {
             forwarder_name: shipment.forwarderName,
             tracking_url: shipment.trackingUrl,
             notes: shipment.notes
-        }).select().single();
-        if (error) throw error;
+        });
         return data;
     },
     update: async (id: string, shipment: any) => {
-        const { data, error } = await supabase.from('shipments').update({
+        const { data } = await api.put(`/api/shipments/${id}`, {
             proforma_id: shipment.proformaId,
             customer_id: shipment.customerId,
             booking_reference: shipment.bookingReference,
@@ -537,43 +507,92 @@ export const shipmentService = {
             forwarder_name: shipment.forwarderName,
             tracking_url: shipment.trackingUrl,
             notes: shipment.notes
-        }).eq('id', id).select().single();
-        if (error) throw error;
+        });
         return data;
     }
 };
 
 export const supplierService = {
     getAll: async () => {
-        const { data, error } = await supabase.from('suppliers').select('*');
-        if (error) throw error;
+        const { data } = await api.get('/api/suppliers');
         return data.map((s: any) => ({
             ...s,
             products: s.products || []
         }));
     },
     create: async (supplier: any) => {
-        const { data, error } = await supabase.from('suppliers').insert({
+        const { data } = await api.post('/api/suppliers', {
             name: supplier.name,
             country: supplier.country,
             contact_person: supplier.contactPerson,
             email: supplier.email,
             phone: supplier.phone,
             products: supplier.products
-        }).select().single();
-        if (error) throw error;
+        });
         return data;
     },
     update: async (id: string, updates: any) => {
-        const { data, error } = await supabase.from('suppliers').update({
+        const { data } = await api.put(`/api/suppliers/${id}`, {
             name: updates.name,
             country: updates.country,
             contact_person: updates.contactPerson,
             email: updates.email,
             phone: updates.phone,
             products: updates.products
-        }).eq('id', id).select().single();
-        if (error) throw error;
+        });
         return data;
+    }
+};
+
+export const taskService = {
+    getAll: async () => {
+        const { data } = await api.get('/api/tasks');
+        return data.map((t: any) => ({
+            ...t,
+            dueDate: t.due_date,
+            createdAt: t.created_at,
+            assignedTo: t.assigned_to,
+            link: t.link
+        }));
+    },
+    create: async (task: any) => {
+        const { data } = await api.post('/api/tasks', {
+            title: task.title,
+            description: task.description,
+            due_date: task.dueDate,
+            priority: task.priority,
+            assigned_to: task.assignedTo,
+            status: task.status || 'pending',
+            link: task.link
+        });
+        return {
+            ...data,
+            dueDate: data.due_date,
+            createdAt: data.created_at,
+            assignedTo: data.assigned_to,
+            link: data.link
+        };
+    },
+    update: async (id: string, updates: any) => {
+        const { data } = await api.put(`/api/tasks/${id}`, {
+            title: updates.title,
+            description: updates.description,
+            due_date: updates.dueDate,
+            priority: updates.priority,
+            assigned_to: updates.assignedTo,
+            status: updates.status,
+            link: updates.link
+        });
+        return {
+            ...data,
+            dueDate: data.due_date,
+            createdAt: data.created_at,
+            assignedTo: data.assigned_to,
+            link: data.link
+        };
+    },
+    delete: async (id: string) => {
+        await api.delete(`/api/tasks/${id}`);
+        return true;
     }
 };

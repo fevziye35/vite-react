@@ -1,15 +1,21 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { supabase } from '../lib/supabase';
-import type { User } from '@supabase/supabase-js';
+import axios from 'axios';
 
-// Mock User Data
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+interface User {
+    id: string;
+    email: string;
+    fullName?: string;
+    role?: string;
+}
 
 interface AuthContextType {
     user: User | null;
     isAuthenticated: boolean;
-    login: (username: string, password: string) => Promise<boolean>;
-    register: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+    isLoading: boolean;
+    login: (email: string, password: string) => Promise<boolean>;
+    register: (email: string, password: string, fullName?: string) => Promise<{ success: boolean; error?: string }>;
     logout: () => void;
 }
 
@@ -17,53 +23,80 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Check active session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null);
-        });
+        // Check for existing token on mount
+        const initializeAuth = async () => {
+            try {
+                const token = localStorage.getItem('auth_token');
+                if (token) {
+                    // Verify token with server
+                    const response = await axios.get(`${API_URL}/api/auth/me`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    setUser(response.data.user);
+                }
+            } catch (error) {
+                console.error('Error checking session:', error);
+                // Token is invalid, clear it
+                localStorage.removeItem('auth_token');
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
-        // Listen for changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user ?? null);
-        });
-
-        return () => subscription.unsubscribe();
+        initializeAuth();
     }, []);
 
     const login = async (email: string, password: string): Promise<boolean> => {
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password
-        });
+        try {
+            const response = await axios.post(`${API_URL}/api/auth/login`, {
+                email,
+                password
+            });
 
-        if (error) {
-            console.error('Login error:', error.message);
+            const { user: userData, token } = response.data;
+
+            // Store token
+            localStorage.setItem('auth_token', token);
+            setUser(userData);
+
+            return true;
+        } catch (error: any) {
+            console.error('Login error:', error.response?.data?.error || error.message);
             return false;
         }
-        return true;
     };
 
-    const register = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-        const { error } = await supabase.auth.signUp({
-            email,
-            password
-        });
+    const register = async (email: string, password: string, fullName?: string): Promise<{ success: boolean; error?: string }> => {
+        try {
+            const response = await axios.post(`${API_URL}/api/auth/register`, {
+                email,
+                password,
+                fullName
+            });
 
-        if (error) {
-            return { success: false, error: error.message };
+            const { user: userData, token } = response.data;
+
+            // Store token and login user
+            localStorage.setItem('auth_token', token);
+            setUser(userData);
+
+            return { success: true };
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.error || 'Registration failed';
+            return { success: false, error: errorMessage };
         }
-        return { success: true };
     };
 
-    const logout = async () => {
-        await supabase.auth.signOut();
+    const logout = () => {
+        localStorage.removeItem('auth_token');
         setUser(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, logout }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, register, logout }}>
             {children}
         </AuthContext.Provider>
     );

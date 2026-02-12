@@ -10,7 +10,8 @@ import {
     Settings,
     LogOut,
     Truck,
-    Ship
+    Ship,
+    CheckSquare
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -25,6 +26,7 @@ export function Sidebar() {
         { icon: FileText, label: 'Teklifler', path: '/offers' },
         { icon: Briefcase, label: 'Anlaşmalar', path: '/deals' },
         { icon: Calendar, label: 'Toplantılar', path: '/meetings' },
+        { icon: CheckSquare, label: 'Görevler', path: '/tasks' },
         { icon: FileText, label: 'Proforma Faturalar', path: '/proformas' },
         { icon: Ship, label: 'Sevkiyatlar', path: '/shipments' },
         { icon: Truck, label: 'Lojistik Teklifleri', path: '/logistics' },

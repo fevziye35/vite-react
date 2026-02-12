@@ -2,8 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { AuthProvider } from './context/AuthContext';
-import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { ToastProvider } from './components/ui/Toast';
+import { NotificationPrompt } from './components/ui/NotificationPrompt';
 
 // Loading component for Suspense fallback
 const PageLoader = () => (
@@ -24,11 +24,11 @@ const OffersPage = lazy(() => import('./features/offers/OffersPage').then(m => (
 const CreateOfferPage = lazy(() => import('./features/offers/CreateOfferPage').then(m => ({ default: m.CreateOfferPage })));
 const DealsPage = lazy(() => import('./features/deals/DealsPage').then(m => ({ default: m.DealsPage })));
 const MeetingsPage = lazy(() => import('./features/meetings/MeetingsPage').then(m => ({ default: m.MeetingsPage })));
+const TasksPage = lazy(() => import('./features/tasks/TasksPage').then(m => ({ default: m.TasksPage })));
 const ProformasPage = lazy(() => import('./features/proformas/ProformasPage').then(m => ({ default: m.ProformasPage })));
 const ProformaViewPage = lazy(() => import('./features/proformas/ProformaViewPage').then(m => ({ default: m.ProformaViewPage })));
 const ProfitLossPage = lazy(() => import('./features/finance/ProfitLossPage').then(m => ({ default: m.ProfitLossPage })));
 const SettingsPage = lazy(() => import('./features/settings/SettingsPage').then(m => ({ default: m.SettingsPage })));
-const LoginPage = lazy(() => import('./features/auth/LoginPage').then(m => ({ default: m.LoginPage })));
 
 function App() {
   return (
@@ -37,121 +37,91 @@ function App() {
         <BrowserRouter>
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              {/* Public Routes */}
-              <Route path="/login" element={<LoginPage />} />
-
-              {/* Protected Routes */}
+              {/* Main Routes */}
               <Route path="/" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <DashboardPage />
-                  </DashboardLayout>
-                </ProtectedRoute>
+                <DashboardLayout>
+                  <DashboardPage />
+                </DashboardLayout>
               } />
               <Route path="/customers" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <CustomersPage />
-                  </DashboardLayout>
-                </ProtectedRoute>
+                <DashboardLayout>
+                  <CustomersPage />
+                </DashboardLayout>
               } />
               <Route path="/products" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <ProductsPage />
-                  </DashboardLayout>
-                </ProtectedRoute>
+                <DashboardLayout>
+                  <ProductsPage />
+                </DashboardLayout>
               } />
               <Route path="/offers" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <OffersPage />
-                  </DashboardLayout>
-                </ProtectedRoute>
+                <DashboardLayout>
+                  <OffersPage />
+                </DashboardLayout>
               } />
               <Route path="/offers/new" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <CreateOfferPage />
-                  </DashboardLayout>
-                </ProtectedRoute>
+                <DashboardLayout>
+                  <CreateOfferPage />
+                </DashboardLayout>
               } />
               <Route path="/offers/:id/edit" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <CreateOfferPage />
-                  </DashboardLayout>
-                </ProtectedRoute>
+                <DashboardLayout>
+                  <CreateOfferPage />
+                </DashboardLayout>
               } />
               <Route path="/deals" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <DealsPage />
-                  </DashboardLayout>
-                </ProtectedRoute>
+                <DashboardLayout>
+                  <DealsPage />
+                </DashboardLayout>
               } />
               <Route path="/meetings" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <MeetingsPage />
-                  </DashboardLayout>
-                </ProtectedRoute>
+                <DashboardLayout>
+                  <MeetingsPage />
+                </DashboardLayout>
+              } />
+              <Route path="/tasks" element={
+                <DashboardLayout>
+                  <TasksPage />
+                </DashboardLayout>
               } />
               <Route path="/proformas" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <ProformasPage />
-                  </DashboardLayout>
-                </ProtectedRoute>
+                <DashboardLayout>
+                  <ProformasPage />
+                </DashboardLayout>
               } />
               <Route path="/proformas/:id" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <ProformaViewPage />
-                  </DashboardLayout>
-                </ProtectedRoute>
+                <DashboardLayout>
+                  <ProformaViewPage />
+                </DashboardLayout>
               } />
               <Route path="/shipments" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <ShipmentsPage />
-                  </DashboardLayout>
-                </ProtectedRoute>
+                <DashboardLayout>
+                  <ShipmentsPage />
+                </DashboardLayout>
               } />
               <Route path="/suppliers" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <SuppliersPage />
-                  </DashboardLayout>
-                </ProtectedRoute>
+                <DashboardLayout>
+                  <SuppliersPage />
+                </DashboardLayout>
               } />
               <Route path="/logistics" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <LogisticsPage />
-                  </DashboardLayout>
-                </ProtectedRoute>
+                <DashboardLayout>
+                  <LogisticsPage />
+                </DashboardLayout>
               } />
               <Route path="/logistics-companies" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <LogisticsCompaniesPage />
-                  </DashboardLayout>
-                </ProtectedRoute>
+                <DashboardLayout>
+                  <LogisticsCompaniesPage />
+                </DashboardLayout>
               } />
               <Route path="/profit-loss" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <ProfitLossPage />
-                  </DashboardLayout>
-                </ProtectedRoute>
+                <DashboardLayout>
+                  <ProfitLossPage />
+                </DashboardLayout>
               } />
               <Route path="/settings" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <SettingsPage />
-                  </DashboardLayout>
-                </ProtectedRoute>
+                <DashboardLayout>
+                  <SettingsPage />
+                </DashboardLayout>
               } />
 
               {/* Catch all */}
@@ -159,6 +129,7 @@ function App() {
             </Routes>
           </Suspense>
         </BrowserRouter>
+        <NotificationPrompt />
       </AuthProvider>
     </ToastProvider>
   );
