@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, ChevronDown, List, Activity, Settings, Filter, MoreHorizontal, X, Send } from 'lucide-react';
+import { Plus, Search, ChevronDown, List, Activity, Settings, Filter, MoreHorizontal, X, Send, User } from 'lucide-react';
 import CreateDealModal from '../components/CreateDealModal';
 
 const columns = [
@@ -22,9 +22,15 @@ const activityColumns = [
 export default function DealsPage() {
     const [activeTab, setActiveTab] = useState('Kanban');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [deals, setDeals] = useState<any[]>([]);
+
+    const handleSaveDeal = (newDeal: any) => {
+        setDeals(prev => [...prev, newDeal]);
+        setIsCreateModalOpen(false);
+    };
 
     return (
-        <div className="min-h-full bg-space bg-cover flex flex-col p-4">
+        <div className="min-h-full bg-[#17202b] flex flex-col p-4">
             {/* Search Header */}
             <div className="flex items-center gap-2 mb-4">
                 <h2 className="text-2xl font-semibold text-white mr-4">Anlaşmalar</h2>
@@ -90,66 +96,93 @@ export default function DealsPage() {
 
             {/* Kanban Board */}
             {activeTab === 'Kanban' ? (
-                <div className="flex-1 overflow-x-auto flex items-start gap-px pr-4 pb-4">
-                    {columns.map(col => (
-                        <div key={col.id} className="w-[300px] min-w-[300px] flex flex-col border-r border-white/10 last:border-r-0 h-full">
-                            {/* Column Header */}
-                            <div className={`px-4 py-2 ${col.color} text-slate-900 mx-1 mb-3 relative group`}>
-                                <div className="flex justify-between items-center text-sm font-semibold">
-                                    <span>{col.title.toUpperCase()} ({col.count})</span>
-                                    {col.color === 'bg-amber-400' && (
-                                        <button className="w-5 h-5 bg-white/30 rounded-full flex items-center justify-center text-white hover:bg-white/50 transition-colors">
+                <div className="flex-1 overflow-x-auto flex items-start pb-4">
+                    {columns.map((col, index) => {
+                        const colDeals = deals.filter(d => d.stage === col.title);
+                        const count = colDeals.length;
+                        const total = colDeals.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
+
+                        return (
+                            <div key={col.id} className="w-[300px] min-w-[300px] flex flex-col border-r border-white/10 last:border-r-0 h-full">
+                                {/* Column Header */}
+                                <div
+                                    className={`py-2 ${col.color} text-slate-900 mb-3 flex items-center justify-between ${index === 0 ? 'pl-4 pr-5' : 'pl-8 pr-5'} z-10 relative shadow-sm`}
+                                    style={{
+                                        clipPath: index === 0
+                                            ? 'polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%)'
+                                            : 'polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%, 16px 50%)',
+                                        marginLeft: index === 0 ? '0' : '-16px',
+                                        width: index === 0 ? '100%' : 'calc(100% + 16px)'
+                                    }}
+                                >
+                                    <span className="text-[13px] font-medium whitespace-nowrap overflow-hidden text-ellipsis mr-2">{col.title} ({count})</span>
+                                    {index === columns.length - 1 && (
+                                        <button className="w-5 h-5 rounded-full flex items-center justify-center text-slate-800 bg-white/30 hover:bg-white/50 transition-colors shrink-0">
                                             <Plus size={14} />
                                         </button>
                                     )}
                                 </div>
-                            </div>
-                            {/* Column Stats */}
-                            <div className="text-center mb-6">
-                                <div className="text-2xl font-light text-white">{col.total} ₺</div>
-                                <button className="text-white/50 text-xl hover:text-white/80 transition-colors mt-2">+</button>
-                            </div>
+                                {/* Column Stats */}
+                                <div className="text-center mb-4">
+                                    <div className="text-3xl font-light text-white mt-2">{total} <span className="text-xl">₺</span></div>
+                                    <button className="text-white/40 hover:text-white/80 transition-colors mt-2 w-full flex items-center justify-center font-light"><Plus size={18} /></button>
+                                </div>
 
-                            {/* "Hızlı Anlaşma" in first column only */}
-                            {col.id === '1' && (
-                                <div className="px-3 mb-3">
-                                    <button onClick={() => alert("Hızlı Anlaşma formu açılıyor...")} className="w-full bg-blue-500/20 hover:bg-blue-500/40 text-blue-50 text-sm py-2 rounded-md font-bold transition-colors flex items-center justify-center border border-blue-400/30">
-                                        <Plus size={16} className="mr-2" /> Hızlı Anlaşma
-                                    </button>
+                                {/* "Hızlı Anlaşma" in first column only */}
+                                {col.id === '1' && (
+                                    <div className="px-3 mb-3">
+                                        <button onClick={() => alert("Hızlı Anlaşma formu açılıyor...")} className="w-full bg-blue-500/20 hover:bg-blue-500/40 text-blue-50 text-sm py-2 rounded-md font-bold transition-colors flex items-center justify-center border border-blue-400/30">
+                                            <Plus size={16} className="mr-2" /> Hızlı Anlaşma
+                                        </button>
 
-                                    {/* Integration Info Box */}
-                                    <div className="mt-4 bg-blue-900/50 border border-blue-400/20 rounded-md p-3 relative">
-                                        <button className="absolute top-2 right-2 text-white/50 hover:text-white"><X size={14} /></button>
-                                        <h4 className="text-sm font-medium text-white text-center mb-3">
-                                            İletişim Merkezi<br />Otomatik anlaşma kaynakları
-                                        </h4>
-                                        <div className="grid grid-cols-2 gap-2 text-xs text-white/70">
-                                            <div className="flex items-center"><span className="w-4 h-4 mr-2 bg-blue-400/20 rounded inline-flex items-center justify-center"><MoreHorizontal size={10} /></span> Canlı Sohbet</div>
-                                            <div className="flex items-center"><Activity size={12} className="mr-2" /> Aramalar</div>
-                                            <div className="flex items-center"><List size={12} className="mr-2" /> CRM formları</div>
-                                            <div className="flex items-center"><Activity size={12} className="mr-2" /> Posta</div>
-                                            <div className="flex items-center"><Activity size={12} className="mr-2" /> Viber</div>
-                                            <div className="flex items-center"><Send size={12} className="mr-2" /> Telegram</div>
+                                        {/* Integration Info Box */}
+                                        <div className="mt-4 bg-blue-900/50 border border-blue-400/20 rounded-md p-3 relative">
+                                            <button className="absolute top-2 right-2 text-white/50 hover:text-white"><X size={14} /></button>
+                                            <h4 className="text-sm font-medium text-white text-center mb-3">
+                                                İletişim Merkezi<br />Otomatik anlaşma kaynakları
+                                            </h4>
+                                            <div className="grid grid-cols-2 gap-2 text-xs text-white/70">
+                                                <div className="flex items-center"><span className="w-4 h-4 mr-2 bg-blue-400/20 rounded inline-flex items-center justify-center"><MoreHorizontal size={10} /></span> Canlı Sohbet</div>
+                                                <div className="flex items-center"><Activity size={12} className="mr-2" /> Aramalar</div>
+                                                <div className="flex items-center"><List size={12} className="mr-2" /> CRM formları</div>
+                                                <div className="flex items-center"><Activity size={12} className="mr-2" /> Posta</div>
+                                                <div className="flex items-center"><Activity size={12} className="mr-2" /> Viber</div>
+                                                <div className="flex items-center"><Send size={12} className="mr-2" /> Telegram</div>
+                                            </div>
+                                        </div>
+
+                                        {/* CRM Import Box */}
+                                        <div className="mt-3 bg-white/5 border border-white/10 rounded-md p-3 relative">
+                                            <button className="absolute top-2 right-2 text-white/50 hover:text-white"><X size={14} /></button>
+                                            <h4 className="text-sm font-medium text-white mb-2">CRM çözümü ön ayarları</h4>
+                                            <ul className="text-xs text-white/70 space-y-2">
+                                                <li className="flex items-start"><span className="text-blue-400 mr-2">➜</span> CRM çözümü ön ayarlarını dosyadan içe aktarın</li>
+                                                <li className="flex items-start"><span className="text-blue-400 mr-2">➜</span> CRM çözümü ön ayarlarını dosyaya aktarın</li>
+                                                <li className="flex items-start"><span className="text-blue-400 mr-2">↺</span> Diğer CRM'den taşıyın</li>
+                                            </ul>
                                         </div>
                                     </div>
+                                )}
 
-                                    {/* CRM Import Box */}
-                                    <div className="mt-3 bg-white/5 border border-white/10 rounded-md p-3 relative">
-                                        <button className="absolute top-2 right-2 text-white/50 hover:text-white"><X size={14} /></button>
-                                        <h4 className="text-sm font-medium text-white mb-2">CRM çözümü ön ayarları</h4>
-                                        <ul className="text-xs text-white/70 space-y-2">
-                                            <li className="flex items-start"><span className="text-blue-400 mr-2">➜</span> CRM çözümü ön ayarlarını dosyadan içe aktarın</li>
-                                            <li className="flex items-start"><span className="text-blue-400 mr-2">➜</span> CRM çözümü ön ayarlarını dosyaya aktarın</li>
-                                            <li className="flex items-start"><span className="text-blue-400 mr-2">↺</span> Diğer CRM'den taşıyın</li>
-                                        </ul>
-                                    </div>
+                                {/* Deal Cards Container */}
+                                <div className="flex-1 px-3 mt-4 flex flex-col gap-2 relative z-10">
+                                    {colDeals.map((deal: any) => (
+                                        <div key={deal.id} className="bg-white rounded shadow-sm border border-slate-200/60 p-3 pt-4 cursor-pointer hover:shadow transition-shadow group relative overflow-hidden">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-[#008cff]"></div>
+                                            <div className="flex justify-between items-start mb-1">
+                                                <div className="text-[14px] font-semibold text-[#008cff] group-hover:underline truncate">{deal.title}</div>
+                                            </div>
+                                            <div className="text-[15px] text-slate-700 font-bold tracking-tight mb-2">{deal.amount} {deal.currency}</div>
+                                            {deal.customer && <div className="text-[12px] text-slate-500 mt-2 flex items-center gap-1.5"><div className="w-4 h-4 bg-slate-200 rounded-full flex items-center justify-center"><User size={10} /></div> <span className="truncate">{deal.customer}</span></div>}
+                                            <div className="text-[11px] text-slate-400 mt-2 flex justify-between items-center border-t border-slate-100 pt-2">
+                                                <span>Bugün {deal.endDate}</span>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            )}
-
-                            {/* Column Body Area (Empty for now) */}
-                            <div className="flex-1 px-2"></div>
-                        </div>
-                    ))}
+                            </div>
+                        );
+                    })}
                 </div>
             ) : activeTab === 'Liste' ? (
                 <div className="flex-1 bg-white rounded-t-xl shadow-lg mt-4 overflow-hidden flex flex-col relative w-full border-x border-slate-200">
@@ -194,18 +227,30 @@ export default function DealsPage() {
                     </div>
                 </div>
             ) : activeTab === 'Etkinlikler' ? (
-                <div className="flex-1 overflow-x-auto flex items-start gap-px pr-4 pb-4">
-                    {activityColumns.map(col => (
+                <div className="flex-1 overflow-x-auto flex items-start pb-4 mt-2">
+                    {activityColumns.map((col, index) => (
                         <div key={col.id} className="w-[300px] min-w-[300px] flex flex-col border-r border-white/10 last:border-r-0 h-full">
                             {/* Column Header */}
-                            <div className={`px-4 py-2 ${col.color} ${col.id === 'a5' ? 'text-slate-800' : 'text-slate-900'} mx-1 mb-3 relative group`}>
-                                <div className="flex justify-between items-center text-sm font-semibold">
-                                    <span>{col.title} ({col.count})</span>
-                                </div>
+                            <div
+                                className={`py-2 ${col.color} ${col.id === 'a5' ? 'text-slate-800' : 'text-slate-900'} mb-5 flex items-center justify-between ${index === 0 ? 'pl-4 pr-5' : 'pl-8 pr-5'} z-10 relative shadow-sm`}
+                                style={{
+                                    clipPath: index === 0
+                                        ? 'polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%)'
+                                        : 'polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%, 16px 50%)',
+                                    marginLeft: index === 0 ? '0' : '-16px',
+                                    width: index === 0 ? '100%' : 'calc(100% + 16px)'
+                                }}
+                            >
+                                <span className="text-[13px] font-medium whitespace-nowrap overflow-hidden text-ellipsis mr-2">{col.title} ({col.count})</span>
+                                {index === activityColumns.length - 1 && (
+                                    <button className="w-5 h-5 rounded-full flex items-center justify-center text-slate-800 bg-black/10 hover:bg-black/20 transition-colors shrink-0">
+                                        <Plus size={14} />
+                                    </button>
+                                )}
                             </div>
 
                             <div className="text-center mb-4">
-                                <button className="text-white/50 text-xl hover:text-white/80 transition-colors">+</button>
+                                <button className="text-white/40 hover:text-white/80 transition-colors w-full flex items-center justify-center"><Plus size={18} /></button>
                             </div>
 
                             {/* Info block for first column */}
@@ -338,7 +383,7 @@ export default function DealsPage() {
                 </div>
             )}
 
-            {isCreateModalOpen && <CreateDealModal onClose={() => setIsCreateModalOpen(false)} />}
+            {isCreateModalOpen && <CreateDealModal onClose={() => setIsCreateModalOpen(false)} onSave={handleSaveDeal} />}
         </div>
     );
 }
