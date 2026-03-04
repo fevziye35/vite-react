@@ -23,9 +23,9 @@ function MainLayout() {
     const location = useLocation();
 
     const getLinkClass = (path: string) => {
-        return location.pathname === path || (path === '/customers' && location.pathname === '/')
-            ? "flex items-center gap-4 p-4 rounded-2xl bg-blue-600 text-white shadow-xl transition-all"
-            : "flex items-center gap-4 p-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all";
+        return location.pathname === path || (path === '/deals' && location.pathname === '/')
+            ? "flex items-center gap-4 p-4 rounded-2xl bg-blue-600 text-white shadow-xl transition-all font-bold"
+            : "flex items-center gap-4 p-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all font-bold";
     };
 
     return (
@@ -56,7 +56,7 @@ function MainLayout() {
             </aside>
             <main className="flex-1 overflow-y-auto bg-slate-50 relative">
                 <Routes>
-                    <Route path="/" element={<CustomersPage subdomain={subdomain} />} />
+                    <Route path="/" element={<DealsPage />} />
                     <Route path="/deals" element={<DealsPage />} />
                     <Route path="/customers" element={<CustomersPage subdomain={subdomain} />} />
                     <Route path="/offers" element={<OffersPage subdomain={subdomain} />} />

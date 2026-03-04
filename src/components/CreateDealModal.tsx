@@ -5,6 +5,7 @@ interface CreateDealModalProps {
 }
 
 const stages = [
+    { id: 0, name: 'Personel', color: 'bg-slate-200 text-slate-600 border-slate-300' },
     { id: 1, name: 'Geliştiriliyor', color: 'bg-slate-200 text-slate-600 border-slate-300' },
     { id: 2, name: 'Sayfa oluştur', color: 'bg-slate-200 text-slate-600 border-slate-300' },
     { id: 3, name: 'Fatura', color: 'bg-slate-200 text-slate-600 border-slate-300' },
@@ -94,6 +95,7 @@ export default function CreateDealModal({ onClose }: CreateDealModalProps) {
                                     <label className="block text-[13px] text-slate-500 mb-1">Aşama</label>
                                     <div className="relative flex items-center">
                                         <select className="w-full border border-slate-200 rounded p-2.5 text-[14px] text-slate-700 outline-none focus:border-blue-400 appearance-none bg-[#fdfdfd] cursor-pointer transition-colors">
+                                            <option>Personel</option>
                                             <option>Geliştiriliyor</option>
                                             <option>Sayfa oluştur</option>
                                             <option>Fatura</option>
