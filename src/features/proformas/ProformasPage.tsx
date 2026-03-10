@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Download, Loader2, Ship, Eye, Search } from 'lucide-react';
+import { FileText, Loader2, Ship, Eye, Search, Edit, Printer, Trash2 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 
@@ -27,6 +27,19 @@ export function ProformasPage() {
             setLoading(false);
         }
     }
+
+    const handleDelete = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if (window.confirm('Bu proforma faturayı silmek istediğinizden emin misiniz?')) {
+            try {
+                await proformaService.delete(id);
+                loadProformas();
+            } catch (error) {
+                console.error('Failed to delete proforma', error);
+                alert('Proforma silinirken bir hata oluştu.');
+            }
+        }
+    };
 
     const filteredProformas = proformas.filter(pi =>
         (pi.proforma_number && pi.proforma_number.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -98,14 +111,20 @@ export function ProformasPage() {
                                     </td>
                                     <td className="p-4">
                                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Button variant="ghost" size="icon" onClick={() => navigate(`/proformas/${pi.id}`)} title="View Details">
+                                            <Button variant="ghost" size="icon" onClick={() => navigate(`/proformas/${pi.id}`)} title="Görüntüle">
                                                 <Eye size={18} className="text-primary hover:text-accent" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" onClick={() => window.location.href = '/shipments'} title="Create Shipment">
+                                            <Button variant="ghost" size="icon" onClick={() => navigate(`/proformas/${pi.id}?edit=true`)} title="Düzenle">
+                                                <Edit size={18} className="text-blue-500 hover:text-blue-600" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" onClick={() => navigate(`/proformas/${pi.id}?print=true`)} title="Yazdır">
+                                                <Printer size={18} className="text-gray-500 hover:text-gray-700" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" onClick={() => window.location.href = '/shipments'} title="Sevkiyat Oluştur">
                                                 <Ship size={18} className="text-blue-500 hover:text-blue-600" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" title="Download PDF">
-                                                <Download size={18} className="text-gray-400 hover:text-primary" />
+                                            <Button variant="ghost" size="icon" onClick={(e) => handleDelete(e, pi.id)} title="Sil">
+                                                <Trash2 size={18} className="text-danger hover:text-red-600" />
                                             </Button>
                                         </div>
                                     </td>

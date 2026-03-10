@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Printer, Download, Edit, Save, Plus, Trash2 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { ProformaInvoiceTemplate } from '../../components/proforma/ProformaInvoiceTemplate';
@@ -56,21 +56,27 @@ const MOCK_PROFORMA: Proforma = {
 export function ProformaViewPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const toast = useToast();
 
     const [proforma, setProforma] = useState<Proforma | null>(null);
     const [editedProforma, setEditedProforma] = useState<Proforma | null>(null);
     const [loading, setLoading] = useState(true);
-    const [isEditMode, setIsEditMode] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(searchParams.get('edit') === 'true');
     const [paymentPercentage, setPaymentPercentage] = useState(20);
+
+    const shouldPrint = searchParams.get('print') === 'true';
 
     useEffect(() => {
         setTimeout(() => {
             setProforma(MOCK_PROFORMA);
             setEditedProforma(MOCK_PROFORMA);
             setLoading(false);
+            if (shouldPrint) {
+                setTimeout(() => window.print(), 100);
+            }
         }, 500);
-    }, [id]);
+    }, [id, shouldPrint]);
 
     // Calculate totals on-the-fly instead of in useEffect
     const calculatedProforma = useMemo(() => {

@@ -458,6 +458,10 @@ export const proformaService = {
             items: offer.items || []
         };
         return proformaService.create(proforma);
+    },
+    delete: async (id: string) => {
+        await api.delete(`/api/proformas/${id}`);
+        return true;
     }
 };
 

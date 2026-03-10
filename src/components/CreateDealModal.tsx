@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { X, Search, Calendar, ChevronDown, Check, Plus, Settings, Users, Edit2, Link as LinkIcon, User } from 'lucide-react';
+import { X, Calendar, ChevronDown, Check, Plus, Settings, Edit2, Link as LinkIcon, User, Building, List, ListOrdered, AtSign, Search, Lock } from 'lucide-react';
+
+function GearIcon() {
+    return <Settings size={14} className="text-slate-300 hover:text-slate-500 cursor-pointer ml-3 shrink-0" />;
+}
 
 interface CreateDealModalProps {
     onClose: () => void;
@@ -12,14 +16,15 @@ export default function CreateDealModal({ onClose, onSave }: CreateDealModalProp
     const [title, setTitle] = useState('Anlaşma');
     const [stage, setStage] = useState('Geliştiriliyor');
     const [amount, setAmount] = useState('0');
-    const [currency, setCurrency] = useState('₺');
+    const [currency] = useState('₺');
     const [endDate, setEndDate] = useState(new Date().toLocaleDateString('tr-TR'));
     const [customer, setCustomer] = useState('');
     const [dealType, setDealType] = useState('Satış');
     const [startDate, setStartDate] = useState(new Date().toLocaleDateString('tr-TR'));
+    const [isSelectFieldModalOpen, setIsSelectFieldModalOpen] = useState(false);
 
     // These base stages exactly match the ones in DealsPage
-    const stagesList = ['Personel', 'Geliştiriliyor', 'Sayfa oluştur', 'Fatura', 'Üzerinde çalışılıyor', 'Nihai fatura'];
+    const stagesList = ['Ad', 'Geliştiriliyor', 'Sayfa oluştur', 'Fatura', 'Üzerinde çalışılıyor', 'Nihai fatura'];
 
     // active index logic
     const activeStageIndex = stagesList.indexOf(stage);
@@ -129,151 +134,243 @@ export default function CreateDealModal({ onClose, onSave }: CreateDealModalProp
                     <div className="md:col-span-6 space-y-4">
                         <div className="bg-white rounded shadow-sm border border-slate-200/50 p-6 relative">
                             <div className="flex items-center justify-between mb-5">
-                                <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">ANLAŞMA HAKKINDA</h3>
-                                <button className="text-[12px] text-slate-400 hover:text-slate-600">düzenle</button>
+                                <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">ANLAŞMA HAKKINDA <Edit2 size={12} className="text-slate-300 cursor-pointer hover:text-slate-500" /></h3>
+                                <button className="text-[12px] text-slate-400 hover:text-slate-600">iptal</button>
                             </div>
 
-                            <div className="space-y-5">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-[13px] text-slate-400 mb-1">Ad</label>
+                                    <div className="flex items-center w-full">
+                                        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="# numaralı Anlaşma" className="flex-1 w-full text-[14px] text-slate-700 border border-slate-300 rounded p-2.5 outline-none focus:border-blue-400" />
+                                        <GearIcon />
+                                    </div>
+                                </div>
                                 <div>
                                     <label className="block text-[13px] text-slate-400 mb-1">Aşama</label>
-                                    <select value={stage} onChange={e => setStage(e.target.value)} className="w-full text-[14px] text-slate-700 outline-none border-b border-transparent hover:border-slate-300 focus:border-blue-400 pb-1 cursor-pointer bg-transparent">
-                                        {stagesList.map(s => <option key={s} value={s}>{s}</option>)}
-                                    </select>
+                                    <div className="flex items-center w-full">
+                                        <select value={stage} onChange={e => setStage(e.target.value)} className="flex-1 w-full text-[14px] text-slate-700 border border-slate-300 rounded p-2.5 outline-none focus:border-blue-400 cursor-pointer bg-white">
+                                            {stagesList.map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                        <GearIcon />
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-[13px] text-slate-400 mb-1">Tutar ve para birimi</label>
-                                    <div className="flex items-end justify-between">
-                                        <div className="flex items-end gap-1">
-                                            <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="text-[28px] font-light text-slate-800 outline-none w-24 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-400" />
-                                            <span className="text-[20px] text-slate-500 mb-1">{currency}</span>
-                                        </div>
-                                        <button className="bg-[#00d4e9] text-white px-4 py-2 rounded text-[13px] font-bold tracking-wide hover:bg-[#00c5d9]">ÖDEME AL</button>
-                                    </div>
-                                </div>
-                                <div className="border border-slate-200 rounded p-4 bg-[#fbfdfd]">
-                                    <h4 className="text-[13px] text-slate-500 mb-2">Ödeme ve teslimat</h4>
-                                    <p className="text-[12px] text-slate-400 italic mb-3">Bu kutuda ödemelerle ve teslimatlarla ilgili bilgiler gösterilecektir.</p>
-                                    <button className="text-[13px] text-blue-500 mb-4 hover:underline">Ekle</button>
-                                    <div className="flex justify-between items-center pt-3 border-t border-slate-100">
-                                        <span className="text-[13px] text-slate-400 flex items-center gap-1">Anlaşma toplamı <div className="w-3 h-3 rounded-full bg-slate-200 text-[9px] flex items-center justify-center text-slate-500 font-bold">?</div></span>
-                                        <span className="text-[13px] font-medium text-slate-600">0 ₺</span>
+                                    <div className="flex items-center w-full gap-3">
+                                        <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="flex-1 min-w-0 text-[14px] text-slate-700 border border-slate-300 rounded p-2.5 outline-none focus:border-blue-400" />
+                                        <select className="w-[140px] text-[14px] text-slate-700 border border-slate-300 rounded p-2.5 outline-none focus:border-blue-400 bg-white cursor-pointer">
+                                            <option>Turkish Lira</option>
+                                        </select>
+                                        <GearIcon />
                                     </div>
                                 </div>
                                 <div>
                                     <label className="block text-[13px] text-slate-400 mb-1">Bitiş tarihi</label>
-                                    <div className="flex items-center gap-2 group border-b border-transparent hover:border-slate-300 focus-within:border-blue-400 pb-1">
-                                        <input type="text" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full text-[14px] text-slate-700 outline-none bg-transparent" />
-                                        <Calendar size={14} className="text-slate-300 group-hover:text-slate-500" />
+                                    <div className="flex items-center w-full">
+                                        <div className="flex-1 flex items-center border border-slate-300 rounded p-2.5 bg-white focus-within:border-blue-400">
+                                            <input type="text" value={endDate} onChange={e => setEndDate(e.target.value)} className="flex-1 text-[14px] text-slate-700 outline-none w-full" />
+                                            <Calendar size={16} className="text-slate-300" />
+                                        </div>
+                                        <GearIcon />
                                     </div>
                                 </div>
                                 <div>
                                     <label className="block text-[13px] text-slate-400 mb-1">Müşteri</label>
-                                    <input type="text" value={customer} onChange={e => setCustomer(e.target.value)} placeholder="alan boş" className="w-full text-[14px] text-slate-700 outline-none border-b border-transparent hover:border-slate-300 focus:border-blue-400 pb-1 placeholder-slate-300 bg-transparent" />
+                                    <div className="flex items-start w-full">
+                                        <div className="flex-1 border border-slate-200 rounded p-4 bg-white shadow-sm">
+                                            <div className="mb-4">
+                                                <label className="block text-[13px] text-slate-400 mb-1">Kişiler</label>
+                                                <div className="flex items-center border border-slate-300 rounded p-2 bg-white focus-within:border-blue-400">
+                                                    <div className="w-5 h-5 bg-slate-400 text-white rounded-full flex items-center justify-center mr-2 shrink-0"><User size={12} /></div>
+                                                    <input type="text" value={customer} onChange={(e) => setCustomer(e.target.value)} placeholder="Kişi adı, telefon veya e-posta" className="flex-1 outline-none text-[14px] text-slate-700" />
+                                                    <Search size={14} className="text-slate-400" />
+                                                </div>
+                                                <div className="mt-2 text-[13px] text-slate-500 cursor-pointer border-b border-dashed border-slate-300 w-max hover:text-slate-800">+ Katılımcı ekle</div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-[13px] text-slate-400 mb-1">Şirket</label>
+                                                <div className="flex items-center border border-slate-300 rounded p-2 bg-white focus-within:border-blue-400">
+                                                    <div className="w-5 h-5 bg-slate-400 text-white rounded-full flex items-center justify-center mr-2 shrink-0"><Building size={12} /></div>
+                                                    <input type="text" placeholder="Şirket adı, telefon veya e-posta" className="flex-1 outline-none text-[14px] text-slate-700" />
+                                                    <Search size={14} className="text-slate-400" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <GearIcon />
+                                    </div>
                                 </div>
 
-                                <div className="mt-2 text-[12px] text-slate-400 flex justify-between">
-                                    <div className="flex gap-2">
-                                        <span className="hover:text-slate-600 cursor-pointer border-b border-dashed border-slate-300">Alanı seç</span>
-                                        <span className="hover:text-slate-600 cursor-pointer border-b border-dashed border-slate-300">Alan oluştur</span>
+                                <div className="mt-4 pt-2 text-[13px] flex justify-between">
+                                    <div className="flex gap-4">
+                                        <span onClick={() => setIsSelectFieldModalOpen(true)} className="text-slate-500 hover:text-slate-700 cursor-pointer border-b border-dashed border-slate-300 pb-0.5">Alanı seç</span>
+                                        <span className="text-slate-500 hover:text-slate-700 cursor-pointer border-b border-dashed border-slate-300 pb-0.5">Alan oluştur</span>
                                     </div>
-                                    <span className="hover:text-slate-600 cursor-pointer border-b border-dashed border-slate-300">Bölümü sil</span>
+                                    <span className="text-red-500 hover:text-red-600 cursor-pointer border-b border-dashed border-red-300 pb-0.5">Bölümü sil</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Additional Sections */}
-                        <div className="bg-white rounded shadow-sm border border-slate-200/50 p-6">
+                        <div className="bg-white rounded shadow-sm border border-slate-200/50 p-6 relative">
                             <div className="flex items-center justify-between mb-5">
-                                <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">DAHA FAZLA</h3>
-                                <button className="text-[12px] text-slate-400 hover:text-slate-600">düzenle</button>
+                                <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">DAHA FAZLA <Edit2 size={12} className="text-slate-300 cursor-pointer hover:text-slate-500" /></h3>
+                                <button className="text-[12px] text-slate-400 hover:text-slate-600">iptal</button>
                             </div>
-                            <div className="space-y-5">
+                            <div className="space-y-4">
                                 <div>
                                     <label className="block text-[13px] text-slate-400 mb-1">Anlaşma türü</label>
-                                    <select value={dealType} onChange={e => setDealType(e.target.value)} className="w-full text-[14px] text-slate-700 outline-none border-b border-transparent hover:border-slate-300 focus:border-blue-400 pb-1 bg-transparent cursor-pointer">
-                                        <option>Satış</option>
-                                        <option>Hizmet</option>
-                                        <option>Diğer</option>
-                                    </select>
+                                    <div className="flex items-center w-full">
+                                        <select value={dealType} onChange={e => setDealType(e.target.value)} className="flex-1 w-full text-[14px] text-slate-700 border border-slate-300 rounded p-2.5 outline-none focus:border-blue-400 cursor-pointer bg-white">
+                                            <option>Satış</option>
+                                            <option>Hizmet</option>
+                                            <option>Diğer</option>
+                                        </select>
+                                        <GearIcon />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-[13px] text-slate-400 mb-1">Kaynak</label>
+                                    <div className="flex items-center w-full">
+                                        <select className="flex-1 w-full text-[14px] text-slate-700 border border-slate-300 rounded p-2.5 outline-none focus:border-blue-400 cursor-pointer bg-white">
+                                            <option>Seçilmedi</option>
+                                        </select>
+                                        <GearIcon />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-[13px] text-slate-400 mb-1">Kaynak bilgileri</label>
+                                    <div className="flex items-start w-full">
+                                        <textarea className="flex-1 w-full text-[14px] text-slate-700 border border-slate-300 rounded p-2 outline-none focus:border-blue-400 h-24 resize-none"></textarea>
+                                        <GearIcon />
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-[13px] text-slate-400 mb-1">Başlama tarihi</label>
-                                    <div className="flex items-center gap-2 group border-b border-transparent hover:border-slate-300 focus-within:border-blue-400 pb-1">
-                                        <input type="text" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full text-[14px] text-slate-700 outline-none bg-transparent" />
-                                        <Calendar size={14} className="text-slate-300 group-hover:text-slate-500" />
+                                    <div className="flex items-center w-full">
+                                        <div className="flex-1 flex items-center border border-slate-300 rounded p-2.5 bg-white focus-within:border-blue-400">
+                                            <input type="text" value={startDate} onChange={e => setStartDate(e.target.value)} className="flex-1 text-[14px] text-slate-700 outline-none w-full" />
+                                            <Calendar size={16} className="text-slate-300" />
+                                        </div>
+                                        <GearIcon />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-[13px] text-slate-400 mb-1">Herkese açık</label>
-                                    <select className="w-full text-[14px] text-slate-700 outline-none border-b border-transparent hover:border-slate-300 focus:border-blue-400 pb-1 bg-transparent cursor-pointer">
-                                        <option>Evet</option>
-                                        <option>Hayır</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-[13px] text-slate-400 mb-2">Sorumlu</label>
-                                    <div className="flex items-center gap-2 border border-slate-200 rounded-full py-1.5 px-3 bg-[#fdfdfd] w-max cursor-pointer hover:border-blue-300 shadow-sm">
-                                        <div className="w-6 h-6 rounded-full bg-slate-500 text-white flex items-center justify-center shrink-0"><User size={14} /></div>
-                                        <span className="text-[14px] text-[#008cff]">kullanici@makfacrm.com</span>
+                                    <div className="flex items-center w-full mt-6">
+                                        <div className="flex-1 flex items-center gap-2">
+                                            <input type="checkbox" defaultChecked className="w-4 h-4 text-blue-500 cursor-pointer" />
+                                            <label className="text-[14px] text-slate-700 cursor-pointer">Herkese açık</label>
+                                        </div>
+                                        <GearIcon />
                                     </div>
-                                </div>
-                                <div>
-                                    <label className="block text-[13px] text-slate-400 mb-1">UTM parametreleri</label>
-                                    <div className="text-[14px] text-slate-700 pb-1">Yok</div>
                                 </div>
 
-                                <div className="mt-2 text-[12px] text-slate-400 flex justify-between">
-                                    <div className="flex gap-2">
-                                        <span className="hover:text-slate-600 cursor-pointer border-b border-dashed border-slate-300">Alanı seç</span>
-                                        <span className="hover:text-slate-600 cursor-pointer border-b border-dashed border-slate-300">Alan oluştur</span>
+                                <div className="border-t border-slate-100 pt-5 mt-5">
+                                    <label className="block text-[13px] text-slate-400 mb-1">Sorumlu</label>
+                                    <div className="flex items-start w-full">
+                                        <div className="flex-1 border border-slate-300 rounded p-3 flex items-center justify-between bg-white relative">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-8 h-8 rounded-full bg-slate-600 text-white flex items-center justify-center shrink-0"><User size={20} /></div>
+                                                <span className="text-[14px] text-[#008cff]">fevziye.mamak35@gmail.com</span>
+                                            </div>
+                                            <button className="text-[10px] text-slate-500 hover:text-slate-700 font-bold tracking-wider absolute right-3 -top-2.5 bg-white px-1">DEĞİŞTİR</button>
+                                        </div>
+                                        <GearIcon />
                                     </div>
-                                    <span className="hover:text-slate-600 cursor-pointer border-b border-dashed border-slate-300">Bölümü sil</span>
+                                </div>
+
+                                <div className="mt-4">
+                                    <label className="block text-[13px] text-slate-400 mb-1">Gözlemciler</label>
+                                    <div className="flex items-center justify-between w-full">
+                                        <div className="text-[13px] text-slate-500 cursor-pointer border-b border-dashed border-slate-300 w-max hover:text-slate-800">+ Gözlemci ekle</div>
+                                        <GearIcon />
+                                    </div>
+                                </div>
+
+                                <div className="mt-4">
+                                    <label className="block text-[13px] text-slate-400 mb-1">Yorum</label>
+                                    <div className="flex items-start w-full">
+                                        <div className="flex-1 border border-slate-300 rounded overflow-hidden bg-white shadow-sm">
+                                            <div className="flex items-center gap-4 border-b border-slate-200 p-2 bg-[#fdfdfd] text-slate-500">
+                                                <span className="font-bold text-[14px] cursor-pointer hover:text-slate-800">B</span>
+                                                <span className="italic font-serif text-[15px] cursor-pointer hover:text-slate-800">I</span>
+                                                <span className="underline text-[14px] cursor-pointer hover:text-slate-800">U</span>
+                                                <span className="line-through text-[14px] cursor-pointer hover:text-slate-800">S</span>
+                                                <div className="w-px h-4 bg-slate-300 mx-1"></div>
+                                                <ListOrdered size={16} className="cursor-pointer hover:text-slate-800" />
+                                                <List size={16} className="cursor-pointer hover:text-slate-800" />
+                                                <div className="w-px h-4 bg-slate-300 mx-1"></div>
+                                                <LinkIcon size={16} className="cursor-pointer hover:text-slate-800" />
+                                                <AtSign size={16} className="cursor-pointer text-purple-500 hover:text-purple-700" />
+                                            </div>
+                                            <textarea className="w-full h-24 p-3 outline-none resize-none text-[14px] text-slate-700 bg-white"></textarea>
+                                        </div>
+                                        <GearIcon />
+                                    </div>
+                                </div>
+
+                                <div className="mt-4 pt-2 text-[13px] flex justify-between">
+                                    <div className="flex gap-4">
+                                        <span onClick={() => setIsSelectFieldModalOpen(true)} className="text-slate-500 hover:text-slate-700 cursor-pointer border-b border-dashed border-slate-300 pb-0.5">Alanı seç</span>
+                                        <span className="text-slate-500 hover:text-slate-700 cursor-pointer border-b border-dashed border-slate-300 pb-0.5">Alan oluştur</span>
+                                    </div>
+                                    <span className="text-red-500 hover:text-red-600 cursor-pointer border-b border-dashed border-red-300 pb-0.5">Bölümü sil</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Ürünler Section */}
-                        <div className="bg-white rounded shadow-sm border border-slate-200/50 p-6">
+                        <div className="bg-white rounded shadow-sm border border-slate-200/50 p-6 relative">
                             <div className="flex items-center justify-between mb-5">
-                                <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">ÜRÜNLER</h3>
-                                <button className="text-[12px] text-slate-400 hover:text-slate-600">düzenle</button>
+                                <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">ÜRÜNLER <Edit2 size={12} className="text-slate-300 cursor-pointer hover:text-slate-500" /></h3>
+                                <button className="text-[12px] text-slate-400 hover:text-slate-600">iptal</button>
                             </div>
-                            <div>
-                                <label className="block text-[13px] text-slate-400 mb-2">Ürünler</label>
-                                <button className="w-full py-3 border border-dashed border-[#008cff] text-[#008cff] rounded text-[14px] font-medium bg-blue-50/20 hover:bg-blue-50 transition-colors flex items-center justify-center">
-                                    + ekle
-                                </button>
+                            <div className="flex items-start w-full">
+                                <div className="flex-1">
+                                    <label className="block text-[13px] text-slate-400 mb-2">Ürünler</label>
+                                    <button className="w-full py-3 border border-dashed border-[#008cff] text-[#008cff] rounded text-[14px] font-medium bg-blue-50/20 hover:bg-blue-50 transition-colors flex items-center justify-center">
+                                        + ekle
+                                    </button>
+                                </div>
+                                <div className="mt-7">
+                                    <GearIcon />
+                                </div>
                             </div>
 
-                            <div className="mt-4 text-[12px] text-slate-400 flex justify-between">
-                                <div className="flex gap-2">
-                                    <span className="hover:text-slate-600 cursor-pointer border-b border-dashed border-slate-300">Alanı seç</span>
-                                    <span className="hover:text-slate-600 cursor-pointer border-b border-dashed border-slate-300">Alan oluştur</span>
+                            <div className="mt-6 pt-2 text-[13px] flex justify-between">
+                                <div className="flex gap-4">
+                                    <span onClick={() => setIsSelectFieldModalOpen(true)} className="text-slate-500 hover:text-slate-700 cursor-pointer border-b border-dashed border-slate-300 pb-0.5">Alanı seç</span>
+                                    <span className="text-slate-500 hover:text-slate-700 cursor-pointer border-b border-dashed border-slate-300 pb-0.5">Alan oluştur</span>
                                 </div>
-                                <span className="hover:text-slate-600 cursor-pointer border-b border-dashed border-slate-300">Bölümü sil</span>
+                                <span className="text-red-500 hover:text-red-600 cursor-pointer border-b border-dashed border-red-300 pb-0.5">Bölümü sil</span>
                             </div>
                         </div>
 
                         {/* Yinelenen Anlaşma */}
-                        <div className="bg-white rounded shadow-sm border border-slate-200/50 p-6">
+                        <div className="bg-white rounded shadow-sm border border-slate-200/50 p-6 relative">
                             <div className="flex items-center justify-between mb-5">
-                                <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">YİNELENEN ANLAŞMA</h3>
-                                <button className="text-[12px] text-slate-400 hover:text-slate-600">düzenle</button>
+                                <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">YİNELENEN ANLAŞMA <Edit2 size={12} className="text-slate-300 cursor-pointer hover:text-slate-500" /></h3>
+                                <button className="text-[12px] text-slate-400 hover:text-slate-600">iptal</button>
                             </div>
-                            <div>
-                                <label className="block text-[13px] text-slate-400 mb-2">Tekrarla</label>
-                                <div className="border border-slate-200 rounded py-2.5 px-3 text-[14px] text-slate-700 flex justify-between items-center cursor-not-allowed bg-[#fdfdfd]">
-                                    Tekrarlama
-                                    <LockIcon />
+                            <div className="flex items-start w-full">
+                                <div className="flex-1">
+                                    <label className="block text-[13px] text-slate-400 mb-2">Tekrarla</label>
+                                    <div className="border border-slate-300 rounded p-2.5 text-[14px] text-slate-700 flex justify-between items-center bg-[#fdfdfd]">
+                                        Tekrarlama
+                                        <Lock size={14} className="text-[#008cff]" />
+                                    </div>
+                                </div>
+                                <div className="mt-7">
+                                    <GearIcon />
                                 </div>
                             </div>
 
-                            <div className="mt-4 text-[12px] text-slate-400 flex justify-between">
-                                <div className="flex gap-2">
-                                    <span className="hover:text-slate-600 cursor-pointer border-b border-dashed border-slate-300">Alanı seç</span>
-                                    <span className="hover:text-slate-600 cursor-pointer border-b border-dashed border-slate-300">Alan oluştur</span>
+                            <div className="mt-6 pt-2 text-[13px] flex justify-between">
+                                <div className="flex gap-4">
+                                    <span onClick={() => setIsSelectFieldModalOpen(true)} className="text-slate-500 hover:text-slate-700 cursor-pointer border-b border-dashed border-slate-300 pb-0.5">Alanı seç</span>
+                                    <span className="text-slate-500 hover:text-slate-700 cursor-pointer border-b border-dashed border-slate-300 pb-0.5">Alan oluştur</span>
                                 </div>
-                                <span className="hover:text-slate-600 cursor-pointer border-b border-dashed border-slate-300">Bölümü sil</span>
+                                <span className="text-red-500 hover:text-red-600 cursor-pointer border-b border-dashed border-red-300 pb-0.5">Bölümü sil</span>
                             </div>
                         </div>
 
@@ -382,13 +479,71 @@ export default function CreateDealModal({ onClose, onSave }: CreateDealModalProp
                     <button onClick={onClose} className="text-slate-500 hover:text-slate-800 text-[13px] font-bold px-6 py-3 uppercase transition-all">İptal</button>
                 </div>
             </div>
+
+            {/* Select Fields Modal */}
+            {isSelectFieldModalOpen && (
+                <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white rounded shadow-xl w-full max-w-3xl flex flex-col max-h-[90vh]">
+                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                            <h2 className="text-[16px] text-slate-600">Alanları seçin</h2>
+                            <button onClick={() => setIsSelectFieldModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto flex-1">
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="flex-1 flex items-center border border-slate-300 rounded p-2 focus-within:border-blue-400">
+                                    <input type="text" placeholder="Alan bul" className="flex-1 outline-none text-[14px] text-slate-700 font-light" />
+                                    <Search size={16} className="text-slate-400" />
+                                </div>
+                                <div className="border border-[#00d4e9] rounded px-4 py-2 text-[14px] text-slate-700 relative flex items-center justify-center min-w-[100px] cursor-pointer">
+                                    Anlaşma
+                                    <div className="absolute -top-2 -right-2 w-4 h-4 bg-[#00d4e9] rounded-full flex items-center justify-center text-white"><Check size={10} strokeWidth={4} /></div>
+                                </div>
+                            </div>
+
+                            <div className="mb-6">
+                                <h3 className="text-[15px] text-slate-600 mb-4 border-b border-slate-100 pb-2">Daha fazla</h3>
+                                <div className="grid grid-cols-3 gap-y-4">
+                                    {['Anlaşma türü', 'Başlama tarihi', 'Gözlemciler', 'Kaynak', 'Herkese açık', 'Yorum', 'Kaynak bilgileri', 'Sorumlu', 'UTM parametreleri'].map(field => (
+                                        <label key={field} className="flex items-center gap-2 cursor-pointer">
+                                            <input type="checkbox" className="w-3.5 h-3.5 border-slate-300 rounded text-blue-500 cursor-pointer" />
+                                            <span className="text-[13px] text-slate-600">{field}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 className="text-[15px] text-slate-600 mb-4 border-b border-slate-100 pb-2">Gizli alanlar</h3>
+                                <div className="grid grid-cols-3 gap-y-4">
+                                    {['ID', 'Olasılık', 'Satış Zekası', 'Oluşturulma Tarihi', 'Aşamayı değiştiren', 'Son iletişim', 'Değiştirme Tarihi', 'Aşama değişimi tarihi'].map(field => (
+                                        <label key={field} className="flex items-center gap-2 cursor-pointer">
+                                            <input type="checkbox" className="w-3.5 h-3.5 border-slate-300 rounded text-blue-500 cursor-pointer" />
+                                            <span className="text-[13px] text-slate-600">{field}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-[#fbfbfb]">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" className="w-3.5 h-3.5 border-slate-300 rounded text-blue-500 cursor-pointer" />
+                                <span className="text-[13px] text-slate-600">tümünü seç</span>
+                            </label>
+                            <div className="flex gap-2">
+                                <button className="bg-[#b0edf4] hover:bg-[#a1e8f0] text-white px-6 py-2 rounded text-[12px] font-bold tracking-wider transition">SEÇ</button>
+                                <button onClick={() => setIsSelectFieldModalOpen(false)} className="px-4 py-2 rounded text-[12px] font-bold tracking-wider text-slate-500 hover:bg-slate-200 transition">İPTAL</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
 
-function LockIcon() {
-    return <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#008cff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>;
-}
+
 
 function FilterIcon() {
     return <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>;

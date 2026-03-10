@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Plus, Search, ChevronDown, List, Activity, Settings, Filter, MoreHorizontal, X, Send, User } from 'lucide-react';
-import CreateDealModal from '../components/CreateDealModal';
+import { Plus, Search, ChevronDown, Settings, Filter, X, User, Building2, Phone, Mail, MessageSquare } from 'lucide-react';
+
+import DealDetailView from '../components/DealDetailView';
 
 const columns = [
-    { id: '0', title: 'Personel', color: 'bg-indigo-400', count: 0, total: 0 },
+    { id: '0', title: 'Ad', color: 'bg-indigo-400', count: 0, total: 0 },
     { id: '1', title: 'Geliştiriliyor', color: 'bg-blue-400', count: 0, total: 0 },
     { id: '2', title: 'Sayfa oluştur', color: 'bg-cyan-400', count: 0, total: 0 },
     { id: '3', title: 'Fatura', color: 'bg-teal-300', count: 0, total: 0 },
@@ -21,20 +22,46 @@ const activityColumns = [
 
 export default function DealsPage() {
     const [activeTab, setActiveTab] = useState('Kanban');
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [deals, setDeals] = useState<any[]>([]);
+    const [selectedDeal, setSelectedDeal] = useState<any | null>(null);
+    const [quickAddCol, setQuickAddCol] = useState<string | null>(null);
+    const [quickAddForm, setQuickAddForm] = useState({ title: '', amount: '', currency: '₺', person: '', company: '' });
 
     const handleSaveDeal = (newDeal: any) => {
-        setDeals(prev => [...prev, newDeal]);
-        setIsCreateModalOpen(false);
+        setDeals(prev => {
+            const exists = prev.find(d => d.id === newDeal.id);
+            if (exists) {
+                return prev.map(d => d.id === newDeal.id ? newDeal : d);
+            }
+            return [...prev, newDeal];
+        });
+        setSelectedDeal(null);
+        setQuickAddCol(null);
+        setQuickAddForm({ title: '', amount: '', currency: '₺', person: '', company: '' });
     };
+
+    const handleQuickAddSave = (stage: string) => {
+        if (!quickAddForm.title) return;
+        handleSaveDeal({
+            id: Date.now().toString(),
+            title: quickAddForm.title,
+            amount: quickAddForm.amount,
+            currency: quickAddForm.currency,
+            stage,
+            customer: quickAddForm.person || quickAddForm.company,
+            endDate: new Date().toLocaleDateString('tr-TR'),
+            created_at: new Date().toISOString()
+        });
+    };
+
+
 
     return (
         <div className="min-h-full bg-[#17202b] flex flex-col p-4">
             {/* Search Header */}
             <div className="flex items-center gap-2 mb-4">
                 <h2 className="text-2xl font-semibold text-white mr-4">Anlaşmalar</h2>
-                <button onClick={() => setIsCreateModalOpen(true)} className="flex items-center bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-sm text-sm font-medium transition-colors shadow-sm">
+                <button onClick={() => setSelectedDeal({ id: Date.now().toString(), isNew: true, title: 'Yeni Anlaşma', amount: '', currency: '₺', stage: 'Ad', customer: '' })} className="flex items-center bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-sm text-sm font-medium transition-colors shadow-sm">
                     <Plus size={16} className="mr-1" /> Oluştur <span className="ml-2 border-l border-green-600 pl-2"><ChevronDown size={14} /></span>
                 </button>
                 <button className="flex items-center bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-md text-sm transition-colors border border-white/10">
@@ -125,57 +152,145 @@ export default function DealsPage() {
                                 {/* Column Stats */}
                                 <div className="text-center mb-4">
                                     <div className="text-3xl font-light text-white mt-2">{total} <span className="text-xl">₺</span></div>
-                                    <button className="text-white/40 hover:text-white/80 transition-colors mt-2 w-full flex items-center justify-center font-light"><Plus size={18} /></button>
+                                    <button
+                                        onClick={() => setQuickAddCol(col.title)}
+                                        className="text-white/40 hover:text-white/80 transition-colors mt-2 w-full flex items-center justify-center font-light"
+                                    >
+                                        <Plus size={18} />
+                                    </button>
                                 </div>
 
-                                {/* "Hızlı Anlaşma" in first column only */}
-                                {col.id === '1' && (
-                                    <div className="px-3 mb-3">
-                                        <button onClick={() => alert("Hızlı Anlaşma formu açılıyor...")} className="w-full bg-blue-500/20 hover:bg-blue-500/40 text-blue-50 text-sm py-2 rounded-md font-bold transition-colors flex items-center justify-center border border-blue-400/30">
-                                            <Plus size={16} className="mr-2" /> Hızlı Anlaşma
-                                        </button>
-
-                                        {/* Integration Info Box */}
-                                        <div className="mt-4 bg-blue-900/50 border border-blue-400/20 rounded-md p-3 relative">
-                                            <button className="absolute top-2 right-2 text-white/50 hover:text-white"><X size={14} /></button>
-                                            <h4 className="text-sm font-medium text-white text-center mb-3">
-                                                İletişim Merkezi<br />Otomatik anlaşma kaynakları
-                                            </h4>
-                                            <div className="grid grid-cols-2 gap-2 text-xs text-white/70">
-                                                <div className="flex items-center"><span className="w-4 h-4 mr-2 bg-blue-400/20 rounded inline-flex items-center justify-center"><MoreHorizontal size={10} /></span> Canlı Sohbet</div>
-                                                <div className="flex items-center"><Activity size={12} className="mr-2" /> Aramalar</div>
-                                                <div className="flex items-center"><List size={12} className="mr-2" /> CRM formları</div>
-                                                <div className="flex items-center"><Activity size={12} className="mr-2" /> Posta</div>
-                                                <div className="flex items-center"><Activity size={12} className="mr-2" /> Viber</div>
-                                                <div className="flex items-center"><Send size={12} className="mr-2" /> Telegram</div>
+                                {/* Quick Add Form */}
+                                {quickAddCol === col.title && (
+                                    <div className="bg-white rounded-lg shadow-xl mx-3 mb-4 p-4 space-y-4 border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
+                                        <div>
+                                            <label className="block text-[11px] text-slate-400 font-bold uppercase mb-1">Ad</label>
+                                            <input
+                                                autoFocus
+                                                type="text"
+                                                placeholder="# numaralı Anlaşma"
+                                                className="w-full border border-slate-200 rounded px-3 py-2 text-[13px] text-slate-900 outline-none focus:border-blue-400"
+                                                value={quickAddForm.title}
+                                                onChange={e => setQuickAddForm({ ...quickAddForm, title: e.target.value })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[11px] text-slate-400 font-bold uppercase mb-1">Tutar ve para birimi</label>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    className="flex-1 border border-slate-200 rounded px-3 py-2 text-[13px] text-slate-900 outline-none focus:border-blue-400"
+                                                    value={quickAddForm.amount}
+                                                    onChange={e => setQuickAddForm({ ...quickAddForm, amount: e.target.value })}
+                                                />
+                                                <select
+                                                    className="w-16 border border-slate-200 rounded px-1 py-2 text-[13px] text-slate-900 bg-white outline-none focus:border-blue-400"
+                                                    value={quickAddForm.currency}
+                                                    onChange={e => setQuickAddForm({ ...quickAddForm, currency: e.target.value })}
+                                                >
+                                                    <option>₺</option>
+                                                    <option>$</option>
+                                                    <option>€</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-[11px] text-slate-400 font-bold uppercase mb-1">Müşteri</label>
+                                            <div className="border border-slate-100 rounded p-3 bg-slate-50/30 space-y-3">
+                                                <div>
+                                                    <span className="text-[10px] text-slate-400 font-bold block mb-1">Kişiler</span>
+                                                    <div className="relative">
+                                                        <User size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300" />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Kişi adı, telefon veya e-posta"
+                                                            className="w-full border border-slate-200 rounded pl-8 pr-8 py-1.5 text-[12px] text-slate-900 outline-none bg-white font-medium"
+                                                            value={quickAddForm.person}
+                                                            onChange={e => setQuickAddForm({ ...quickAddForm, person: e.target.value })}
+                                                        />
+                                                        <Search size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-300" />
+                                                    </div>
+                                                </div>
+                                                <div className="text-[10px] text-blue-500 font-bold cursor-pointer hover:underline">+ Katılımcı ekle</div>
+                                                <div>
+                                                    <span className="text-[10px] text-slate-400 font-bold block mb-1">Şirket</span>
+                                                    <div className="relative">
+                                                        <Building2 size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300" />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Şirket adı, telefon veya e-posta"
+                                                            className="w-full border border-slate-200 rounded pl-8 pr-8 py-1.5 text-[12px] text-slate-900 outline-none bg-white font-medium"
+                                                            value={quickAddForm.company}
+                                                            onChange={e => setQuickAddForm({ ...quickAddForm, company: e.target.value })}
+                                                        />
+                                                        <Search size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-300" />
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        {/* CRM Import Box */}
-                                        <div className="mt-3 bg-white/5 border border-white/10 rounded-md p-3 relative">
-                                            <button className="absolute top-2 right-2 text-white/50 hover:text-white"><X size={14} /></button>
-                                            <h4 className="text-sm font-medium text-white mb-2">CRM çözümü ön ayarları</h4>
-                                            <ul className="text-xs text-white/70 space-y-2">
-                                                <li className="flex items-start"><span className="text-blue-400 mr-2">➜</span> CRM çözümü ön ayarlarını dosyadan içe aktarın</li>
-                                                <li className="flex items-start"><span className="text-blue-400 mr-2">➜</span> CRM çözümü ön ayarlarını dosyaya aktarın</li>
-                                                <li className="flex items-start"><span className="text-blue-400 mr-2">↺</span> Diğer CRM'den taşıyın</li>
-                                            </ul>
+                                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                                            <div className="text-blue-500 text-[11px] font-bold cursor-pointer hover:underline">Alanı seç</div>
+                                            <div className="flex items-center gap-1 opacity-40">
+                                                <User size={14} className="text-slate-600" /> <User size={14} className="text-slate-600" />
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-2 pt-2 pb-1">
+                                            <button
+                                                onClick={() => handleQuickAddSave(col.title)}
+                                                className="bg-[#00d0f5] hover:bg-[#00c0e0] text-white px-4 py-1.5 rounded text-[11px] font-black uppercase tracking-wider transition-colors shadow-sm"
+                                            >
+                                                KAYDET
+                                            </button>
+                                            <button
+                                                onClick={() => setQuickAddCol(null)}
+                                                className="text-slate-400 hover:text-slate-600 font-bold text-[11px] px-2 py-1.5 uppercase transition-colors"
+                                            >
+                                                İPTAL
+                                            </button>
                                         </div>
                                     </div>
                                 )}
 
+
+
                                 {/* Deal Cards Container */}
-                                <div className="flex-1 px-3 mt-4 flex flex-col gap-2 relative z-10">
+                                <div className="flex-1 px-3 mt-0 flex flex-col gap-2 relative z-10">
                                     {colDeals.map((deal: any) => (
-                                        <div key={deal.id} className="bg-white rounded shadow-sm border border-slate-200/60 p-3 pt-4 cursor-pointer hover:shadow transition-shadow group relative overflow-hidden">
-                                            <div className="absolute top-0 left-0 w-1 h-full bg-[#008cff]"></div>
-                                            <div className="flex justify-between items-start mb-1">
-                                                <div className="text-[14px] font-semibold text-[#008cff] group-hover:underline truncate">{deal.title}</div>
+                                        <div onClick={() => setSelectedDeal(deal)} key={deal.id} className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 cursor-pointer hover:shadow-md transition-shadow group relative overflow-hidden">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div
+                                                    className="text-[13px] font-bold text-[#008cff] group-hover:underline truncate pr-6 cursor-pointer"
+                                                >
+                                                    {deal.title}
+                                                </div>
+                                                <div className="text-[10px] bg-slate-100 text-slate-400 w-5 h-5 rounded-full flex items-center justify-center font-bold">0</div>
                                             </div>
-                                            <div className="text-[15px] text-slate-700 font-bold tracking-tight mb-2">{deal.amount} {deal.currency}</div>
-                                            {deal.customer && <div className="text-[12px] text-slate-500 mt-2 flex items-center gap-1.5"><div className="w-4 h-4 bg-slate-200 rounded-full flex items-center justify-center"><User size={10} /></div> <span className="truncate">{deal.customer}</span></div>}
-                                            <div className="text-[11px] text-slate-400 mt-2 flex justify-between items-center border-t border-slate-100 pt-2">
-                                                <span>Bugün {deal.endDate}</span>
+                                            <div className="text-[16px] text-slate-900 font-bold tracking-tight mb-1">{deal.amount} {deal.currency}</div>
+
+                                            {deal.customer && (
+                                                <div className="text-[13px] text-blue-500 font-medium hover:underline mb-3 truncate">
+                                                    {deal.customer}
+                                                </div>
+                                            )}
+
+                                            <div className="text-[11px] text-slate-400 mb-4">şu anda</div>
+
+                                            <div className="flex items-center justify-between border-t border-slate-50 pt-3 mt-1">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-slate-300 hover:text-blue-500 transition-colors cursor-pointer"><Plus size={14} /> <span className="text-[11px] font-bold ml-0.5">Etkinlik</span></span>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <Phone size={14} className="text-slate-300 hover:text-blue-500 cursor-pointer transition-colors" />
+                                                    <Mail size={14} className="text-slate-300 hover:text-blue-500 cursor-pointer transition-colors" />
+                                                    <MessageSquare size={14} className="text-slate-300 hover:text-blue-500 cursor-pointer transition-colors" />
+                                                </div>
+                                            </div>
+
+                                            <div className="absolute bottom-3 right-3 flex items-center gap-1 text-[11px] text-slate-400">
+                                                <span className="mr-1">şu anda</span>
+                                                <div className="w-5 h-5 bg-slate-600 outline outline-2 outline-white rounded-full flex items-center justify-center text-white"><User size={10} /></div>
                                             </div>
                                         </div>
                                     ))}
@@ -253,41 +368,7 @@ export default function DealsPage() {
                                 <button className="text-white/40 hover:text-white/80 transition-colors w-full flex items-center justify-center"><Plus size={18} /></button>
                             </div>
 
-                            {/* Info block for first column */}
-                            {col.id === 'a1' && (
-                                <div className="px-3 mb-3">
-                                    <button onClick={() => alert("Hızlı Anlaşma formu açılıyor...")} className="w-full bg-blue-500/20 hover:bg-blue-500/40 text-blue-50 text-sm py-2 rounded-md font-bold transition-colors flex items-center justify-center border border-blue-400/30">
-                                        <Plus size={16} className="mr-2" /> Hızlı Anlaşma
-                                    </button>
 
-                                    {/* Integration Info Box */}
-                                    <div className="mt-4 bg-blue-900/50 border border-blue-400/20 rounded-md p-3 relative">
-                                        <button className="absolute top-2 right-2 text-white/50 hover:text-white"><X size={14} /></button>
-                                        <h4 className="text-sm font-medium text-white text-center mb-3">
-                                            İletişim Merkezi<br />Otomatik anlaşma kaynakları
-                                        </h4>
-                                        <div className="grid grid-cols-2 gap-2 text-xs text-white/70">
-                                            <div className="flex items-center"><span className="w-4 h-4 mr-2 bg-blue-400/20 rounded inline-flex items-center justify-center"><MoreHorizontal size={10} /></span> Canlı Sohbet</div>
-                                            <div className="flex items-center"><Activity size={12} className="mr-2" /> Aramalar</div>
-                                            <div className="flex items-center"><List size={12} className="mr-2" /> CRM formları</div>
-                                            <div className="flex items-center"><Activity size={12} className="mr-2" /> Posta</div>
-                                            <div className="flex items-center"><Activity size={12} className="mr-2" /> Viber</div>
-                                            <div className="flex items-center"><Send size={12} className="mr-2" /> Telegram</div>
-                                        </div>
-                                    </div>
-
-                                    {/* CRM Import Box */}
-                                    <div className="mt-3 bg-white/5 border border-white/10 rounded-md p-3 relative">
-                                        <button className="absolute top-2 right-2 text-white/50 hover:text-white"><X size={14} /></button>
-                                        <h4 className="text-sm font-medium text-white mb-2">CRM çözümü ön ayarları</h4>
-                                        <ul className="text-xs text-white/70 space-y-2">
-                                            <li className="flex items-start"><span className="text-blue-400 mr-2">➜</span> CRM çözümü ön ayarlarını dosyadan içe aktarın</li>
-                                            <li className="flex items-start"><span className="text-blue-400 mr-2">➜</span> CRM çözümü ön ayarlarını dosyaya aktarın</li>
-                                            <li className="flex items-start"><span className="text-blue-400 mr-2">↺</span> Diğer CRM'den taşıyın</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            )}
 
                             {/* Column Body Area */}
                             <div className="flex-1 px-2"></div>
@@ -383,7 +464,13 @@ export default function DealsPage() {
                 </div>
             )}
 
-            {isCreateModalOpen && <CreateDealModal onClose={() => setIsCreateModalOpen(false)} onSave={handleSaveDeal} />}
+            {selectedDeal && (
+                <DealDetailView
+                    deal={selectedDeal}
+                    onClose={() => setSelectedDeal(null)}
+                    onSave={handleSaveDeal}
+                />
+            )}
         </div>
     );
 }

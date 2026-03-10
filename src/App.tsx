@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Users, FileText, Globe, Building2, Save, ArrowLeft, Printer, LayoutDashboard, LogOut } from 'lucide-react';
+import { Users, FileText, Globe, Building2, Save, ArrowLeft, Printer, LayoutDashboard, LogOut, Trash2, Edit, X, MessageSquare } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import LoginPage from './pages/LoginPage';
 import DealsPage from './pages/DealsPage';
+import MessagesPage from './pages/MessagesPage';
 
 export default function App() {
     return (
@@ -23,7 +24,9 @@ function MainLayout() {
     const location = useLocation();
 
     const getLinkClass = (path: string) => {
-        return location.pathname === path || (path === '/deals' && location.pathname === '/')
+        const isDeals = path === '/deals';
+        const isActive = location.pathname === path || (isDeals && location.pathname === '/');
+        return isActive
             ? "flex items-center gap-4 p-4 rounded-2xl bg-blue-600 text-white shadow-xl transition-all font-bold"
             : "flex items-center gap-4 p-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all font-bold";
     };
@@ -45,6 +48,9 @@ function MainLayout() {
                     <Link to="/offers" className={getLinkClass("/offers")}>
                         <FileText size={22} /> <span>Proforma Listesi</span>
                     </Link>
+                    <Link to="/messages" className={getLinkClass("/messages")}>
+                        <MessageSquare size={22} /> <span>message</span>
+                    </Link>
                 </nav>
 
                 {/* Logout Button */}
@@ -61,6 +67,9 @@ function MainLayout() {
                     <Route path="/customers" element={<CustomersPage subdomain={subdomain} />} />
                     <Route path="/offers" element={<OffersPage subdomain={subdomain} />} />
                     <Route path="/create-proforma" element={<CreateProformaPage subdomain={subdomain} />} />
+                    <Route path="/messages" element={<MessagesPage />} />
+                    {/* Catch-all redirect to deals */}
+                    <Route path="*" element={<DealsPage />} />
                 </Routes>
             </main>
         </div>
@@ -104,32 +113,160 @@ function CustomersPage({ subdomain }: { subdomain: string }) {
 
 function OffersPage({ subdomain }: { subdomain: string }) {
     const [offers, setOffers] = useState<any[]>([]);
+    const [editingOffer, setEditingOffer] = useState<any>(null);
+    const [editForm, setEditForm] = useState({ customer_name: '', amount: '', prepared_by: '' });
     const navigate = useNavigate();
+
+    const fetchOffers = async () => {
+        const { data } = await supabase.from('offers').select('*').eq('tenant_subdomain', subdomain).order('created_at', { ascending: false });
+        if (data) setOffers(data);
+    };
+
     useEffect(() => {
-        const fetchOffers = async () => {
-            const { data } = await supabase.from('offers').select('*').eq('tenant_subdomain', subdomain).order('created_at', { ascending: false });
-            if (data) setOffers(data);
-        };
         fetchOffers();
     }, [subdomain]);
 
+    const handleDelete = async (id: number) => {
+        if (window.confirm('Bu proformayı silmek istediğinizden emin misiniz?')) {
+            const { error } = await supabase.from('offers').delete().eq('id', id);
+            if (!error) fetchOffers();
+        }
+    };
+
+    const handleEditSave = async () => {
+        if (!editForm.customer_name || !editForm.amount) return alert("Müşteri ve Tutar gerekli!");
+        let finalName = editForm.customer_name.replace(/\s*\(Hazırlayan:.*?\)/, '');
+        if (editForm.prepared_by) {
+            finalName += ` (Hazırlayan: ${editForm.prepared_by})`;
+        }
+        const { error } = await supabase.from('offers').update({
+            customer_name: finalName,
+            amount: parseFloat(editForm.amount)
+        }).eq('id', editingOffer.id);
+
+        if (!error) {
+            setEditingOffer(null);
+            fetchOffers();
+        } else {
+            alert('Güncelleme sırasında bir hata oluştu.');
+        }
+    };
+
+    const openEdit = (o: any) => {
+        const match = o.customer_name.match(/(.*?)\s*\(Hazırlayan:\s*(.*?)\)/);
+        if (match) {
+            setEditForm({ customer_name: match[1], prepared_by: match[2], amount: (o.amount || 0).toString() });
+        } else {
+            setEditForm({ customer_name: o.customer_name, prepared_by: '', amount: (o.amount || 0).toString() });
+        }
+        setEditingOffer(o);
+    };
+
+    const handleDownloadPDF = (o: any) => {
+        const doc = new jsPDF();
+        doc.setFillColor(30, 41, 59); doc.rect(0, 0, 210, 15, 'F');
+        doc.setFontSize(22); doc.setTextColor(30, 41, 59); doc.setFont("helvetica", "bold");
+        doc.text("PROFORMA INVOICE", 105, 35, { align: "center" });
+
+        doc.setFontSize(10); doc.text("MAKFA GIDA ÜRÜNLERİ SANAYİ TİCARET A.Ş.", 14, 50);
+        doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(100);
+        const invoiceNo = `TR-2026-MAK-${o.id || Math.floor(1000 + Math.random() * 9000)}`;
+        doc.text(`NUMBER: ${invoiceNo}`, 196, 50, { align: "right" });
+
+        const displayName = o.customer_name.replace(/\s*\(Hazırlayan:.*?\)/, '');
+        doc.setFontSize(10); doc.setTextColor(0); doc.setFont("helvetica", "bold");
+        doc.text(`CUSTOMER: ${displayName}`, 14, 60);
+
+        autoTable(doc, {
+            startY: 65,
+            head: [['Description', 'Quantity', 'Piece', 'Total Price $']],
+            body: [['Sunflower oil 5 lt', '33.750 BOX', '135.000', `$ ${parseFloat(o.amount || "0").toLocaleString()}`]],
+            headStyles: { fillColor: [30, 41, 59] }
+        });
+
+        let finalY = (doc as any).lastAutoTable.finalY + 15;
+        doc.setFontSize(9); doc.setTextColor(0); doc.setFont("helvetica", "bold");
+        doc.text("BANK ACCOUNT DETAILS:", 14, finalY);
+        doc.setFont("helvetica", "normal"); doc.text(`Bank: Türkiye Finans Katılım Bankası A.Ş`, 14, finalY + 7);
+        doc.text(`IBAN: TR18 0020 6002 9005 4897 4901 01`, 14, finalY + 12);
+        doc.text(`SWIFT: AFKBTRISXXX`, 14, finalY + 17);
+
+        doc.setTextColor(150, 0, 0);
+        doc.text(`*Validity: three (3) days`, 14, finalY + 27);
+
+        doc.save(`${invoiceNo}.pdf`);
+    };
+
     return (
-        <div className="p-12 text-left">
+        <div className="p-12 text-left relative">
             <div className="flex justify-between items-center mb-10">
                 <h2 className="text-3xl font-black italic text-slate-800">Hazırlanan Proformalar</h2>
                 <button onClick={() => navigate('/create-proforma')} className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black italic shadow-xl">+ YENİ PROFORMA OLUŞTUR</button>
             </div>
             <div className="space-y-4">
-                {offers.map(o => (
-                    <div key={o.id} className="bg-white p-8 rounded-[32px] border border-slate-100 flex justify-between items-center shadow-sm italic">
-                        <div>
-                            <span className="font-black text-xl text-slate-800 block">{o.customer_name}</span>
-                            <span className="text-blue-600 font-black text-2xl">$ {o.amount.toLocaleString()}</span>
+                {offers.map(o => {
+                    const match = o.customer_name.match(/(.*?)\s*\(Hazırlayan:\s*(.*?)\)/);
+                    const displayName = match ? match[1] : o.customer_name;
+                    const preparedBy = match ? match[2] : null;
+
+                    return (
+                        <div key={o.id} className="bg-white p-8 rounded-[32px] border border-slate-100 flex flex-col md:flex-row md:justify-between md:items-center gap-4 shadow-sm italic group">
+                            <div className="flex flex-col gap-1">
+                                {preparedBy && (
+                                    <div className="text-slate-400 text-sm font-bold uppercase tracking-wider mb-1">
+                                        Hazırlayan: {preparedBy}
+                                    </div>
+                                )}
+                                <span className="font-black text-xl text-slate-800 block">{displayName}</span>
+                                <span className="text-blue-600 font-black text-2xl mt-1">$ {(o.amount || 0).toLocaleString()}</span>
+                            </div>
+                            <div className="flex flex-col md:flex-row md:items-center gap-6">
+                                <div className="text-slate-400 font-bold bg-slate-50 px-4 py-2 rounded-xl">{new Date(o.created_at).toLocaleDateString('tr-TR')}</div>
+                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => handleDownloadPDF(o)} className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="PDF İndir">
+                                        <Printer size={20} />
+                                    </button>
+                                    <button onClick={() => openEdit(o)} className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all" title="Düzenle">
+                                        <Edit size={20} />
+                                    </button>
+                                    <button onClick={() => handleDelete(o.id)} className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" title="Sil">
+                                        <Trash2 size={20} />
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div className="text-slate-400 font-bold bg-slate-50 px-4 py-2 rounded-xl">{new Date(o.created_at).toLocaleDateString('tr-TR')}</div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
+
+            {/* Edit Modal */}
+            {editingOffer && (
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex justify-center items-center italic">
+                    <div className="bg-white p-8 rounded-[32px] w-full max-w-lg shadow-2xl relative">
+                        <button onClick={() => setEditingOffer(null)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-800">
+                            <X size={24} />
+                        </button>
+                        <h3 className="text-2xl font-black text-slate-800 border-b pb-4 mb-6">Proformayı Düzenle</h3>
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase">Müşteri Adı</label>
+                                <input className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-xl font-bold outline-none focus:border-blue-500" value={editForm.customer_name} onChange={e => setEditForm({ ...editForm, customer_name: e.target.value })} />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase">Hazırlayan Kişi (İsteğe Bağlı)</label>
+                                <input className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-xl font-bold outline-none focus:border-emerald-500" placeholder="Örn: Fevzi, Ali Mamak..." value={editForm.prepared_by} onChange={e => setEditForm({ ...editForm, prepared_by: e.target.value })} />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase">Tutar ($)</label>
+                                <input type="number" className="w-full bg-blue-50 border-2 border-blue-100 p-4 rounded-xl font-black text-blue-600 text-xl outline-none" value={editForm.amount} onChange={e => setEditForm({ ...editForm, amount: e.target.value })} />
+                            </div>
+                            <button onClick={handleEditSave} className="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-blue-700 transition-colors mt-4">
+                                KAYDET
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -143,7 +280,7 @@ function CreateProformaPage({ subdomain }: { subdomain: string }) {
         invoice_no: `TR-2026-MAK-${Math.floor(1000 + Math.random() * 9000)}`,
         bank_name: 'Türkiye Finans Katılım Bankası A.Ş',
         bank_iban: 'TR18 0020 6002 9005 4897 4901 01',
-        bank_swift: 'AFKBTRISXXX', validity: 'three (3) days'
+        bank_swift: 'AFKBTRISXXX', validity: 'three (3) days', prepared_by: ''
     });
 
     useEffect(() => {
@@ -154,7 +291,7 @@ function CreateProformaPage({ subdomain }: { subdomain: string }) {
         getCustomers();
     }, [subdomain]);
 
-    const handleDownloadPDF = () => {
+    const generatePDF = () => {
         const doc = new jsPDF();
         doc.setFillColor(30, 41, 59); doc.rect(0, 0, 210, 15, 'F');
         doc.setFontSize(22); doc.setTextColor(30, 41, 59); doc.setFont("helvetica", "bold");
@@ -163,6 +300,9 @@ function CreateProformaPage({ subdomain }: { subdomain: string }) {
         doc.setFontSize(10); doc.text("MAKFA GIDA ÜRÜNLERİ SANAYİ TİCARET A.Ş.", 14, 50);
         doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(100);
         doc.text(`NUMBER: ${form.invoice_no}`, 196, 50, { align: "right" });
+        if (form.prepared_by) {
+            doc.text(`PREPARED BY/LOGGED IN: ${form.prepared_by.toUpperCase()}`, 196, 55, { align: "right" });
+        }
 
         autoTable(doc, {
             startY: 65,
@@ -181,12 +321,29 @@ function CreateProformaPage({ subdomain }: { subdomain: string }) {
         doc.setTextColor(150, 0, 0);
         doc.text(`*Validity: ${form.validity}`, 14, finalY + 27);
 
+        return doc;
+    };
+
+    const handleDownloadPDF = () => {
+        const doc = generatePDF();
         doc.save(`${form.invoice_no}.pdf`);
+    };
+
+    const handlePrint = () => {
+        const doc = generatePDF();
+        doc.autoPrint();
+        const blob = doc.output('blob');
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
     };
 
     const handleSave = async () => {
         if (!form.company_name || !form.amount) return alert("Hata: Müşteri ve Tutar gerekli!");
-        const { error } = await supabase.from('offers').insert([{ tenant_subdomain: subdomain, customer_name: form.company_name, amount: parseFloat(form.amount), status: 'Final' }]);
+        let finalName = form.company_name;
+        if (form.prepared_by) {
+            finalName += ` (Hazırlayan: ${form.prepared_by})`;
+        }
+        const { error } = await supabase.from('offers').insert([{ tenant_subdomain: subdomain, customer_name: finalName, amount: parseFloat(form.amount), status: 'Final' }]);
         if (!error) { alert("Sisteme Kaydedildi!"); navigate('/offers'); }
     };
 
@@ -198,8 +355,11 @@ function CreateProformaPage({ subdomain }: { subdomain: string }) {
                         <ArrowLeft size={20} /> Geri Dön
                     </button>
                     <div className="flex gap-4">
+                        <button onClick={handlePrint} className="bg-white px-8 py-3 rounded-2xl font-bold border border-slate-200 flex items-center gap-2 hover:bg-slate-50 transition-all shadow-sm">
+                            <Printer size={20} /> YAZDIR
+                        </button>
                         <button onClick={handleDownloadPDF} className="bg-white px-8 py-3 rounded-2xl font-bold border border-slate-200 flex items-center gap-2 hover:bg-slate-50 transition-all shadow-sm">
-                            <Printer size={20} /> PDF AL
+                            <FileText size={20} /> PDF AL
                         </button>
                         <button onClick={handleSave} className="bg-blue-600 text-white px-10 py-3 rounded-2xl font-black flex items-center gap-2 shadow-xl hover:bg-blue-700 transition-all">
                             <Save size={20} /> SİSTEME KAYDET
@@ -210,13 +370,17 @@ function CreateProformaPage({ subdomain }: { subdomain: string }) {
                 <div className="grid grid-cols-3 gap-8">
                     <div className="col-span-2 bg-white rounded-[40px] shadow-2xl p-12 space-y-8 border border-slate-200">
                         <h1 className="text-2xl font-black text-slate-800 border-b pb-4 uppercase tracking-tighter">Proforma Editörü</h1>
-                        <div className="grid grid-cols-2 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase">Müşteri Seçimi</label>
                                 <select className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-xl font-bold outline-none focus:border-blue-500 transition-all" value={form.company_name} onChange={e => setForm({ ...form, company_name: e.target.value })}>
                                     <option value="">Seçiniz...</option>
                                     {customers.map(c => <option key={c.company_name} value={c.company_name}>{c.company_name}</option>)}
                                 </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase">Hazırlayan Kişi</label>
+                                <input className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-xl font-bold outline-none focus:border-emerald-500 transition-all" placeholder="Örn: Ali Mamak" value={form.prepared_by} onChange={e => setForm({ ...form, prepared_by: e.target.value })} />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase">Toplam Tutar ($)</label>
