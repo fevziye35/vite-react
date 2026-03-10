@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabaseClient'; // Klasör yapına göre yol bu şekilde olmalı
+import { supabase } from '../../lib/supabaseClient';
 
 export const ChatWindow = () => {
     const [messages, setMessages] = useState<any[]>([]);
