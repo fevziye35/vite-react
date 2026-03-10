@@ -520,6 +520,25 @@ app.put('/api/suppliers/:id', (req, res) => {
     res.json(updated);
 });
 
+// ==================== TIMELINE EVENTS ====================
+app.get('/api/timeline_events/:deal_id', (req, res) => {
+    const events = db.prepare('SELECT * FROM timeline_events WHERE deal_id = ? ORDER BY created_at DESC').all();
+    res.json(events);
+});
+
+app.post('/api/timeline_events', (req, res) => {
+    const id = generateId();
+    const now = getNow();
+    const { deal_id, type, title, user, content, assignee, due_date, was_sent_as_message, icon } = req.body;
+
+    db.prepare(`
+        INSERT INTO timeline_events (id, deal_id, type, title, user, content, assignee, due_date, was_sent_as_message, icon, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, deal_id, type, title, user, content, assignee, due_date, was_sent_as_message ? 1 : 0, icon, now);
+
+    res.json({ id, ...req.body, created_at: now });
+});
+
 // ==================== START SERVER ====================
 app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);

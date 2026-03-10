@@ -1,4 +1,5 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState, useEffect } from 'react';
+import { timelineService } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import {
     X, ChevronDown, ChevronLeft, ChevronRight,
@@ -110,14 +111,27 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, onClose, onSave }
         return date.getDate() === 6 && date.getMonth() === 2 && date.getFullYear() === 2026;
     };
 
-    const [timelineEvents, setTimelineEvents] = useState<any[]>([
-        { id: 6, title: 'Aşama değiştirildi', time: '14:27', before: 'Uzberinde çalışılıyor', after: 'Nihai fatura', icon: <Edit3 size={14} /> },
-        { id: 5, title: 'Aşama değiştirildi', time: '14:23', before: 'Fatura', after: 'Üzerinde çalışılıyor', icon: <Edit3 size={14} /> },
-        { id: 4, title: 'Aşama değiştirildi', time: '14:23', before: 'Sayfa oluştur', after: 'Fatura', icon: <Edit3 size={14} /> },
-        { id: 3, title: 'Aşama değiştirildi', time: '14:23', before: 'Ad', after: 'Sayfa oluştur', icon: <Edit3 size={14} /> },
-        { id: 2, title: 'Aşama değiştirildi', time: '14:23', before: 'Geliştiriliyor', after: 'Ad', icon: <Edit3 size={14} /> },
-        { id: 1, title: 'Anlaşma oluşturuldu', time: '13:27', content: '22', icon: <Info size={14} /> },
-    ]);
+    const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (!deal?.id) return;
+        const fetchEvents = async () => {
+            try {
+                const events = await timelineService.getByDealId(deal.id);
+                setTimelineEvents(events.map((e: any) => {
+                    let iconNode = <Info size={14} />;
+                    if (e.type === 'message') iconNode = <MessageSquare size={14} />;
+                    else if (e.type === 'task') iconNode = <List size={14} />;
+                    return { ...e, icon: iconNode };
+                }));
+            } catch (error) {
+                console.error("Failed to fetch timeline events", error);
+            }
+        };
+        fetchEvents();
+        const interval = setInterval(fetchEvents, 3000); // Poll every 3 seconds for live updates
+        return () => clearInterval(interval);
+    }, [deal]);
 
     const [editingSections, setEditingSections] = useState<Record<string, boolean>>({});
     const [editData, setEditData] = useState({ ...deal });
@@ -955,7 +969,9 @@ group
                                                                 content: messageInput,
                                                                 icon: <MessageSquare size={14} />
                                                             };
-                                                            setTimelineEvents(prev => [newEvent, ...prev]);
+                                                            timelineService.create({ ...newEvent, dealId: deal.id || 'new-deal' })
+                                                                .then(saved => setTimelineEvents(prev => [{ ...saved, icon: newEvent.icon }, ...prev]))
+                                                                .catch(err => console.error("Message send failed", err));
                                                             setMessageInput('');
                                                             setActiveBarTab('Etkinlik');
                                                         }
@@ -1206,26 +1222,31 @@ group
                                                                                 dueDate: selectedDueDate ? `${selectedDueDate.getDate()} ${monthNames[selectedDueDate.getMonth()]} ${selectedDueDate.getFullYear()}` : null,
                                                                                 wasSentAsMessage: sendTaskAsMessage
                                                                             };
-                                                                            setTimelineEvents(prev => {
-                                                                                const updated = [newEvent, ...prev];
-                                                                                if (sendTaskAsMessage) {
-                                                                                    const msgEvent = {
-                                                                                        id: Date.now() + 1,
-                                                                                        type: 'message',
-                                                                                        title: 'Mesaj gönderildi',
-                                                                                        user: 'User',
-                                                                                        time: 'Az önce',
-                                                                                        content: `Görev Atandı: ${taskInput} (Atanan: ${selectedAssignees.join(', ')})`,
-                                                                                        icon: <MessageSquare size={14} />
-                                                                                    };
-                                                                                    return [msgEvent, ...updated];
+                                                                            const createEvents = async () => {
+                                                                                try {
+                                                                                    const savedTask = await timelineService.create({ ...newEvent, dealId: deal.id || 'new-deal' });
+                                                                                    let eventsToAdd = [{ ...savedTask, icon: <List size={14} /> }];
+                                                                                    if (sendTaskAsMessage) {
+                                                                                        const msgEvent = {
+                                                                                            type: 'message',
+                                                                                            title: 'Mesaj gönderildi',
+                                                                                            user: 'User',
+                                                                                            time: 'Az önce',
+                                                                                            content: `Görev Atandı: ${taskInput} (Atanan: ${selectedAssignees.join(', ')})`,
+                                                                                            icon: <MessageSquare size={14} />
+                                                                                        };
+                                                                                        const savedMsg = await timelineService.create({ ...msgEvent, dealId: deal.id || 'new-deal' });
+                                                                                        eventsToAdd.unshift({ ...savedMsg, icon: msgEvent.icon });
+                                                                                    }
+                                                                                    setTimelineEvents(prev => [...eventsToAdd, ...prev]);
+                                                                                } catch (e) {
+                                                                                    console.error("Task submission failed", e);
                                                                                 }
-                                                                                return updated;
-                                                                            });
+                                                                            };
+                                                                            createEvents();
                                                                             setTaskInput('');
                                                                             setSelectedDueDate(null);
                                                                             setShowTaskActionDropdown(false);
-                                                                            setActiveBarTab('Etkinlik');
                                                                         }
                                                                     }}
                                                                     className="w-full text-left px-4 py-2.5 text-[13px] font-bold text-slate-700 hover:bg-slate-50 border-b border-slate-50 transition-colors"
@@ -1246,26 +1267,31 @@ group
                                                                                 dueDate: selectedDueDate ? `${selectedDueDate.getDate()} ${monthNames[selectedDueDate.getMonth()]} ${selectedDueDate.getFullYear()}` : null,
                                                                                 wasSentAsMessage: sendTaskAsMessage
                                                                             };
-                                                                            setTimelineEvents(prev => {
-                                                                                const updated = [newEvent, ...prev];
-                                                                                if (sendTaskAsMessage) {
-                                                                                    const msgEvent = {
-                                                                                        id: Date.now() + 1,
-                                                                                        type: 'message',
-                                                                                        title: 'Mesaj gönderildi',
-                                                                                        user: 'User',
-                                                                                        time: 'Az önce',
-                                                                                        content: `Görev Atandı: ${taskInput} (Atanan: ${selectedAssignees.join(', ')})`,
-                                                                                        icon: <MessageSquare size={14} />
-                                                                                    };
-                                                                                    return [msgEvent, ...updated];
+                                                                            const createEventsCal = async () => {
+                                                                                try {
+                                                                                    const savedTask = await timelineService.create({ ...newEvent, dealId: deal.id || 'new-deal' });
+                                                                                    let eventsToAdd = [{ ...savedTask, icon: <List size={14} /> }];
+                                                                                    if (sendTaskAsMessage) {
+                                                                                        const msgEvent = {
+                                                                                            type: 'message',
+                                                                                            title: 'Mesaj gönderildi',
+                                                                                            user: 'User',
+                                                                                            time: 'Az önce',
+                                                                                            content: `Görev Atandı: ${taskInput} (Atanan: ${selectedAssignees.join(', ')})`,
+                                                                                            icon: <MessageSquare size={14} />
+                                                                                        };
+                                                                                        const savedMsg = await timelineService.create({ ...msgEvent, dealId: deal.id || 'new-deal' });
+                                                                                        eventsToAdd.unshift({ ...savedMsg, icon: msgEvent.icon });
+                                                                                    }
+                                                                                    setTimelineEvents(prev => [...eventsToAdd, ...prev]);
+                                                                                } catch (e) {
+                                                                                    console.error("Task submission failed", e);
                                                                                 }
-                                                                                return updated;
-                                                                            });
+                                                                            };
+                                                                            createEventsCal();
                                                                             setTaskInput('');
                                                                             setSelectedDueDate(null);
                                                                             setShowTaskActionDropdown(false);
-                                                                            setActiveBarTab('Etkinlik');
                                                                         }
                                                                     }}
                                                                     className="w-full text-left px-4 py-2.5 text-[13px] font-bold text-slate-700 hover:bg-slate-50 transition-colors"
@@ -1522,7 +1548,9 @@ group
                                                         content: chatInput,
                                                         icon: <MessageSquare size={14} />
                                                     };
-                                                    setTimelineEvents(prev => [newEvent, ...prev]);
+                                                    timelineService.create({ ...newEvent, dealId: deal.id || 'new-deal' })
+                                                        .then(saved => setTimelineEvents(prev => [{ ...saved, icon: newEvent.icon }, ...prev]))
+                                                        .catch(e => console.error("Chat message failed", e));
                                                     setChatInput('');
                                                 }
                                             }}

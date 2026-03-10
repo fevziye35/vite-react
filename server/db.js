@@ -240,6 +240,22 @@ db.exec(`
         phone TEXT,
         products TEXT DEFAULT '[]'
     );
+
+    -- TIMELINE EVENTS
+    CREATE TABLE IF NOT EXISTS timeline_events (
+        id TEXT PRIMARY KEY,
+        deal_id TEXT NOT NULL,
+        type TEXT NOT NULL,
+        title TEXT,
+        user TEXT,
+        content TEXT,
+        assignee TEXT,
+        due_date TEXT,
+        was_sent_as_message INTEGER DEFAULT 0,
+        icon TEXT,
+        created_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY(deal_id) REFERENCES deals(id)
+    );
 `);
 
 // Seed with demo user if no users exist

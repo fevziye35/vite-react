@@ -600,3 +600,37 @@ export const taskService = {
         return true;
     }
 };
+
+export const timelineService = {
+    getByDealId: async (dealId: string) => {
+        const { data } = await api.get(`/api/timeline_events/${dealId}`);
+        return data.map((e: any) => ({
+            ...e,
+            dealId: e.deal_id,
+            wasSentAsMessage: Boolean(e.was_sent_as_message),
+            dueDate: e.due_date,
+            createdAt: e.created_at,
+            time: e.created_at ? new Date(e.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : 'Az önce'
+        }));
+    },
+    create: async (event: any) => {
+        const { data } = await api.post('/api/timeline_events', {
+            deal_id: event.dealId,
+            type: event.type,
+            title: event.title,
+            user: event.user,
+            content: event.content,
+            assignee: event.assignee,
+            due_date: event.dueDate,
+            was_sent_as_message: event.wasSentAsMessage,
+            icon: event.icon ? 'custom' : null
+        });
+        return {
+            ...data,
+            dealId: data.deal_id,
+            wasSentAsMessage: Boolean(data.was_sent_as_message),
+            dueDate: data.due_date,
+            createdAt: data.created_at
+        };
+    }
+};
