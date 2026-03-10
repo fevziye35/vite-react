@@ -1,4 +1,4 @@
-import { ChatWindow } from './components/ChatWindow';
+import { ChatWindow } from './components/chat/ChatWindow';
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Users, FileText, Globe, Building2, Save, ArrowLeft, Printer, LayoutDashboard, LogOut, Trash2, Edit, X, MessageSquare } from 'lucide-react';
