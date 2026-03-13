@@ -8,9 +8,10 @@ interface ModalProps {
     title: string;
     children: React.ReactNode;
     maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+    className?: string;
 }
 
-export function Modal({ isOpen, onClose, title, children, maxWidth = 'md' }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, maxWidth = 'md', className }: ModalProps) {
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === 'Escape') onClose();
@@ -42,7 +43,8 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'md' }: Mod
             <div
                 className={cn(
                     "bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl w-full flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200 border border-white/50",
-                    sizeClasses[maxWidth]
+                    sizeClasses[maxWidth],
+                    className
                 )}
             >
                 <div className="flex items-center justify-between p-6 border-b border-gray-100">

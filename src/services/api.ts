@@ -262,7 +262,7 @@ export const logisticsService = {
             transit_time: logistics.transitTime,
             free_time: logistics.freeTime,
             description: logistics.description,
-            custom_fields: logistics.customFields || {}
+            custom_fields: logistics.custom_fields || {}
         });
         return mapLogistics(data);
     },
@@ -340,6 +340,8 @@ export const dealService = {
         return data.map((d: any) => ({
             ...d,
             targetProducts: d.target_products,
+            customerName: d.customer_name,
+            customer: d.customer_name, // Map to existing 'customer' field for UI compatibility
             items: d.items || [],
             offerId: d.offer_id
         }));
@@ -348,6 +350,7 @@ export const dealService = {
         const { data } = await api.post('/api/deals', {
             title: deal.title,
             customer_id: deal.customerId,
+            customer_name: deal.customer || deal.customerName,
             target_products: deal.targetProducts,
             target_volume: deal.targetVolume,
             target_country: deal.targetCountry,
@@ -364,12 +367,26 @@ export const dealService = {
     },
     update: async (id: string, updates: any) => {
         const { data } = await api.put(`/api/deals/${id}`, {
+            title: updates.title,
+            customer_id: updates.customerId,
+            customer_name: updates.customer || updates.customerName,
+            target_products: updates.targetProducts,
+            target_volume: updates.targetVolume,
+            target_country: updates.targetCountry,
+            expected_closing_date: updates.expectedClosingDate,
             stage: updates.stage,
             probability: updates.probability,
             expected_revenue: updates.expectedRevenue,
-            notes: updates.notes
+            assigned_to: updates.assignedTo,
+            notes: updates.notes,
+            offer_id: updates.offerId,
+            items: updates.items
         });
         return data;
+    },
+    delete: async (id: string) => {
+        await api.delete(`/api/deals/${id}`);
+        return true;
     }
 };
 
@@ -426,25 +443,21 @@ const mapProforma = (p: any): any => ({
     swiftCode: p.swift_code,
     iban: p.iban,
     status: p.status,
+    documentType: p.document_type,
     createdAt: p.created_at
 });
 
 export const proformaService = {
-    getAll: async () => {
-        const { data } = await api.get('/api/proformas');
-        return data ? data.map(mapProforma) : [];
+    getAll: async (type?: string) => {
+        const { data } = await api.get('/api/proformas', { params: { type } });
+        return data.map(mapProforma);
     },
     create: async (proforma: any) => {
         const { data } = await api.post('/api/proformas', {
-            proforma_number: proforma.number,
-            customer_id: proforma.customerId,
-            offer_id: proforma.offerId,
-            total_price: proforma.amount,
-            status: proforma.status,
-            date: proforma.issueDate,
-            items: proforma.items
+            ...proforma,
+            document_type: proforma.documentType
         });
-        return data;
+        return mapProforma(data);
     },
     convertFromOffer: async (offer: any) => {
         const proforma = {
@@ -473,7 +486,7 @@ export const shipmentService = {
             proformaId: s.proforma_id,
             customerId: s.customer_id,
             bookingReference: s.booking_reference,
-            vesselName: s.vessel_name,
+            vessel_name: s.vessel_name,
             containerCount: s.container_count,
             containerType: s.container_type,
             forwarderName: s.forwarder_name,
@@ -556,7 +569,11 @@ export const taskService = {
             dueDate: t.due_date,
             createdAt: t.created_at,
             assignedTo: t.assigned_to,
-            link: t.link
+            link: t.link,
+            preparedBy: t.prepared_by,
+            relatedPersons: t.related_persons,
+            reason: t.reason,
+            dealId: t.deal_id
         }));
     },
     create: async (task: any) => {
@@ -567,14 +584,22 @@ export const taskService = {
             priority: task.priority,
             assigned_to: task.assignedTo,
             status: task.status || 'pending',
-            link: task.link
+            link: task.link,
+            prepared_by: task.preparedBy,
+            related_persons: task.relatedPersons,
+            reason: task.reason,
+            deal_id: task.dealId,
+            category: task.category || 'activity'
         });
         return {
             ...data,
             dueDate: data.due_date,
             createdAt: data.created_at,
             assignedTo: data.assigned_to,
-            link: data.link
+            link: data.link,
+            preparedBy: data.prepared_by,
+            relatedPersons: data.related_persons,
+            reason: data.reason
         };
     },
     update: async (id: string, updates: any) => {
@@ -585,14 +610,22 @@ export const taskService = {
             priority: updates.priority,
             assigned_to: updates.assignedTo,
             status: updates.status,
-            link: updates.link
+            link: updates.link,
+            prepared_by: updates.preparedBy,
+            related_persons: updates.relatedPersons,
+            reason: updates.reason,
+            deal_id: updates.dealId,
+            category: updates.category || 'activity'
         });
         return {
             ...data,
             dueDate: data.due_date,
             createdAt: data.created_at,
             assignedTo: data.assigned_to,
-            link: data.link
+            link: data.link,
+            preparedBy: data.prepared_by,
+            relatedPersons: data.related_persons,
+            reason: data.reason
         };
     },
     delete: async (id: string) => {
@@ -632,5 +665,44 @@ export const timelineService = {
             dueDate: data.due_date,
             createdAt: data.created_at
         };
+    }
+};
+
+export const reservationService = {
+    getByDealId: async (dealId: string) => {
+        const { data } = await api.get(`/api/reservations/${dealId}`);
+        return data.map((r: any) => ({
+            ...r,
+            dateString: r.date_string,
+            dealId: r.deal_id
+        }));
+    },
+    create: async (reservation: { deal_id: string; date_string: string; time: string; note: string }) => {
+        const { data } = await api.post('/api/reservations', reservation);
+        return {
+            ...data,
+            dateString: data.date_string,
+            dealId: data.deal_id
+        };
+    }
+};
+
+export const notificationService = {
+    getAll: async () => {
+        const { data } = await api.get('/api/notifications');
+        return data.map((n: any) => ({
+            ...n,
+            userId: n.user_id,
+            isRead: Boolean(n.is_read),
+            createdAt: n.created_at
+        }));
+    },
+    markAsRead: async (id: string) => {
+        const { data } = await api.put(`/api/notifications/${id}/read`);
+        return data;
+    },
+    delete: async (id: string) => {
+        const { data } = await api.delete(`/api/notifications/${id}`);
+        return data;
     }
 };

@@ -1,11 +1,12 @@
-﻿import React, { useState, useEffect } from 'react';
-import { timelineService } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { timelineService, reservationService } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabaseClient';
 import {
     X, ChevronDown, ChevronLeft, ChevronRight,
     Settings, Globe, Plus, Edit3, User,
     Info, Lock, Search, LayoutGrid, Trash2, MessageSquare, List, MoreHorizontal,
-    Smile, AtSign, ArrowRight, ArrowLeft,
+    Smile, AtSign, ArrowRight, ArrowLeft, Briefcase,
     ThumbsUp, Gift, Trophy, DollarSign, Crown, Martini, Cake, Flag, Star, Heart, Beer, Flower2
 } from 'lucide-react';
 
@@ -15,21 +16,49 @@ interface DealDetailViewProps {
     onSave?: (dealData: any) => void;
 }
 
-const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, onClose, onSave }) => {
-    const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('Genel');
-    const [isEditingTitle, setIsEditingTitle] = useState(deal.isNew || false);
-    const [chatInput, setChatInput] = useState('');
-    const [mainTaskInput, setMainTaskInput] = useState('');
-    const [savedTaskInput, setSavedTaskInput] = useState('');
-    const [isTaskInputActive, setIsTaskInputActive] = useState(false);
+function useLocalStorage<T>(key: string, initialValue: T) {
+    const [storedValue, setStoredValue] = useState<T>(() => {
+        try {
+            const item = window.localStorage.getItem(key);
+            if (!item) return initialValue;
+            const parsed = JSON.parse(item);
+            if (Array.isArray(initialValue) && !Array.isArray(parsed)) {
+                return initialValue;
+            }
+            return parsed;
+        } catch (error) {
+            console.error(`Error reading localStorage key "${key}":`, error);
+            return initialValue;
+        }
+    });
 
-    // Yorum State
+    useEffect(() => {
+        try {
+            window.localStorage.setItem(key, JSON.stringify(storedValue));
+        } catch (error) {
+            console.error(error);
+        }
+    }, [key, storedValue]);
+
+    return [storedValue, setStoredValue] as const;
+}
+
+const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, onClose, onSave }) => {
+    const dealId = deal?.id || 'new';
+    const navigate = useNavigate();
+    const [activeTab, setActiveTab] = useState<'Genel' | 'Ürünler' | 'Tahminler' | 'Faturalar' | 'İlgili öğeler'>('Genel');
+    const [isEditingTitle, setIsEditingTitle] = useState(deal.isNew || false);
+    const [chatInput, setChatInput] = useLocalStorage(`chatInput_${dealId}`, '');
+    const [mainTaskInput, setMainTaskInput] = useLocalStorage(`mainTaskInput_${dealId}`, '');
+    const [savedTaskInput, setSavedTaskInput] = useLocalStorage(`savedTaskInput_${dealId}`, '');
+    const [isTaskInputActive, setIsTaskInputActive] = useState(false);
+    const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+    const [mentionSearch, setMentionSearch] = useState('');
     const [activeBarTab, setActiveBarTab] = useState('Etkinlik');
     const [selectedAssignees, setSelectedAssignees] = useState<string[]>(['Herkes']);
     const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
     const [sendTaskAsMessage, setSendTaskAsMessage] = useState(false);
-    const [taskInput, setTaskInput] = useState('');
+    const [taskInput, setTaskInput] = useLocalStorage(`taskInput_${dealId}`, '');
     const [selectedDueDate, setSelectedDueDate] = useState<Date | null>(null);
     const [showDueDateDropdown, setShowDueDateDropdown] = useState(false);
     const [showTaskActionDropdown, setShowTaskActionDropdown] = useState(false);
@@ -43,12 +72,16 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, onClose, onSave }
         { id: '4', name: 'Mehmet Yılmaz', icon: <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center text-[10px] text-white">M</div> },
         { id: '5', name: 'Canan Demir', icon: <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center text-[10px] text-white">C</div> }
     ];
-    const [commentInput, setCommentInput] = useState('');
-    const [savedCommentInput, setSavedCommentInput] = useState('');
+    const [commentInput, setCommentInput] = useLocalStorage(`commentInput_${dealId}`, '');
+    const [savedCommentInput, setSavedCommentInput] = useLocalStorage(`savedCommentInput_${dealId}`, '');
     const [isCommentActive, setIsCommentActive] = useState(false);
 
     // Mesaj State
-    const [messageInput, setMessageInput] = useState('');
+    const [messageInput, setMessageInput] = useLocalStorage(`messageInput_${dealId}`, '');
+
+    // Belge Dropdown State
+    const [showBelgeDropdown, setShowBelgeDropdown] = useState(false);
+    const [selectedBelge, setSelectedBelge] = useState('Belge');
 
     // Rezervasyon State
     const [reservationSearch, setReservationSearch] = useState('');
@@ -114,10 +147,11 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, onClose, onSave }
     const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
 
     useEffect(() => {
-        if (!deal?.id) return;
+        if (!dealId || dealId === 'new') return; // Ensure dealId is valid before fetching
+
         const fetchEvents = async () => {
             try {
-                const events = await timelineService.getByDealId(deal.id);
+                const events = await timelineService.getByDealId(dealId);
                 setTimelineEvents(events.map((e: any) => {
                     let iconNode = <Info size={14} />;
                     if (e.type === 'message') iconNode = <MessageSquare size={14} />;
@@ -128,10 +162,22 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, onClose, onSave }
                 console.error("Failed to fetch timeline events", error);
             }
         };
+
+        const fetchReservations = async () => {
+            try {
+                const data = await reservationService.getByDealId(dealId);
+                setReservations(data);
+            } catch (error) {
+                console.error('Error fetching reservations:', error);
+            }
+        };
+
         fetchEvents();
+        fetchReservations();
+
         const interval = setInterval(fetchEvents, 3000); // Poll every 3 seconds for live updates
         return () => clearInterval(interval);
-    }, [deal]);
+    }, [dealId]);
 
     const [editingSections, setEditingSections] = useState<Record<string, boolean>>({});
     const [editData, setEditData] = useState({ ...deal });
@@ -174,6 +220,154 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, onClose, onSave }
     const [selectedRole, setSelectedRole] = useState<string | null>(null);
     const [taskStatusFilter, setTaskStatusFilter] = useState<string>('Devam eden');
     const [taskSearch, setTaskSearch] = useState('');
+
+    // Products State
+    interface Product {
+        id: string;
+        name: string;
+        price: number;
+        quantity: number;
+        discount: number;
+        tax: number;
+        total: number;
+    }
+
+    interface Forecast {
+        id: string;
+        number: string;
+        stage: number; // 0-100
+        amount: number;
+        currency: string;
+        relatedTo: string;
+        completionDate: string;
+        validityDate: string;
+        responsible: string;
+        creationDate: string;
+        customerJourney: string;
+        isSaved: boolean;
+    }
+
+    interface Invoice {
+        id: string;
+        name: string;
+        number: string;
+        price: number;
+        date: string;
+        isSaved: boolean;
+    }
+
+    const [products, setProducts] = useLocalStorage<Product[]>(`products_${dealId}`, [
+        { id: '1', name: 'Örnek Ürün', price: 1000, quantity: 1, discount: 0, tax: 18, total: 1180 }
+    ]);
+
+    const [forecasts, setForecasts] = useLocalStorage<Forecast[]>(`forecasts_${dealId}`, []);
+    const [forecastSearch, setForecastSearch] = useState('');
+
+    const [invoices, setInvoices] = useLocalStorage<Invoice[]>(`invoices_${dealId}`, []);
+
+    const addProduct = () => {
+        const newProduct: Product = {
+            id: Date.now().toString(),
+            name: '',
+            price: 0,
+            quantity: 1,
+            discount: 0,
+            tax: 18, // Updated default to 18 for consistency
+            total: 0
+        };
+        setProducts([...products, newProduct]);
+    };
+
+    const handleDeleteDeal = () => {
+        if (window.confirm('Bu anlaşmayı tamamen silmek istediğinizden emin misiniz?')) {
+            const savedDeals = localStorage.getItem('deals_board_data');
+            if (savedDeals) {
+                try {
+                    const deals = JSON.parse(savedDeals);
+                    const updatedDeals = deals.filter((d: any) => d.id !== deal.id);
+                    localStorage.setItem('deals_board_data', JSON.stringify(updatedDeals));
+                    onClose();
+                    // Optional: trigger a refresh in parent if needed, but DealsPage already watches localStorage usually or would need a callback
+                    if (onSave) onSave(null); // Assuming null or a special signal can trigger parent refresh
+                } catch (e) {
+                    console.error('Failed to delete deal', e);
+                }
+            }
+        }
+    };
+
+    const updateProduct = (id: string, updates: Partial<Product>) => {
+        setProducts(prev => prev.map(p => {
+            if (p.id === id) {
+                const updated = { ...p, ...updates };
+                // Recalculate total
+                const subtotal = updated.price * updated.quantity;
+                const afterDiscount = subtotal - (subtotal * (updated.discount / 100));
+                updated.total = afterDiscount + (afterDiscount * (updated.tax / 100));
+                return updated;
+            }
+            return p;
+        }));
+    };
+
+    const deleteProduct = (id: string) => {
+        setProducts(products.filter(p => p.id !== id));
+    };
+
+    const addForecast = () => {
+        const newForecast: Forecast = {
+            id: Date.now().toString(),
+            number: '',
+            stage: 0,
+            amount: 0,
+            currency: '₺',
+            relatedTo: '',
+            completionDate: '',
+            validityDate: '',
+            responsible: 'Fevziye',
+            creationDate: new Date().toLocaleDateString('tr-TR'),
+            customerJourney: '',
+            isSaved: false
+        };
+        setForecasts([newForecast, ...forecasts]);
+    };
+
+    const updateForecast = (id: string, updates: Partial<Forecast>) => {
+        setForecasts(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
+    };
+
+    const deleteForecast = (id: string) => {
+        setForecasts(forecasts.filter(f => f.id !== id));
+    };
+
+    const addInvoice = () => {
+        const newInvoice: Invoice = {
+            id: Date.now().toString(),
+            name: '',
+            number: '',
+            price: 0,
+            date: new Date().toLocaleDateString('tr-TR'),
+            isSaved: false
+        };
+        setInvoices([newInvoice, ...invoices]);
+    };
+
+    const updateInvoice = (id: string, updates: Partial<Invoice>) => {
+        setInvoices(prev => prev.map(inv => inv.id === id ? { ...inv, ...updates } : inv));
+    };
+
+    const deleteInvoice = (id: string) => {
+        setInvoices(invoices.filter(inv => inv.id !== id));
+    };
+
+    const grandTotal = products.reduce((sum, p) => sum + p.total, 0);
+
+    // Sync grandTotal with editData amount
+    useEffect(() => {
+        if (activeTab === 'Ürünler' && grandTotal > 0) {
+            setEditData((prev: any) => ({ ...prev, amount: grandTotal.toString() }));
+        }
+    }, [grandTotal, activeTab]);
 
 
     const availableFieldGroups = [
@@ -237,7 +431,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, onClose, onSave }
     };
 
     const handleStageUpdate = (label: string) => {
-        if (label === 'Anlaşmayı kapat') {
+        if (label === 'Anlaşmayı Kapat') {
             setShowCloseModal(true);
             return;
         }
@@ -245,7 +439,7 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, onClose, onSave }
         setShowStageDropdown(false);
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setEditData((prev: any) => ({ ...prev, [name]: value }));
     };
@@ -294,16 +488,13 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, onClose, onSave }
     );
 
     const stages = [
-        { id: 'ad', label: 'Ad', color: 'bg-indigo-400' },
-        { id: 'gelistiriliyor', label: 'Geliştiriliyor', color: 'bg-blue-400' },
-        { id: 'ad2', label: 'Ad', color: 'bg-blue-400' },
-        { id: 'sayfa-olustur', label: 'Sayfa oluşturma', color: 'bg-cyan-400' },
-        { id: 'fatura', label: 'Fatura', color: 'bg-teal-300' },
-        { id: 'uzerinde-calisiliyor', label: 'Üzerinde çalışılıyor', color: 'bg-emerald-300' },
-        { id: 'nihai-fatura', label: 'Nihai fatura', color: 'bg-amber-400' },
-        { id: 'anlasma-kazanildi', label: 'Anlaşma kazanıldı', color: 'bg-green-500' },
-        { id: 'anlasma-kaybedildi', label: 'Anlaşma kaybedildi', color: 'bg-red-400' },
-        { id: 'anlasmayi-kapat', label: 'Anlaşmayı kapat', color: 'bg-slate-400' },
+        { id: 'teklif-atildi', label: 'Müşteriye Teklif Atıldı', color: 'bg-indigo-400' },
+        { id: 'cevap-bekleniyor', label: 'Cevap Bekleniyor', color: 'bg-blue-400' },
+        { id: 'proforma-atildi', label: 'Proforma Atıldı', color: 'bg-cyan-400' },
+        { id: 'bekleniyor', label: 'Bekleniyor', color: 'bg-amber-400' },
+        { id: 'anlasma-kazanildi', label: 'Anlaşma Kazanıldı', color: 'bg-green-500' },
+        { id: 'anlasma-kaybedildi', label: 'Anlaşma Kaybedildi', color: 'bg-red-500' },
+        { id: 'anlasmayi-kapat', label: 'Anlaşmayı Kapat', color: 'bg-slate-400' },
     ];
 
     const currentStageIndex = stages.findIndex(s => s.label === (editData.stage || deal.stage));
@@ -338,9 +529,53 @@ const DealDetailView: React.FC<DealDetailViewProps> = ({ deal, onClose, onSave }
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button className="p-2 text-slate-400 hover:text-slate-600"><Settings size={18} /></button>
-                            <button className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded text-[13px] text-slate-600 hover:bg-slate-50 font-medium">
-                                Belge <ChevronDown size={14} />
+                            <div className="relative">
+                                <button 
+                                    onClick={() => setShowBelgeDropdown(!showBelgeDropdown)}
+                                    className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded text-[13px] text-slate-600 hover:bg-slate-50 font-medium bg-white"
+                                >
+                                    {selectedBelge} <ChevronDown size={14} className={`transition-transform duration-200 ${showBelgeDropdown ? 'rotate-180' : ''}`} />
+                                </button>
+                                {showBelgeDropdown && (
+                                    <>
+                                        <div className="fixed inset-0 z-[190]" onClick={() => setShowBelgeDropdown(false)} />
+                                        <div className="absolute right-0 top-full mt-2 w-[220px] bg-white border border-slate-200 shadow-xl rounded-xl py-2 z-[200] animate-in fade-in zoom-in-95 duration-100 origin-top-right">
+                                            {[
+                                                'Quote (UK)',
+                                                'Invoice (UK)',
+                                                'Packing sheet (UK)',
+                                                'Order confirmation (UK)'
+                                            ].map((item) => (
+                                                <div
+                                                    key={item}
+                                                    onClick={() => {
+                                                        setSelectedBelge(item);
+                                                        setShowBelgeDropdown(false);
+                                                    }}
+                                                    className="px-4 py-2 text-[14px] text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
+                                                >
+                                                    {item}
+                                                </div>
+                                            ))}
+                                            <div className="my-2 border-t border-slate-100" />
+                                            <div
+                                                onClick={() => {
+                                                    setSelectedBelge('Belgeler');
+                                                    setShowBelgeDropdown(false);
+                                                }}
+                                                className="px-4 py-2 text-[14px] text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors"
+                                            >
+                                                Belgeler
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                            <button 
+                                onClick={handleDeleteDeal}
+                                className="flex items-center gap-2 text-red-400 hover:text-red-300 text-[13px] font-bold transition-colors px-3 py-1.5 rounded bg-white/5 border border-white/10"
+                            >
+                                <Trash2 size={16} /> Sayfayı sil
                             </button>
                             <button onClick={onClose} className="ml-2 p-2 text-slate-400 hover:text-slate-600 transition-colors">
                                 <X size={24} />
@@ -377,10 +612,10 @@ group
 
                 <div className="bg-white px-6 border-b border-slate-200 flex items-center justify-between overflow-x-auto no-scrollbar">
                     <div className="flex gap-6">
-                        {['Genel', 'Ürünler', 'Tahminler', 'Faturalar', 'İlgili öğeler', 'Geçmiş', 'Daha fazla'].map(tab => (
+                        {['Genel', 'Ürünler', 'Tahminler', 'Faturalar', 'İlgili öğeler'].map(tab => (
                             <button
                                 key={tab}
-                                onClick={() => setActiveTab(tab)}
+                                 onClick={() => setActiveTab(tab as any)}
                                 className={`py-4 text-[13px] font-bold border-b-2 transition-all block whitespace-nowrap
                                     ${activeTab === tab ? 'border-blue-500 text-blue-500' : 'border-transparent text-slate-500 hover:text-slate-700'}
 `}
@@ -395,8 +630,11 @@ group
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 flex gap-6">
-                    {/* Left Column */}
-                    <div className="w-[420px] flex flex-col gap-4 shrink-0 font-medium">
+                    {activeTab === 'Genel' && (
+                        <React.Fragment>
+                            {/* Left Column */}
+                            {activeBarTab !== 'Rezervasyon' && (
+                                <div className="w-[420px] flex flex-col gap-4 shrink-0 font-medium">
                         {/* Section: Anlaşma Hakkında */}
                         {!deletedSections.includes('about') && (
                             <div className="bg-white rounded-lg border border-slate-200 p-6 flex flex-col gap-6 shadow-sm">
@@ -417,7 +655,7 @@ group
                                                 onClick={() => setShowStageDropdown(!showStageDropdown)}
                                                 className="text-[14px] text-white flex items-center justify-between cursor-pointer hover:bg-indigo-700 p-2 border border-indigo-500 rounded transition-colors bg-indigo-600 min-h-[34px] font-bold shadow-sm"
                                             >
-                                                {editData.stage || 'Sayfa oluşturma'}
+                                                {editData.stage || 'Müşteriye Teklif Atıldı'}
                                                 <ChevronDown size={14} className="text-white/70" />
                                             </div>
 
@@ -441,12 +679,21 @@ group
                                         <label className="block text-[12px] text-slate-400 mb-1">Tutar ve para birimi</label>
                                         {editingSections['about'] ? (
                                             <div className="flex items-center gap-2">
-                                                <input name="amount" value={editData.amount || ''} onChange={handleInputChange} className="w-full border border-slate-200 rounded px-2 py-1 text-[14px] outline-blue-500" />
-                                                <span className="text-slate-400 text-[18px]">â‚º</span>
+                                                <input name="amount" value={editData.amount || ''} onChange={handleInputChange} className="flex-1 border border-slate-200 rounded px-2 py-1 text-[14px] outline-blue-500" />
+                                                <select
+                                                    name="currency"
+                                                    value={editData.currency || '₺'}
+                                                    onChange={handleInputChange}
+                                                    className="border border-slate-200 rounded px-1 py-1 text-[13px] bg-white outline-none"
+                                                >
+                                                    <option value="₺">₺</option>
+                                                    <option value="$">$</option>
+                                                    <option value="€">€</option>
+                                                </select>
                                             </div>
                                         ) : (
                                             <div className="text-[32px] font-light text-slate-800 leading-none">
-                                                {editData.amount || '1.000'} <span className="text-[24px]">â‚º</span>
+                                                {editData.amount || '1.000'} <span className="text-[24px]">{editData.currency || '₺'}</span>
                                             </div>
                                         )}
                                     </div>
@@ -456,12 +703,22 @@ group
                                         <button className="text-blue-500 text-[12px] hover:underline">Ekle</button>
                                         <div className="pt-3 border-t border-slate-100 flex justify-between items-center">
                                             <div className="flex items-center gap-1.5 text-[12px] text-slate-500">Anlaşma toplamı <Info size={14} className="opacity-30" /></div>
-                                            <div className="text-[13px] font-bold text-slate-500">{deal.amount || '1.000'}â‚º</div>
+                                            <div className="text-[13px] font-bold text-slate-500">{deal.amount || '1.000'}{deal.currency || '₺'}</div>
                                         </div>
                                     </div>
                                     <div>
                                         <label className="block text-[12px] text-slate-400 mb-1">Bitiş tarihi</label>
-                                        <div className="text-[14px] text-slate-800 font-bold">12 Mart 2026</div>
+                                        {editingSections['about'] ? (
+                                            <input
+                                                type="text"
+                                                name="endDate"
+                                                value={editData.endDate || ''}
+                                                onChange={handleInputChange}
+                                                className="w-full border border-slate-200 rounded px-2 py-1 text-[13px] outline-blue-500"
+                                            />
+                                        ) : (
+                                            <div className="text-[14px] text-slate-800 font-bold">{editData.endDate || '12 Mart 2026'}</div>
+                                        )}
                                     </div>
                                     <div className="pt-4 border-t border-slate-100 space-y-4">
                                         <div className="text-[12px] text-slate-400 font-bold uppercase mb-4">Müşteri</div>
@@ -546,7 +803,17 @@ group
                                     </div>
                                     <div>
                                         <label className="block text-[12px] text-slate-400 mb-1">Başlama tarihi</label>
-                                        <div className="text-[14px] text-slate-800">5 Mart 2026</div>
+                                        {editingSections['more'] ? (
+                                            <input
+                                                type="text"
+                                                name="startDate"
+                                                value={editData.startDate || ''}
+                                                onChange={handleInputChange}
+                                                className="w-full border border-slate-200 rounded px-2 py-1 text-[13px] outline-blue-500"
+                                            />
+                                        ) : (
+                                            <div className="text-[14px] text-slate-800">{editData.startDate || '5 Mart 2026'}</div>
+                                        )}
                                     </div>
                                     {/* Custom Fields: DAHA FAZLA */}
                                     {customFields['more']?.map((field) => (
@@ -794,22 +1061,27 @@ group
                             </div>
                         </div>
                     </div>
+                    )}
 
                     {/* Right Column: Activity & Timeline */}
                     <div className="flex-1 flex flex-col gap-6">
                         {/* Combined Timeline Section */}
                         <div className="flex flex-col gap-0 relative pt-2">
                             {/* Vertical Timeline Line */}
-                            <div className="absolute left-6 top-8 bottom-0 w-[1px] bg-slate-200" />
+                            {activeBarTab !== 'Rezervasyon' && (
+                                <div className="absolute left-6 top-8 bottom-0 w-[1px] bg-slate-200" />
+                            )}
 
                             {/* Interactive Bar */}
                             <div className="relative mb-6">
                                 {/* Timeline Icon */}
-                                <div className="absolute left-2 top-6 w-8 h-8 rounded-full bg-[#3ab0ff] flex items-center justify-center text-white border-4 border-[#eff2f4] z-10">
-                                    <MessageSquare size={16} fill="currentColor" className="text-white" />
-                                </div>
+                                {activeBarTab !== 'Rezervasyon' && (
+                                    <div className="absolute left-2 top-6 w-8 h-8 rounded-full bg-[#3ab0ff] flex items-center justify-center text-white border-4 border-[#eff2f4] z-10">
+                                        <MessageSquare size={16} fill="currentColor" className="text-white" />
+                                    </div>
+                                )}
 
-                                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-visible font-bold ml-16">
+                                <div className={`bg-white rounded-xl border border-slate-200 shadow-sm overflow-visible font-bold ${activeBarTab === 'Rezervasyon' ? 'ml-0' : 'ml-16'}`}>
                                     <div className="flex border-b border-slate-100 px-4">
                                         {['Etkinlik', 'Yorum', 'Mesaj', 'Rezervasyon', 'Görev'].map(item => (
                                             <button
@@ -932,16 +1204,60 @@ group
                                             <div className="border border-slate-200 rounded-lg overflow-hidden flex flex-col focus-within:border-blue-400 transition-colors">
                                                 <textarea
                                                     value={messageInput}
-                                                    onChange={(e) => setMessageInput(e.target.value)}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        setMessageInput(val);
+                                                        
+                                                        // @ detection
+                                                        const lastWord = val.split(' ').pop() || '';
+                                                        
+                                                        if (lastWord.startsWith('@')) {
+                                                            setMentionSearch(lastWord.slice(1));
+                                                            setShowMentionDropdown(true);
+                                                        } else {
+                                                            setShowMentionDropdown(false);
+                                                        }
+                                                    }}
                                                     placeholder="Mesaj metni girin"
                                                     className="w-full p-3 min-h-[100px] text-[14px] text-slate-700 placeholder:text-slate-400 outline-none resize-none"
                                                 />
+                                                {showMentionDropdown && (
+                                                    <div className="absolute left-4 bottom-[60px] w-48 bg-white border border-slate-200 shadow-xl rounded-lg z-[210] overflow-hidden">
+                                                        <div className="max-h-[200px] overflow-y-auto no-scrollbar">
+                                                            {teamMembers.filter(m => m.name.toLowerCase().includes(mentionSearch.toLowerCase())).map(member => (
+                                                                <div 
+                                                                    key={member.id}
+                                                                    onClick={() => {
+                                                                        const words = messageInput.split(' ');
+                                                                        words.pop();
+                                                                        setMessageInput([...words, `@${member.name} `].join(' '));
+                                                                        setShowMentionDropdown(false);
+                                                                    }}
+                                                                    className="p-2 hover:bg-slate-50 cursor-pointer flex items-center gap-2 border-b border-slate-50 last:border-0"
+                                                                >
+                                                                    {member.icon}
+                                                                    <span className="text-[13px] font-bold text-slate-700">{member.name}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
                                                 <div className="flex items-center justify-between px-3 pb-3">
                                                     <div className="flex items-center gap-4">
-                                                        <button className="flex items-center gap-1.5 text-[14px] font-bold text-slate-600 hover:text-slate-800">
+                                                        <button 
+                                                            onClick={() => setMessageInput(prev => prev + (prev.endsWith(' ') ? '' : ' ') + (editData.title || '(İsimsiz)') + ' ')}
+                                                            className="flex items-center gap-1.5 text-[14px] font-bold text-slate-600 hover:text-slate-800"
+                                                        >
                                                             <Plus size={16} className="text-slate-400" /> Ekle
                                                         </button>
-                                                        <button className="w-5 h-5 rounded-full border border-purple-500 flex items-center justify-center text-purple-600 hover:bg-purple-50">
+                                                        <button 
+                                                            onClick={() => {
+                                                                setMessageInput(prev => prev + (prev.endsWith(' ') ? '' : ' ') + '@');
+                                                                setShowMentionDropdown(true);
+                                                                setMentionSearch('');
+                                                            }}
+                                                            className="w-5 h-5 rounded-full border border-purple-500 flex items-center justify-center text-purple-600 hover:bg-purple-50"
+                                                        >
                                                             <AtSign size={12} />
                                                         </button>
                                                     </div>
@@ -958,20 +1274,31 @@ group
 
                                             <div className="flex items-center gap-4 px-1">
                                                 <button
-                                                    onClick={() => {
+                                                    onClick={async () => {
                                                         if (messageInput.trim()) {
+                                                            const content = messageInput;
+                                                            // Send to Supabase Ekip Sohbeti
+                                                            try {
+                                                                await supabase.from('messages').insert([
+                                                                    { content: content, sender_name: 'Fevziye' }
+                                                                ]);
+                                                            } catch (e) {
+                                                                console.error("Supabase send failed", e);
+                                                            }
+
                                                             const newEvent = {
                                                                 id: Date.now(),
                                                                 type: 'message',
                                                                 title: 'Mesaj gönderildi',
                                                                 user: 'User',
                                                                 time: 'Az önce',
-                                                                content: messageInput,
+                                                                content: content,
                                                                 icon: <MessageSquare size={14} />
                                                             };
                                                             timelineService.create({ ...newEvent, dealId: deal.id || 'new-deal' })
-                                                                .then(saved => setTimelineEvents(prev => [{ ...saved, icon: newEvent.icon }, ...prev]))
+                                                                .then(saved => setTimelineEvents((prev: any) => [{ ...saved, icon: newEvent.icon }, ...prev]))
                                                                 .catch(err => console.error("Message send failed", err));
+                                                            
                                                             setMessageInput('');
                                                             setActiveBarTab('Etkinlik');
                                                         }
@@ -1316,7 +1643,7 @@ group
                                     )}
 
                                     {activeBarTab === 'Rezervasyon' && (
-                                        <div className="bg-white relative flex flex-col h-[600px] border-t border-slate-100">
+                                        <div className="bg-white relative flex flex-col min-h-[800px] border-t border-slate-100">
                                             {/* Top Header Controls */}
                                             <div className="flex items-center justify-between p-4 border-b border-slate-100">
                                                 <div className="flex items-center gap-6">
@@ -1329,7 +1656,7 @@ group
                                                     </div>
                                                     <div className="flex flex-col text-[11px] text-slate-400 leading-tight">
                                                         <span>+ <span className="font-bold">0</span> müşteri</span>
-                                                        <span>+ <span className="font-bold">0</span>â‚º</span>
+                                                        <span>+ <span className="font-bold">0</span> ₺</span>
                                                     </div>
                                                     <div className="relative">
                                                         <input
@@ -1343,15 +1670,7 @@ group
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center gap-6">
-                                                    <div className="flex items-center gap-4 text-[12px] font-medium text-slate-500">
-                                                        <span className="flex items-center gap-1.5"><span className="font-bold text-slate-700">0</span> Onaylanmamış</span>
-                                                        <span className="flex items-center gap-1.5"><span className="font-bold text-slate-700">0</span> Geciken</span>
-                                                    </div>
-                                                    <button className="text-[12px] font-medium text-slate-500 border border-slate-200 px-3 py-1.5 rounded hover:bg-slate-50 transition-colors">
-                                                        Rezervasyon uzantıları
-                                                    </button>
-                                                </div>
+
                                             </div>
 
                                             {/* Main Content Area */}
@@ -1364,7 +1683,7 @@ group
                                                         const isEditingThisSlot = bookingInput?.time === time;
 
                                                         return (
-                                                            <div key={time} className="min-h-[64px] border-b border-slate-50 relative flex group cursor-pointer hover:bg-slate-50 transition-colors"
+                                                            <div key={time} className="min-h-[90px] border-b border-slate-50 relative flex group cursor-pointer hover:bg-slate-50 transition-colors"
                                                                 onClick={() => {
                                                                     if (!isEditingThisSlot && slotReservations.length === 0) {
                                                                         setBookingInput({ time, note: '' });
@@ -1372,14 +1691,14 @@ group
                                                                 }}
                                                             >
                                                                 {/* Time Label & Notes Column */}
-                                                                <div className="w-[120px] shrink-0 border-r border-slate-100 group-hover:border-blue-200 transition-colors flex flex-col pt-2 px-2 relative min-h-[64px]">
+                                                                <div className="w-[120px] shrink-0 border-r border-slate-100 group-hover:border-blue-200 transition-colors flex flex-col pt-2 px-2 relative min-h-[90px]">
                                                                     <div className="text-[11px] text-slate-400 font-medium text-right pr-1 mb-1">
                                                                         {time}
                                                                     </div>
 
                                                                     {/* Render saved notes directly under the time */}
                                                                     {slotReservations.map(res => (
-                                                                        <div key={res.id} className="mt-1 bg-blue-50 border border-blue-200 rounded p-1.5 text-[10px] text-blue-700 font-medium shadow-sm flex flex-col group/res relative z-10 word-break">
+                                                                        <div key={res.id} className="mt-1 bg-blue-50 border border-blue-200 rounded p-1.5 text-[10px] text-black font-medium shadow-sm flex flex-col group/res relative z-10 word-break">
                                                                             <span className="leading-snug">{res.note}</span>
                                                                             <button
                                                                                 className="absolute -top-1.5 -right-1.5 text-slate-400 bg-white border border-slate-200 rounded-full p-0.5 hover:text-red-500 opacity-0 group-hover/res:opacity-100 transition-opacity"
@@ -1399,13 +1718,22 @@ group
                                                                             <textarea
                                                                                 autoFocus
                                                                                 placeholder="Not..."
-                                                                                className="w-full text-[11px] outline-none placeholder:text-slate-400 resize-none h-12 bg-slate-50 rounded p-1 border border-slate-100"
+                                                                                className="w-full text-[11px] text-black outline-none placeholder:text-slate-400 resize-none h-12 bg-slate-50 rounded p-1 border border-slate-100"
                                                                                 value={bookingInput.note}
                                                                                 onChange={e => setBookingInput({ ...bookingInput, note: e.target.value })}
                                                                                 onKeyDown={(e) => {
                                                                                     if (e.key === 'Enter' && !e.shiftKey && bookingInput.note.trim()) {
                                                                                         e.preventDefault();
-                                                                                        setReservations([...reservations, { id: Date.now().toString(), dateString: dateStr, time, note: bookingInput.note.trim() }]);
+                                                                                        const newNote = bookingInput.note.trim();
+                                                                                        reservationService.create({
+                                                                                            deal_id: dealId,
+                                                                                            date_string: dateStr,
+                                                                                            time,
+                                                                                            note: newNote
+                                                                                        }).then(res => {
+                                                                                            setReservations(prev => [...prev, res]);
+                                                                                            alert("Rezervasyon kaydedildi ve e-posta bildirimi gönderildi.");
+                                                                                        });
                                                                                         setBookingInput(null);
                                                                                     } else if (e.key === 'Escape') {
                                                                                         setBookingInput(null);
@@ -1418,7 +1746,16 @@ group
                                                                                     className="text-[9px] bg-blue-500 text-white px-1.5 py-0.5 rounded hover:bg-blue-600 font-bold"
                                                                                     onClick={() => {
                                                                                         if (bookingInput.note.trim()) {
-                                                                                            setReservations([...reservations, { id: Date.now().toString(), dateString: dateStr, time, note: bookingInput.note.trim() }]);
+                                                                                            const newNote = bookingInput.note.trim();
+                                                                                            reservationService.create({
+                                                                                                deal_id: dealId,
+                                                                                                date_string: dateStr,
+                                                                                                time,
+                                                                                                note: newNote
+                                                                                            }).then(res => {
+                                                                                                setReservations(prev => [...prev, res]);
+                                                                                                alert("Rezervasyon kaydedildi ve e-posta bildirimi gönderildi.");
+                                                                                            });
                                                                                             setBookingInput(null);
                                                                                         }
                                                                                     }}
@@ -1449,18 +1786,18 @@ group
                                                 </div>
 
                                                 {/* Right Panel - Calendar & Waitlist */}
-                                                <div className="w-[30%] shrink-0 min-w-[280px] bg-slate-50/50 flex flex-col p-4 gap-4 overflow-y-auto">
+                                                <div className="w-[400px] shrink-0 bg-slate-50/50 flex flex-col p-6 gap-6 overflow-y-auto border-l border-slate-200">
                                                     {/* Mini Calendar Component */}
-                                                    <div className="bg-white border text-center border-slate-200 rounded-xl p-4 shadow-sm w-full mx-auto self-start">
-                                                        <div className="flex items-center justify-between mb-4">
-                                                            <button className="text-slate-400 hover:text-slate-600" onClick={handlePrevMonth}><ArrowLeft size={14} /></button>
-                                                            <span className="text-[14px] font-bold text-slate-700">{monthNames[currentCalendarDate.getMonth()]} {currentCalendarDate.getFullYear()}</span>
-                                                            <button className="text-slate-400 hover:text-slate-600" onClick={handleNextMonth}><ArrowRight size={14} /></button>
+                                                    <div className="bg-white border text-center border-slate-200 rounded-xl p-6 shadow-sm w-full mx-auto self-start">
+                                                        <div className="flex items-center justify-between mb-6">
+                                                            <button className="text-slate-400 hover:text-slate-600 p-1" onClick={handlePrevMonth}><ArrowLeft size={18} /></button>
+                                                            <span className="text-[18px] font-bold text-slate-700">{monthNames[currentCalendarDate.getMonth()]} {currentCalendarDate.getFullYear()}</span>
+                                                            <button className="text-slate-400 hover:text-slate-600 p-1" onClick={handleNextMonth}><ArrowRight size={18} /></button>
                                                         </div>
-                                                        <div className="grid grid-cols-7 gap-1 text-[11px] font-medium text-slate-400 mb-2">
+                                                        <div className="grid grid-cols-7 gap-2 text-[13px] font-bold text-slate-400 mb-4">
                                                             <div>Pt</div><div>Sa</div><div>Ça</div><div>Pe</div><div>Cu</div><div>Ct</div><div className="text-red-400">Pz</div>
                                                         </div>
-                                                        <div className="grid grid-cols-7 gap-y-2 gap-x-1 text-[13px] text-slate-600 font-medium">
+                                                        <div className="grid grid-cols-7 gap-y-4 gap-x-2 text-[16px] text-slate-600 font-bold">
                                                             {calendarGrid.map((item, idx) => {
                                                                 const isSelected = isDateSelected(item.date);
                                                                 const dayOfWeek = item.date.getDay(); // 0 is Sunday
@@ -1482,7 +1819,7 @@ group
                                                                                 setCurrentCalendarDate(new Date(item.date.getFullYear(), item.date.getMonth(), 1));
                                                                             }
                                                                         }}
-                                                                        className={`flex items-center justify-center mx-auto cursor-pointer w-6 h-6 rounded-full transition-colors ${isSelected ? 'bg-blue-500 text-white shadow-sm font-bold' : `hover:bg-slate-100 ${textClass}`}`}
+                                                                        className={`flex items-center justify-center mx-auto cursor-pointer w-10 h-10 rounded-full transition-colors ${isSelected ? 'bg-blue-500 text-white shadow-md font-extrabold' : `hover:bg-slate-100 ${textClass}`}`}
                                                                     >
                                                                         {item.day}
                                                                     </div>
@@ -1517,6 +1854,7 @@ group
                                         </div>
                                     )}
                                 </div>
+                            </div>
 
                                 {/* Sohbette Tartış Input */}
                                 <div className="relative mb-12">
@@ -1604,7 +1942,7 @@ group
                                                 {event.before ? (
                                                     <div className="flex items-center gap-2 text-[12px] px-3 py-2 bg-slate-50 rounded border border-slate-100 w-fit">
                                                         <span className="text-slate-500">{event.before}</span>
-                                                        <span className="text-slate-300 text-[16px]">â†’</span>
+                                                        <span className="text-slate-300 text-[16px]">→</span>
                                                         <span className="text-slate-500 font-bold">{event.after}</span>
                                                     </div>
                                                 ) : (
@@ -1616,7 +1954,699 @@ group
                                 </div>
                             </div>
                         </div>
+                    </React.Fragment>
+                )}
+
+                    {activeTab === 'Ürünler' && (
+                        <div className="flex-1 flex flex-col gap-6 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-20">
+                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+                            <h3 className="text-[16px] font-bold text-slate-700">Ürün Listesi</h3>
+                            <button
+                                onClick={addProduct}
+                                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-[4px] text-[13px] font-bold flex items-center gap-2 transition-all shadow-sm"
+                            >
+                                <Plus size={16} /> Ürün ekle
+                            </button>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/20">
+                                        <th className="px-6 py-3">Ürün Adı</th>
+                                        <th className="px-4 py-3 text-right">Fiyat</th>
+                                        <th className="px-4 py-3 text-right">Adet</th>
+                                        <th className="px-4 py-3 text-right">İndirim (%)</th>
+                                        <th className="px-4 py-3 text-right">KDV (%)</th>
+                                        <th className="px-4 py-3 text-right">Toplam</th>
+                                        <th className="px-6 py-3"></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {products.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={7} className="px-6 py-12 text-center text-slate-400 italic">
+                                                Henüz ürün eklenmemiş. "Ürün ekle" butonuna basarak başlayabilirsiniz.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        products.map((product) => (
+                                            <tr key={product.id} className="group hover:bg-slate-50/50 transition-colors">
+                                                <td className="px-6 py-3">
+                                                    <input
+                                                        value={product.name}
+                                                        onChange={(e) => updateProduct(product.id, { name: e.target.value })}
+                                                        placeholder="Ürün adı..."
+                                                        className="w-full bg-transparent border-b border-transparent focus:border-blue-400 outline-none p-1 text-[13px] text-slate-700 font-medium"
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <input
+                                                        type="number"
+                                                        value={product.price || ''}
+                                                        onChange={(e) => updateProduct(product.id, { price: parseFloat(e.target.value) || 0 })}
+                                                        className="w-24 bg-transparent border-b border-transparent focus:border-blue-400 outline-none p-1 text-[13px] text-right text-slate-700"
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <input
+                                                        type="number"
+                                                        value={product.quantity || ''}
+                                                        onChange={(e) => updateProduct(product.id, { quantity: parseFloat(e.target.value) || 0 })}
+                                                        className="w-16 bg-transparent border-b border-transparent focus:border-blue-400 outline-none p-1 text-[13px] text-right text-slate-700"
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <input
+                                                        type="number"
+                                                        value={product.discount || ''}
+                                                        onChange={(e) => updateProduct(product.id, { discount: parseFloat(e.target.value) || 0 })}
+                                                        className="w-16 bg-transparent border-b border-transparent focus:border-blue-400 outline-none p-1 text-[13px] text-right text-slate-700"
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <input
+                                                        type="number"
+                                                        value={product.tax || ''}
+                                                        onChange={(e) => updateProduct(product.id, { tax: parseFloat(e.target.value) || 0 })}
+                                                        className="w-16 bg-transparent border-b border-transparent focus:border-blue-400 outline-none p-1 text-[13px] text-right text-slate-700"
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-3 text-right text-[13px] font-bold text-slate-800">
+                                                    {product.total.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                                                </td>
+                                                <td className="px-6 py-3 text-right">
+                                                    <button
+                                                        onClick={() => deleteProduct(product.id)}
+                                                        className="p-1.5 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                                <tfoot>
+                                    <tr className="bg-slate-50/20 text-[12px] text-slate-500">
+                                        <td colSpan={5} className="px-6 py-2 text-right font-medium">Ara Toplam:</td>
+                                        <td className="px-4 py-2 text-right">
+                                            {products.reduce((sum, p) => sum + (p.price * p.quantity), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                    <tr className="bg-slate-50/20 text-[12px] text-slate-500">
+                                        <td colSpan={5} className="px-6 py-2 text-right font-medium">Toplam İndirim:</td>
+                                        <td className="px-4 py-2 text-right text-red-500">
+                                            -{products.reduce((sum, p) => sum + ((p.price * p.quantity) * (p.discount / 100)), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                    <tr className="bg-slate-50/20 text-[12px] text-slate-500 border-b border-slate-100">
+                                        <td colSpan={5} className="px-6 py-2 text-right font-medium">Toplam KDV:</td>
+                                        <td className="px-4 py-2 text-right">
+                                            {products.reduce((sum, p) => {
+                                                const afterDiscount = (p.price * p.quantity) * (1 - p.discount / 100);
+                                                return sum + (afterDiscount * (p.tax / 100));
+                                            }, 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                    <tr className="bg-slate-50/50">
+                                        <td colSpan={5} className="px-6 py-4 text-right text-[12px] font-bold text-slate-600 uppercase tracking-wider">
+                                            Genel Toplam:
+                                        </td>
+                                        <td className="px-4 py-4 text-right text-[18px] font-black text-blue-600">
+                                            {grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
                     </div>
+                    )}
+
+                    {activeTab === 'Tahminler' && (
+                        <div className="flex-1 flex flex-col gap-4 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-20">
+                            {/* Toolbar */}
+                            <div className="px-6 py-4 border-b border-slate-100 flex items-center bg-slate-50/30 gap-3">
+                                <button
+                                    onClick={addForecast}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-[13px] font-bold flex items-center gap-2 transition-all shadow-sm shrink-0"
+                                >
+                                    <Plus size={16} /> Yeni tahmin
+                                </button>
+                                
+                                <div className="flex items-center bg-white border border-slate-200 rounded-md px-3 py-1.5 gap-2 flex-1 max-w-md shadow-inner">
+                                    <div className="flex items-center bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[12px] gap-1 font-medium border border-blue-100">
+                                        Devam ediyor <X size={12} className="cursor-pointer" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="+ Ara"
+                                        value={forecastSearch}
+                                        onChange={(e) => setForecastSearch(e.target.value)}
+                                        className="bg-transparent border-none outline-none flex-1 text-[13px] text-slate-700 placeholder:text-slate-400"
+                                    />
+                                    <Search size={16} className="text-slate-400" />
+                                </div>
+                            </div>
+
+                            {/* Table */}
+                            <div className="overflow-x-auto relative flex-1">
+                                {forecasts.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center p-20 text-center">
+                                        <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-500 mb-6 drop-shadow-sm">
+                                            <Trophy size={32} />
+                                        </div>
+                                        <h3 className="text-[20px] font-bold text-slate-800 mb-2">Tahminler</h3>
+                                        <p className="text-slate-500 max-w-md leading-relaxed mb-8">
+                                            Bu anlaşma için gelecek tahminlerini burada yönetebilirsiniz. 
+                                            Beklenen kapanış tarihi ve olasılık değerlerine göre öngörüler oluşturun.
+                                        </p>
+                                        <button 
+                                            onClick={addForecast}
+                                            className="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-bold text-[14px] shadow-lg shadow-indigo-500/20 transition-all"
+                                        >
+                                            Tahmin Oluştur
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <table className="w-full text-left border-collapse min-w-[1200px]">
+                                        <thead>
+                                            <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/20">
+                                                <th className="px-4 py-3 w-10"><input type="checkbox" className="rounded" /></th>
+                                                <th className="px-2 py-3 w-8"><Settings size={14} /></th>
+                                                <th className="px-4 py-3">Tahmin</th>
+                                                <th className="px-4 py-3">Aşama</th>
+                                                <th className="px-4 py-3 text-right">Miktar/Para Birimi</th>
+                                                <th className="px-4 py-3">Şuna bağlı</th>
+                                                <th className="px-4 py-3">Tamamlanma tarihi</th>
+                                                <th className="px-4 py-3">Geçerlilik tarihi</th>
+                                                <th className="px-4 py-3">Sorumlu</th>
+                                                <th className="px-4 py-3">Oluşturulma tarihi</th>
+                                                <th className="px-4 py-3">Müşteri yolculuğu</th>
+                                                <th className="px-4 py-3 w-12"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50">
+                                            {forecasts.map((f) => (
+                                                <tr key={f.id} className={`group hover:bg-slate-50/50 transition-colors ${!f.isSaved ? 'bg-blue-50/20' : ''}`}>
+                                                    <td className="px-4 py-4"><input type="checkbox" className="rounded" disabled={!f.isSaved} /></td>
+                                                    <td className="px-2 py-4"><div className="w-4 h-4 text-slate-300"><List size={14} /></div></td>
+                                                    <td className="px-4 py-4">
+                                                        <div className="flex flex-col">
+                                                            {!f.isSaved ? (
+                                                                <input
+                                                                    value={f.number}
+                                                                    placeholder="No"
+                                                                    onChange={(e) => updateForecast(f.id, { number: e.target.value })}
+                                                                    className="bg-white border border-slate-200 rounded px-2 py-1 text-[13px] text-slate-700 w-20 outline-none focus:border-blue-400"
+                                                                />
+                                                            ) : (
+                                                                <span className="text-[13px] text-blue-500 font-bold">{f.number || '-'}</span>
+                                                            )}
+                                                            <span className="text-[11px] text-slate-400">22</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-4 min-w-[150px]">
+                                                        {!f.isSaved ? (
+                                                            <div className="flex items-center gap-2">
+                                                                <input
+                                                                    type="range"
+                                                                    min="0"
+                                                                    max="100"
+                                                                    value={f.stage}
+                                                                    onChange={(e) => updateForecast(f.id, { stage: parseInt(e.target.value) })}
+                                                                    className="flex-1 h-1.5 bg-slate-100 rounded-full appearance-none cursor-pointer accent-blue-500"
+                                                                />
+                                                                <span className="text-[11px] font-bold text-slate-500 w-8">%{f.stage}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex flex-col gap-1.5">
+                                                                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex">
+                                                                    <div className="h-full bg-blue-400" style={{ width: `${f.stage}%` }}></div>
+                                                                    <div className="h-full bg-slate-100 flex-1"></div>
+                                                                </div>
+                                                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
+                                                                    {f.stage === 0 ? 'Yeni' : f.stage === 100 ? 'Tamamlandı' : 'İşlemde'}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-4 text-right">
+                                                        {!f.isSaved ? (
+                                                            <div className="flex items-center justify-end gap-1">
+                                                                <input
+                                                                    type="number"
+                                                                    value={f.amount || ''}
+                                                                    placeholder="0"
+                                                                    onChange={(e) => updateForecast(f.id, { amount: parseFloat(e.target.value) || 0 })}
+                                                                    className="bg-white border border-slate-200 rounded px-2 py-1 text-[13px] text-slate-700 w-24 text-right outline-none focus:border-blue-400"
+                                                                />
+                                                                <select
+                                                                    value={f.currency}
+                                                                    onChange={(e) => updateForecast(f.id, { currency: e.target.value })}
+                                                                    className="bg-white border border-slate-200 rounded px-1 py-1 text-[12px] outline-none"
+                                                                >
+                                                                    <option value="₺">₺</option>
+                                                                    <option value="$">$</option>
+                                                                    <option value="€">€</option>
+                                                                </select>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-[13px] text-slate-700 font-medium">{f.amount.toLocaleString('tr-TR')}{f.currency}</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-4">
+                                                        <div className="flex flex-col">
+                                                            {!f.isSaved ? (
+                                                                <input
+                                                                    value={f.relatedTo}
+                                                                    placeholder="Müşteri/Bağlantı"
+                                                                    onChange={(e) => updateForecast(f.id, { relatedTo: e.target.value })}
+                                                                    className="bg-white border border-slate-200 rounded px-2 py-1 text-[13px] text-slate-700 outline-none focus:border-blue-400"
+                                                                />
+                                                            ) : (
+                                                                <span className="text-[13px] text-blue-500 font-medium">{f.relatedTo || '-'}</span>
+                                                            )}
+                                                            <span className="text-[11px] text-slate-400">22</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-[13px] text-slate-600 font-medium">
+                                                        {!f.isSaved ? (
+                                                            <input
+                                                                type="text"
+                                                                value={f.completionDate}
+                                                                placeholder="DD.MM.YYYY"
+                                                                onChange={(e) => updateForecast(f.id, { completionDate: e.target.value })}
+                                                                className="bg-white border border-slate-200 rounded px-2 py-1 text-[13px] w-28 outline-none focus:border-blue-400"
+                                                            />
+                                                        ) : (
+                                                            f.completionDate || '-'
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-4 text-[13px] text-slate-600 font-medium">
+                                                        {!f.isSaved ? (
+                                                            <input
+                                                                type="text"
+                                                                value={f.validityDate}
+                                                                placeholder="DD.MM.YYYY"
+                                                                onChange={(e) => updateForecast(f.id, { validityDate: e.target.value })}
+                                                                className="bg-white border border-slate-200 rounded px-2 py-1 text-[13px] w-28 outline-none focus:border-blue-400"
+                                                            />
+                                                        ) : (
+                                                            f.validityDate || '-'
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded-full bg-slate-400 flex items-center justify-center text-white text-[10px]">
+                                                                <User size={12} />
+                                                            </div>
+                                                            <span className="text-[12px] text-slate-600 font-bold">{f.responsible}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-[13px] text-slate-600 font-medium">{f.creationDate}</td>
+                                                    <td className="px-4 py-4"></td>
+                                                    <td className="px-4 py-4 text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            {!f.isSaved && (
+                                                                <button
+                                                                    onClick={() => updateForecast(f.id, { isSaved: true })}
+                                                                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded text-[11px] font-bold transition-colors shadow-sm"
+                                                                >
+                                                                    KAYDET
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => deleteForecast(f.id)}
+                                                                className="p-1.5 text-slate-200 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
+
+                            {/* Footer */}
+                            <div className="px-6 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/30 text-[10px] font-black text-blue-900/40 uppercase tracking-widest">
+                                <div className="flex items-center gap-8">
+                                    <span>Seçilen: 0 / {forecasts.length}</span>
+                                    <span>Toplam: <span className="text-blue-500">Adedi göster</span></span>
+                                </div>
+                                <div className="flex items-center gap-8">
+                                    <span>Sayfalar: 1</span>
+                                    <div className="flex items-center gap-2">
+                                        <span>Kayıtlar:</span>
+                                        <select className="bg-white border border-slate-200 rounded px-1 py-0.5 text-slate-600 outline-none">
+                                            <option>20</option>
+                                            <option>50</option>
+                                            <option>100</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'Faturalar' && (
+                        <div className="flex-1 flex flex-col gap-4 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-20">
+                            {/* Toolbar */}
+                            <div className="px-6 py-4 border-b border-slate-100 flex items-center bg-slate-50/30 gap-3">
+                                <button
+                                    onClick={addInvoice}
+                                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-[13px] font-bold flex items-center gap-2 transition-all shadow-sm shrink-0"
+                                >
+                                    <Plus size={16} /> Fatura Ekle
+                                </button>
+                                
+                                <div className="flex items-center bg-white border border-slate-200 rounded-md px-3 py-1.5 gap-2 flex-1 max-w-md shadow-inner">
+                                    <input
+                                        type="text"
+                                        placeholder="Fatura ara..."
+                                        className="bg-transparent border-none outline-none flex-1 text-[13px] text-slate-700 placeholder:text-slate-400"
+                                    />
+                                    <Search size={16} className="text-slate-400" />
+                                </div>
+                            </div>
+
+                            {/* Table */}
+                            <div className="overflow-x-auto relative flex-1">
+                                {invoices.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center p-20 text-center">
+                                        <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center text-green-500 mb-6 drop-shadow-sm">
+                                            <DollarSign size={32} />
+                                        </div>
+                                        <h3 className="text-[20px] font-bold text-slate-800 mb-2">Faturalar</h3>
+                                        <p className="text-slate-500 max-w-md leading-relaxed mb-8">
+                                            Müşteriye kesilen geçmiş faturaları burada görebilir veya yeni bir fatura kaydı ekleyebilirsiniz.
+                                        </p>
+                                        <button 
+                                            onClick={addInvoice}
+                                            className="bg-green-500 hover:bg-green-600 text-white px-6 py-2.5 rounded-lg font-bold text-[14px] shadow-lg shadow-green-500/20 transition-all"
+                                        >
+                                            Fatura Ekle
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/20">
+                                                <th className="px-6 py-3">Fatura Adı</th>
+                                                <th className="px-6 py-3">Fatura Numarası</th>
+                                                <th className="px-6 py-3 text-right">Fatura Fiyatı</th>
+                                                <th className="px-6 py-3">Fatura Tarihi</th>
+                                                <th className="px-6 py-3 w-12"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50">
+                                            {invoices.map((inv) => (
+                                                <tr key={inv.id} className={`group hover:bg-slate-50/50 transition-colors ${!inv.isSaved ? 'bg-blue-50/20' : ''}`}>
+                                                    <td className="px-6 py-4">
+                                                        {!inv.isSaved ? (
+                                                            <input
+                                                                value={inv.name}
+                                                                placeholder="Fatura adı girin..."
+                                                                onChange={(e) => updateInvoice(inv.id, { name: e.target.value })}
+                                                                className="bg-white border border-slate-200 rounded px-2 py-1 text-[13px] text-slate-700 w-full outline-none focus:border-blue-400"
+                                                            />
+                                                        ) : (
+                                                            <span className="text-[13px] text-slate-700 font-medium">{inv.name || '-'}</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {!inv.isSaved ? (
+                                                            <input
+                                                                value={inv.number}
+                                                                placeholder="Fatura no..."
+                                                                onChange={(e) => updateInvoice(inv.id, { number: e.target.value })}
+                                                                className="bg-white border border-slate-200 rounded px-2 py-1 text-[13px] text-slate-700 w-full outline-none focus:border-blue-400"
+                                                            />
+                                                        ) : (
+                                                            <span className="text-[13px] text-blue-500 font-bold">{inv.number || '-'}</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        {!inv.isSaved ? (
+                                                                <div className="flex items-center justify-end gap-1">
+                                                                    <input
+                                                                        type="number"
+                                                                        value={inv.price || ''}
+                                                                        placeholder="0"
+                                                                        onChange={(e) => updateInvoice(inv.id, { price: parseFloat(e.target.value) || 0 })}
+                                                                        className="bg-white border border-slate-200 rounded px-2 py-1 text-[13px] text-slate-700 w-24 text-right outline-none focus:border-blue-400"
+                                                                    />
+                                                                    <span className="text-[13px] text-slate-400 font-medium">₺</span>
+                                                                </div>
+                                                        ) : (
+                                                            <span className="text-[13px] text-slate-700 font-medium">{inv.price.toLocaleString('tr-TR')} ₺</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {!inv.isSaved ? (
+                                                            <input
+                                                                type="text"
+                                                                value={inv.date}
+                                                                placeholder="GG.AA.YYYY"
+                                                                onChange={(e) => updateInvoice(inv.id, { date: e.target.value })}
+                                                                className="bg-white border border-slate-200 rounded px-2 py-1 text-[13px] text-slate-700 w-32 outline-none focus:border-blue-400"
+                                                            />
+                                                        ) : (
+                                                            <span className="text-[13px] text-slate-600 font-medium">{inv.date || '-'}</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            {!inv.isSaved && (
+                                                                <button
+                                                                    onClick={() => updateInvoice(inv.id, { isSaved: true })}
+                                                                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded text-[11px] font-bold transition-colors shadow-sm"
+                                                                >
+                                                                    KAYDET
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => deleteInvoice(inv.id)}
+                                                                className="p-1.5 text-slate-200 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
+
+                            {/* Footer */}
+                            <div className="px-6 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/30 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                <div>Toplam: {invoices.length} Kayıt</div>
+                                <div>Genel Toplam: <span className="text-green-600">{invoices.reduce((sum, inv) => sum + inv.price, 0).toLocaleString('tr-TR')} ₺</span></div>
+                            </div>
+                        </div>
+                    )}
+                    {activeTab === 'İlgili öğeler' && (
+                        <div className="flex-1 flex flex-col gap-6 mb-20">
+                            {/* Grid Layout for Cards */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                
+                                {/* Sorumlu (Responsible) Card */}
+                                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                                    <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/30 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                                <User size={16} />
+                                            </div>
+                                            <h4 className="text-[14px] font-bold text-slate-700">Sorumlu</h4>
+                                        </div>
+                                        <button className="text-slate-400 hover:text-blue-500 transition-colors">
+                                            <Plus size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="p-5 flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-[18px] font-bold border-2 border-white shadow-sm overflow-hidden">
+                                            {profilePhoto ? <img src={profilePhoto} className="w-full h-full object-cover" /> : 'F'}
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[15px] font-bold text-slate-800">Fevziye Mamak</span>
+                                            <span className="text-[12px] text-slate-400">{profileData.email}</span>
+                                            <div className="mt-2 flex items-center gap-1.5">
+                                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                                <span className="text-[11px] font-medium text-slate-500">Çevrimiçi</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Anlaşma (Deal) Card */}
+                                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                                    <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/30 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+                                                <Briefcase size={16} />
+                                            </div>
+                                            <h4 className="text-[14px] font-bold text-slate-700">Anlaşma</h4>
+                                        </div>
+                                        <button className="text-slate-400 hover:text-amber-500 transition-colors">
+                                            <Edit3 size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="p-5 flex flex-col gap-3">
+                                        <div className="flex flex-col">
+                                            <span className="text-[15px] font-bold text-slate-800 truncate">{editData.title || '(İsimsiz)'}</span>
+                                            <span className="text-[12px] text-slate-400">ID: {dealId}</span>
+                                        </div>
+                                        <div className="flex items-baseline gap-1 mt-1">
+                                            <span className="text-[20px] font-black text-blue-600">{parseFloat(editData.amount).toLocaleString('tr-TR')}</span>
+                                            <span className="text-[14px] font-bold text-blue-400">{editData.currency || '₺'}</span>
+                                        </div>
+                                        <div className="flex flex-col gap-1.5 mt-2">
+                                            <div className="flex justify-between text-[11px] font-bold text-slate-400 uppercase tracking-tighter">
+                                                <span>Aşama</span>
+                                                <span className="text-indigo-500">{editData.stage}</span>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex gap-0.5">
+                                                <div className="h-full bg-indigo-400 flex-1"></div>
+                                                <div className="h-full bg-indigo-400 flex-1"></div>
+                                                <div className="h-full bg-slate-200 flex-1"></div>
+                                                <div className="h-full bg-slate-200 flex-1"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Ürünler (Products) Card */}
+                                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                                    <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/30 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+                                                <LayoutGrid size={16} />
+                                            </div>
+                                            <h4 className="text-[14px] font-bold text-slate-700">Ürünler</h4>
+                                        </div>
+                                        <button onClick={addProduct} className="text-slate-400 hover:text-purple-500 transition-colors">
+                                            <Plus size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="p-5 flex flex-col gap-4">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[13px] text-slate-500">Kayıtlı Ürün</span>
+                                            <span className="text-[15px] font-bold text-slate-800">{Array.isArray(products) ? products.length : 0} Adet</span>
+                                        </div>
+                                        <div className="text-[20px] font-black text-slate-800 border-t border-slate-50 pt-3">
+                                            {grandTotal.toLocaleString('tr-TR')} <span className="text-[14px] text-slate-400 font-bold">₺</span>
+                                        </div>
+                                        <div className="flex flex-col gap-2 mt-1">
+                                            {Array.isArray(products) && products.slice(0, 2).map(p => (
+                                                <div key={p.id} className="text-[12px] text-slate-500 truncate flex items-center gap-2">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-purple-300"></span>
+                                                    {p.name || '(İsimsiz Ürün)'}
+                                                </div>
+                                            ))}
+                                            {Array.isArray(products) && products.length > 2 && (
+                                                <span className="text-[11px] text-blue-500 font-bold ml-3 cursor-pointer hover:underline">
+                                                    + {products.length - 2} ürün daha
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Tahminler (Forecasts) Card */}
+                                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                                    <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/30 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                                <Trophy size={16} />
+                                            </div>
+                                            <h4 className="text-[14px] font-bold text-slate-700">Tahminler</h4>
+                                        </div>
+                                        <button onClick={addForecast} className="text-slate-400 hover:text-indigo-500 transition-colors">
+                                            <Plus size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="p-5 flex flex-col gap-4">
+                                        {!Array.isArray(forecasts) || forecasts.length === 0 ? (
+                                            <div className="py-2 text-[13px] text-slate-400 italic">Henüz tahmin eklenmemiş</div>
+                                        ) : (
+                                            <>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[13px] text-slate-500">Tahmin Sayısı</span>
+                                                    <span className="text-[15px] font-bold text-slate-800">{forecasts.length} Belge</span>
+                                                </div>
+                                                <div className="flex flex-col gap-3 mt-1">
+                                                    {forecasts.slice(0, 2).map(f => (
+                                                        <div key={f.id} className="p-2.5 rounded-lg border border-slate-100 bg-slate-50/50 flex flex-col gap-1.5">
+                                                            <div className="flex justify-between items-center">
+                                                                <span className="text-[12px] font-bold text-blue-500">#{f.number || 'Draft'}</span>
+                                                                <span className="text-[11px] text-slate-400 font-medium">{f.amount.toLocaleString('tr-TR')} {f.currency}</span>
+                                                            </div>
+                                                            <div className="h-1 w-full bg-slate-200 rounded-full overflow-hidden">
+                                                                <div className="h-full bg-blue-400" style={{ width: `${f.stage}%` }}></div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                    {forecasts.length > 2 && (
+                                                        <span className="text-[11px] text-blue-500 font-bold cursor-pointer hover:underline text-center">
+                                                            Tüm tahminleri görüntüle
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Faturalar (Invoices) Card */}
+                                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                                    <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/30 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                                <DollarSign size={16} />
+                                            </div>
+                                            <h4 className="text-[14px] font-bold text-slate-700">Faturalar</h4>
+                                        </div>
+                                        <button onClick={addInvoice} className="text-slate-400 hover:text-green-500 transition-colors">
+                                            <Plus size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="p-5 flex flex-col gap-4">
+                                        {!Array.isArray(invoices) || invoices.length === 0 ? (
+                                            <div className="py-2 text-[13px] text-slate-400 italic">Henüz fatura eklenmemiş</div>
+                                        ) : (
+                                            <>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[13px] text-slate-500">Fatura Sayısı</span>
+                                                    <span className="text-[15px] font-bold text-slate-800">{invoices.length} Belge</span>
+                                                </div>
+                                                <div className="text-[20px] font-black text-green-600 border-t border-slate-50 pt-3">
+                                                    {invoices.reduce((sum, inv) => sum + (inv.price || 0), 0).toLocaleString('tr-TR')} <span className="text-[14px] text-green-400 font-bold">₺</span>
+                                                </div>
+                                                <div className="flex flex-col gap-2 mt-1">
+                                                    {invoices.slice(0, 2).map(inv => (
+                                                        <div key={inv.id} className="text-[12px] text-slate-500 flex items-center justify-between bg-slate-50/80 p-2 rounded">
+                                                            <span className="font-medium truncate max-w-[120px]">{inv.name || 'Fatura'}</span>
+                                                            <span className="font-bold text-slate-700">%{inv.price?.toLocaleString('tr-TR') || 0}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    )}
+                </div>
 
                     {/* Sticky Footer */}
                     <div className="absolute bottom-0 left-0 right-0 h-[60px] bg-white border-t border-slate-200 px-6 flex items-center gap-4 z-50">
@@ -2286,7 +3316,7 @@ group
                                         </div>
                                         <div className="border border-blue-200 rounded px-4 py-2 text-[14px] text-slate-700 relative flex items-center">
                                             Anlaşma
-                                            <div className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#00d0f5] rounded-full flex items-center justify-center text-white"><span className="text-[10px] leading-none">âœ“</span></div>
+                                            <div className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#00d0f5] rounded-full flex items-center justify-center text-white"><span className="text-[10px] leading-none">✓</span></div>
                                         </div>
                                     </div>
 
@@ -2309,7 +3339,7 @@ group
                                                                         checked={selectedFieldKeys.includes(field)}
                                                                         onChange={() => toggleFieldKey(field)}
                                                                     />
-                                                                    <span className="absolute text-white pointer-events-none opacity-0 peer-checked:opacity-100 font-bold block pb-0.5" style={{ fontSize: '10px' }}>âœ“</span>
+                                                                   <span className="absolute text-white pointer-events-none opacity-0 peer-checked:opacity-100 font-bold block pb-0.5" style={{ fontSize: '10px' }}>✓</span>
                                                                 </div>
                                                                 <span className="text-[14px] text-slate-600 group-hover:text-slate-900">{field}</span>
                                                             </label>
@@ -2337,7 +3367,7 @@ group
                                                     }
                                                 }}
                                             />
-                                            <span className="absolute text-white pointer-events-none opacity-0 peer-checked:opacity-100 font-bold block pb-0.5" style={{ fontSize: '10px' }}>âœ“</span>
+                                            <span className="absolute text-white pointer-events-none opacity-0 peer-checked:opacity-100 font-bold block pb-0.5" style={{ fontSize: '10px' }}>✓</span>
                                         </div>
                                         <span className="text-[14px] text-slate-500">tümünü seç</span>
                                     </label>
@@ -2358,7 +3388,6 @@ group
                             </div>
                         </div>
                     )}
-                </div>
             </div>
         </div>
     );

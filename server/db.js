@@ -1,6 +1,12 @@
 import Database from 'better-sqlite3';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const db = new Database('crm.db');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const db = new Database(path.join(__dirname, 'crm.db'));
+
 
 // Initialize Schema
 db.exec(`
@@ -107,6 +113,7 @@ db.exec(`
         probability REAL,
         expected_revenue REAL,
         assigned_to TEXT,
+        customer_name TEXT,
         notes TEXT,
         items TEXT,
         created_at TEXT DEFAULT (datetime('now')),
@@ -174,7 +181,15 @@ db.exec(`
         assigned_to TEXT,
         status TEXT DEFAULT 'pending',
         link TEXT,
-        created_at TEXT DEFAULT (datetime('now'))
+        prepared_by TEXT,
+        related_persons TEXT,
+        reason TEXT,
+        deal_id TEXT,
+        category TEXT DEFAULT 'activity',
+        reminded_1d INTEGER DEFAULT 0,
+        reminded_1h INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY(deal_id) REFERENCES deals(id)
     );
 
     -- PROFORMAS
@@ -206,6 +221,7 @@ db.exec(`
         swift_code TEXT,
         iban TEXT,
         status TEXT DEFAULT 'Draft',
+        document_type TEXT DEFAULT 'proforma',
         created_at TEXT DEFAULT (datetime('now')),
         FOREIGN KEY(customer_id) REFERENCES customers(id)
     );
@@ -256,7 +272,123 @@ db.exec(`
         created_at TEXT DEFAULT (datetime('now')),
         FOREIGN KEY(deal_id) REFERENCES deals(id)
     );
+
+    -- RESERVATIONS
+    CREATE TABLE IF NOT EXISTS reservations (
+        id TEXT PRIMARY KEY,
+        deal_id TEXT NOT NULL,
+        date_string TEXT NOT NULL,
+        time TEXT NOT NULL,
+        note TEXT NOT NULL,
+        created_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY(deal_id) REFERENCES deals(id)
+    );
+
+    -- NOTIFICATIONS
+    CREATE TABLE IF NOT EXISTS notifications (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        type TEXT NOT NULL,
+        title TEXT,
+        message TEXT,
+        link TEXT,
+        is_read INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    );
 `);
+
+// --- MIGRATIONS ---
+const migrateUsersTable = () => {
+    const columns = [
+        { name: 'permissions', type: 'TEXT DEFAULT NULL' }
+    ];
+
+    const tableInfo = db.prepare("PRAGMA table_info(users)").all();
+    const existingColumns = tableInfo.map(c => c.name);
+
+    for (const col of columns) {
+        if (!existingColumns.includes(col.name)) {
+            try {
+                db.prepare(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type}`).run();
+                console.log(`Column ${col.name} added to users table.`);
+            } catch (error) {
+                console.error(`Failed to add column ${col.name}:`, error.message);
+            }
+        }
+    }
+};
+
+const migrateTasksTable = () => {
+    const columns = [
+        { name: 'prepared_by', type: 'TEXT' },
+        { name: 'related_persons', type: 'TEXT' },
+        { name: 'reason', type: 'TEXT' },
+        { name: 'deal_id', type: 'TEXT' },
+        { name: 'category', type: "TEXT DEFAULT 'activity'" },
+        { name: 'reminded_1d', type: 'INTEGER DEFAULT 0' },
+        { name: 'reminded_1h', type: 'INTEGER DEFAULT 0' }
+    ];
+
+    const tableInfo = db.prepare("PRAGMA table_info(tasks)").all();
+    const existingColumns = tableInfo.map(c => c.name);
+
+    for (const col of columns) {
+        if (!existingColumns.includes(col.name)) {
+            try {
+                db.prepare(`ALTER TABLE tasks ADD COLUMN ${col.name} ${col.type}`).run();
+                console.log(`Column ${col.name} added to tasks table.`);
+            } catch (error) {
+                console.error(`Failed to add column ${col.name}:`, error.message);
+            }
+        }
+    }
+};
+
+const migrateDealsTable = () => {
+    const columns = [
+        { name: 'customer_name', type: 'TEXT' }
+    ];
+
+    const tableInfo = db.prepare("PRAGMA table_info(deals)").all();
+    const existingColumns = tableInfo.map(c => c.name);
+
+    for (const col of columns) {
+        if (!existingColumns.includes(col.name)) {
+            try {
+                db.prepare(`ALTER TABLE deals ADD COLUMN ${col.name} ${col.type}`).run();
+                console.log(`Column ${col.name} added to deals table.`);
+            } catch (error) {
+                console.error(`Failed to add column ${col.name}:`, error.message);
+            }
+        }
+    }
+};
+
+const migrateProformasTable = () => {
+    const columns = [
+        { name: 'document_type', type: "TEXT DEFAULT 'proforma'" }
+    ];
+
+    const tableInfo = db.prepare("PRAGMA table_info(proformas)").all();
+    const existingColumns = tableInfo.map(c => c.name);
+
+    for (const col of columns) {
+        if (!existingColumns.includes(col.name)) {
+            try {
+                db.prepare(`ALTER TABLE proformas ADD COLUMN ${col.name} ${col.type}`).run();
+                console.log(`Column ${col.name} added to proformas table.`);
+            } catch (error) {
+                console.error(`Failed to add column ${col.name}:`, error.message);
+            }
+        }
+    }
+};
+
+migrateUsersTable();
+migrateTasksTable();
+migrateDealsTable();
+migrateProformasTable();
 
 // Seed with demo user if no users exist
 const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
