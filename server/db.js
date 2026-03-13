@@ -320,6 +320,48 @@ const migrateUsersTable = () => {
     }
 };
 
+const normalizeUserPermissions = () => {
+    try {
+        const users = db.prepare('SELECT id, permissions, email FROM users').all();
+        const defaultPermissions = JSON.stringify({
+            deals: true,
+            customers: true,
+            offers: true,
+            messages: true
+        });
+
+        const updateStmt = db.prepare('UPDATE users SET permissions = ? WHERE id = ?');
+
+        for (const user of users) {
+            if (!user.permissions || user.permissions === 'null' || user.email === 'fevziye.mamak35@gmail.com') {
+                updateStmt.run(defaultPermissions, user.id);
+                console.log(`Initialized/Restored permissions for ${user.email}`);
+                continue;
+            }
+
+            try {
+                const perms = JSON.parse(user.permissions);
+                // If it's the old format (admin/view) or missing keys, normalize it
+                if (perms.admin !== undefined || perms.view !== undefined || !perms.deals) {
+                    const normalized = {
+                        deals: perms.deals ?? perms.admin ?? perms.view ?? true,
+                        customers: perms.customers ?? perms.admin ?? perms.view ?? true,
+                        offers: perms.offers ?? perms.admin ?? perms.view ?? true,
+                        messages: perms.messages ?? perms.admin ?? perms.view ?? true
+                    };
+                    updateStmt.run(JSON.stringify(normalized), user.id);
+                    console.log(`Normalized permissions for ${user.email}`);
+                }
+            } catch (e) {
+                updateStmt.run(defaultPermissions, user.id);
+                console.log(`Reset corrupt permissions for ${user.email}`);
+            }
+        }
+    } catch (error) {
+        console.error('Normalization error:', error);
+    }
+};
+
 const migrateTasksTable = () => {
     const columns = [
         { name: 'prepared_by', type: 'TEXT' },
@@ -388,6 +430,7 @@ const migrateProformasTable = () => {
 };
 
 migrateUsersTable();
+normalizeUserPermissions();
 migrateTasksTable();
 migrateDealsTable();
 migrateProformasTable();

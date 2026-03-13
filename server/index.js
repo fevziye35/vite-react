@@ -114,6 +114,29 @@ const requireSuperAdmin = (req, res, next) => {
     next();
 };
 
+// Module Permission Middleware
+const checkPermission = (moduleName) => {
+    return (req, res, next) => {
+        // Super admin always has access
+        if (req.user?.email === 'fevziye.mamak35@gmail.com') {
+            return next();
+        }
+
+        // Fetch user from DB to get the latest permissions
+        const user = db.prepare('SELECT permissions FROM users WHERE id = ?').get(req.user.id);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const permissions = JSON.parse(user.permissions || '{}');
+        if (permissions[moduleName] === true) {
+            return next();
+        }
+
+        res.status(403).json({ error: `Bu işlem için '${moduleName}' yetkiniz yok.` });
+    };
+};
+
 // ==================== AUTH ROUTES ====================
 
 // REGISTER
@@ -137,10 +160,17 @@ app.post('/api/auth/register', async (req, res) => {
         const id = generateId();
         const now = getNow();
 
+        const defaultPermissions = JSON.stringify({
+            deals: true,
+            customers: true,
+            offers: true,
+            messages: true
+        });
+
         db.prepare(`
-            INSERT INTO users (id, email, password_hash, full_name, role, created_at)
-            VALUES (?, ?, ?, ?, 'Admin', ?)
-        `).run(id, email, passwordHash, fullName || email.split('@')[0], now);
+            INSERT INTO users (id, email, password_hash, full_name, role, permissions, created_at)
+            VALUES (?, ?, ?, ?, 'Admin', ?, ?)
+        `).run(id, email, passwordHash, fullName || email.split('@')[0], defaultPermissions, now);
 
         // Generate token
         const token = jwt.sign({ id, email }, JWT_SECRET, { expiresIn: '7d' });
@@ -338,7 +368,7 @@ app.post('/api/customers', (req, res) => {
     res.json(newCustomer);
 });
 
-app.put('/api/customers/:id', (req, res) => {
+app.put('/api/customers/:id', authenticateToken, checkPermission('customers'), (req, res) => {
     const now = getNow();
     const { company_name, contact_person, email, phone, country, city, address, preferred_incoterm, notes, tags } = req.body;
 
@@ -353,7 +383,7 @@ app.put('/api/customers/:id', (req, res) => {
     res.json(updated);
 });
 
-app.delete('/api/customers/:id', (req, res) => {
+app.delete('/api/customers/:id', authenticateToken, checkPermission('customers'), (req, res) => {
     db.prepare('DELETE FROM customers WHERE id = ?').run(req.params.id);
     broadcast('customers', { id: req.params.id, deleted: true });
     res.json({ success: true });
@@ -439,7 +469,7 @@ app.put('/api/offers/:id', (req, res) => {
 });
 
 // ==================== DEALS ====================
-app.get('/api/deals', (req, res) => {
+app.get('/api/deals', authenticateToken, checkPermission('deals'), (req, res) => {
     const deals = db.prepare('SELECT * FROM deals ORDER BY created_at DESC').all();
     deals.forEach(d => {
         d.target_products = JSON.parse(d.target_products || '[]');
@@ -448,7 +478,7 @@ app.get('/api/deals', (req, res) => {
     res.json(deals);
 });
 
-app.post('/api/deals', (req, res) => {
+app.post('/api/deals', authenticateToken, checkPermission('deals'), (req, res) => {
     const id = generateId();
     const now = getNow();
     const { 
@@ -468,7 +498,7 @@ app.post('/api/deals', (req, res) => {
     res.json(newDeal);
 });
 
-app.put('/api/deals/:id', (req, res) => {
+app.put('/api/deals/:id', authenticateToken, checkPermission('deals'), (req, res) => {
     const now = getNow();
     const { 
         title, customer_id, customer_name, target_products, target_volume, 
@@ -513,7 +543,7 @@ app.put('/api/deals/:id', (req, res) => {
     res.json(updated);
 });
 
-app.delete('/api/deals/:id', (req, res) => {
+app.delete('/api/deals/:id', authenticateToken, checkPermission('deals'), (req, res) => {
     try {
         db.prepare('DELETE FROM deals WHERE id = ?').run(req.params.id);
         broadcast('deals', { id: req.params.id, deleted: true });
@@ -656,13 +686,19 @@ app.delete('/api/meetings/:id', (req, res) => {
     res.json({ success: true });
 });
 
-// ==================== TASKS ====================
-app.get('/api/tasks', (req, res) => {
-    const tasks = db.prepare('SELECT * FROM tasks ORDER BY created_at DESC').all();
-    res.json(tasks);
+app.delete('/api/proformas/:id', authenticateToken, checkPermission('offers'), (req, res) => {
+    db.prepare('DELETE FROM proformas WHERE id = ?').run(req.params.id);
+    broadcast('proformas', { id: req.params.id, deleted: true });
+    res.json({ success: true });
 });
 
-app.post('/api/tasks', (req, res) => {
+// ==================== CUSTOMERS ====================
+app.get('/api/customers', authenticateToken, checkPermission('customers'), (req, res) => {
+    const customers = db.prepare('SELECT * FROM customers ORDER BY created_at DESC').all();
+    res.json(customers);
+});
+
+app.post('/api/customers', authenticateToken, checkPermission('customers'), (req, res) => {
     try {
         const { title, description, due_date, priority, assigned_to, status, link, prepared_by, related_persons, reason, deal_id, category } = req.body;
         const id = generateId();
@@ -776,7 +812,7 @@ app.delete('/api/notifications/:id', authenticateToken, (req, res) => {
 });
 
 // ==================== PROFORMAS ====================
-app.get('/api/proformas', (req, res) => {
+app.get('/api/proformas', authenticateToken, checkPermission('offers'), (req, res) => {
     const { type } = req.query;
     let query = 'SELECT * FROM proformas';
     let params = [];
@@ -792,7 +828,7 @@ app.get('/api/proformas', (req, res) => {
     res.json(proformas);
 });
 
-app.post('/api/proformas', (req, res) => {
+app.post('/api/proformas', authenticateToken, checkPermission('offers'), (req, res) => {
     const id = generateId();
     const now = getNow();
     const { proforma_number, date, customer_id, offer_id, customer_name, customer_address, company_name, company_address, company_contact, items, total_price, first_payment_amount, final_payment_amount, currency, validity_days, brand, destination, quantity, production_time, payment_terms, beneficiary_name, bank_name, bank_address, swift_code, iban, status, document_type } = req.body;
@@ -951,10 +987,18 @@ app.post('/api/admin/users', authenticateToken, requireSuperAdmin, async (req, r
         const id = generateId();
         const now = getNow();
 
+        // Default all true if permissions not provided or empty
+        const finalPermissions = permissions && Object.keys(permissions).length > 0 ? permissions : {
+            deals: true,
+            customers: true,
+            offers: true,
+            messages: true
+        };
+
         db.prepare(`
             INSERT INTO users (id, email, password_hash, full_name, role, permissions, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        `).run(id, email, passwordHash, fullName, role || 'Viewer', JSON.stringify(permissions || null), now);
+        `).run(id, email, passwordHash, fullName, role || 'Viewer', JSON.stringify(finalPermissions), now);
 
         res.json({ id, email, fullName, role, permissions });
     } catch (error) {

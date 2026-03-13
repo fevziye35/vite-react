@@ -88,9 +88,11 @@ function MainLayout() {
                     </button>
                 </div>
                 <nav className="space-y-3 flex-1 font-bold">
-                    <Link to="/deals" className="flex items-center gap-4 p-4 rounded-2xl text-slate-400 hover:text-white transition-all italic" onClick={() => setIsMobileMenuOpen(false)}>
-                        <LayoutDashboard size={22} /> <span>İŞLER</span>
-                    </Link>
+                    {(user?.permissions?.deals !== false || user?.email === 'fevziye.mamak35@gmail.com') && (
+                        <Link to="/deals" className="flex items-center gap-4 p-4 rounded-2xl text-slate-400 hover:text-white transition-all italic" onClick={() => setIsMobileMenuOpen(false)}>
+                            <LayoutDashboard size={22} /> <span>İŞLER</span>
+                        </Link>
+                    )}
                     {(user?.permissions?.customers !== false || user?.email === 'fevziye.mamak35@gmail.com') && (
                         <Link to="/customers" className="flex items-center gap-4 p-4 rounded-2xl text-slate-400 hover:text-white transition-all italic" onClick={() => setIsMobileMenuOpen(false)}>
                             <Users size={22} /> <span>Müşteriler</span>

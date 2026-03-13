@@ -24,7 +24,12 @@ export default function AdminPage() {
         password: '',
         fullName: '',
         role: 'Viewer',
-        permissions: {} as Record<string, boolean>
+        permissions: {
+            deals: true,
+            customers: true,
+            offers: true,
+            messages: true
+        } as Record<string, boolean>
     });
 
     useEffect(() => {
@@ -165,14 +170,17 @@ export default function AdminPage() {
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex flex-wrap gap-1">
-                                        {u.permissions && Object.keys(u.permissions).some(k => u.permissions[k]) ? (
-                                            MODULES.map(m => u.permissions[m.id] && (
-                                                <span key={m.id} className="bg-green-50 text-green-600 text-[10px] px-2 py-0.5 rounded-md border border-green-100">
-                                                    {m.label}
-                                                </span>
-                                            ))
+                                        {u.permissions && Object.keys(JSON.parse(u.permissions || '{}')).some(k => JSON.parse(u.permissions || '{}')[k] === false) ? (
+                                            MODULES.map(m => {
+                                                const perms = JSON.parse(u.permissions || '{}');
+                                                return perms[m.id] !== false && (
+                                                    <span key={m.id} className="bg-green-50 text-green-600 text-[10px] px-2 py-0.5 rounded-md border border-green-100">
+                                                        {m.label}
+                                                    </span>
+                                                );
+                                            })
                                         ) : (
-                                            <span className="text-slate-400 text-[10px] italic">Tam Erişim (Varsayılan)</span>
+                                            <span className="text-green-600 text-[10px] font-bold italic">Tam Erişim</span>
                                         )}
                                     </div>
                                 </td>
@@ -183,7 +191,12 @@ export default function AdminPage() {
                                     <div className="flex justify-end gap-2">
                                         <button 
                                             onClick={() => {
-                                                setEditingUser(u);
+                                                const perms = typeof u.permissions === 'string' ? JSON.parse(u.permissions) : u.permissions;
+                                                setEditingUser({
+                                                    ...u,
+                                                    fullName: u.full_name,
+                                                    permissions: perms || { deals: true, customers: true, offers: true, messages: true }
+                                                });
                                                 setIsEditModalOpen(true);
                                             }}
                                             className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
