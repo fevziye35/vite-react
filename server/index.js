@@ -454,14 +454,14 @@ app.post('/api/deals', (req, res) => {
     const { 
         title, customer_id, customer_name, target_products, target_volume, 
         target_country, expected_closing_date, stage, 
-        probability, expected_revenue, assigned_to, notes, 
+        probability, expected_revenue, currency, assigned_to, notes, 
         offer_id, items 
     } = req.body;
 
     db.prepare(`
-        INSERT INTO deals (id, title, customer_id, customer_name, offer_id, target_products, target_volume, target_country, expected_closing_date, stage, probability, expected_revenue, assigned_to, notes, items, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, title, customer_id, customer_name, offer_id, JSON.stringify(target_products || []), target_volume, target_country, expected_closing_date, stage, probability, expected_revenue, assigned_to, notes, items ? JSON.stringify(items) : null, now, now);
+        INSERT INTO deals (id, title, customer_id, customer_name, offer_id, target_products, target_volume, target_country, expected_closing_date, stage, probability, expected_revenue, currency, assigned_to, notes, items, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, title, customer_id, customer_name, offer_id, JSON.stringify(target_products || []), target_volume, target_country, expected_closing_date, stage, probability, expected_revenue, currency, assigned_to, notes, items ? JSON.stringify(items) : null, now, now);
 
     const newDeal = { id, ...req.body, created_at: now, updated_at: now };
     broadcast('deals', newDeal);
@@ -489,6 +489,7 @@ app.put('/api/deals/:id', (req, res) => {
             stage = COALESCE(?, stage),
             probability = COALESCE(?, probability),
             expected_revenue = COALESCE(?, expected_revenue),
+            currency = COALESCE(?, currency),
             assigned_to = COALESCE(?, assigned_to),
             notes = COALESCE(?, notes),
             offer_id = COALESCE(?, offer_id),
@@ -499,8 +500,8 @@ app.put('/api/deals/:id', (req, res) => {
         title, customer_id, customer_name,
         target_products ? JSON.stringify(target_products) : null,
         target_volume, target_country, expected_closing_date, stage,
-        probability, expected_revenue, assigned_to, notes,
-        offer_id, 
+        probability, expected_revenue, currency,
+        assigned_to, notes, offer_id, 
         items ? JSON.stringify(items) : null,
         now, req.params.id
     );

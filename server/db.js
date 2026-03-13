@@ -112,6 +112,7 @@ db.exec(`
         stage TEXT,
         probability REAL,
         expected_revenue REAL,
+        currency TEXT,
         assigned_to TEXT,
         customer_name TEXT,
         notes TEXT,
@@ -347,7 +348,8 @@ const migrateTasksTable = () => {
 
 const migrateDealsTable = () => {
     const columns = [
-        { name: 'customer_name', type: 'TEXT' }
+        { name: 'customer_name', type: 'TEXT' },
+        { name: 'currency', type: 'TEXT' }
     ];
 
     const tableInfo = db.prepare("PRAGMA table_info(deals)").all();
