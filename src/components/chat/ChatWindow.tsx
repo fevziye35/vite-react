@@ -156,8 +156,8 @@ export const ChatWindow = ({ contact, onBack }: { contact: any; onBack?: () => v
             <div className="flex-1 overflow-y-auto p-6 space-y-6 relative scrollbar-hide bg-[#f8f9fa]">
                 
                 {messages.filter(msg => {
-                    const content = msg.content || '';
-                    const msgSenderName = (msg.sender_name || '').toLowerCase();
+                    const content = msg?.content || '';
+                    const msgSenderName = (msg?.sender_name || '').toLowerCase();
 
                     // If viewing Team Chat
                     if (contact?.isTeam) {
@@ -185,12 +185,12 @@ export const ChatWindow = ({ contact, onBack }: { contact: any; onBack?: () => v
                 }).map((msg) => {
                     // Robust "isMe" check
                     const currentUserIdentifier = (user?.fullName || user?.email?.split('@')[0] || '').toLowerCase();
-                    const msgSenderName = (msg.sender_name || '').toLowerCase();
+                    const msgSenderName = (msg?.sender_name || '').toLowerCase();
                     
                     const isMe = msgSenderName === currentUserIdentifier;
                     
-                    // Strip the prefix for display
-                    let displayContent = msg.content;
+                    // Strip the prefix for display cleanly
+                    let displayContent = msg?.content || '';
                     if (displayContent.startsWith('@@PM:')) {
                         displayContent = displayContent.split('@@').slice(2).join('@@');
                     }

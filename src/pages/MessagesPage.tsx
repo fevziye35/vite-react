@@ -23,15 +23,18 @@ const MessagesPage = () => {
 
     const contacts = [
         { id: 'team', name: 'Ekip Sohbeti', initials: 'ES', color: 'bg-[#00a884]', textColor: 'text-white', isTeam: true, isOnline: true },
-        ...users.filter(u => u.id !== user?.id).map(u => ({
-            id: u.id,
-            name: u.fullName || u.email,
-            initials: (u.fullName || u.email).substring(0, 2).toUpperCase(),
-            color: 'bg-[#f0f2f5]',
-            textColor: 'text-gray-600',
-            isTeam: false,
-            isOnline: onlineUsers.includes(u.id)
-        }))
+        ...users.filter(u => u?.id && u.id !== user?.id).map(u => {
+            const displayName = u.fullName || u.email || 'İsimsiz';
+            return {
+                id: u.id,
+                name: displayName,
+                initials: displayName.substring(0, 2).toUpperCase(),
+                color: 'bg-[#f0f2f5]',
+                textColor: 'text-gray-600',
+                isTeam: false,
+                isOnline: Array.isArray(onlineUsers) ? onlineUsers.includes(u.id) : false
+            };
+        })
     ];
 
     const handleContactSelect = (contact: any) => {
@@ -40,8 +43,9 @@ const MessagesPage = () => {
     };
 
     const filteredContacts = contacts.filter(c => 
-        c.name.toLowerCase().includes(searchTerm.toLowerCase())
+        (c.name || '').toLowerCase().includes((searchTerm || '').toLowerCase())
     );
+
 
     return (
         <div className="flex bg-[#f0f2f5] h-[calc(100vh-6rem)] md:rounded-2xl overflow-hidden shadow-xl border border-gray-200">
