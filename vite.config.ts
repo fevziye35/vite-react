@@ -5,5 +5,15 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: true, // ali.localhost gibi isimlere cevap vermesini sağlar
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true
+      },
+      '/socket.io': {
+        target: 'ws://localhost:3001',
+        ws: true
+      }
+    }
   }
 })
