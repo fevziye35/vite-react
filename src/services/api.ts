@@ -354,6 +354,7 @@ export const dealService = {
             targetProducts: d.target_products,
             customerName: d.customer_name,
             customer: d.customer_name,
+            amount: d.expected_revenue,
             currency: d.currency,
             items: d.items || [],
             offerId: d.offer_id
@@ -377,7 +378,7 @@ export const dealService = {
             offer_id: deal.offerId,
             items: deal.items
         });
-        return { ...data, items: data.items || [] };
+        return { ...data, amount: data.expected_revenue, items: data.items || [] };
     },
     update: async (id: string, updates: any) => {
         const { data } = await api.put(`/api/deals/${id}`, {

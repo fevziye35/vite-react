@@ -2,13 +2,17 @@ import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import { Send, Trash2 } from 'lucide-react';
+import { useSocket } from '../../context/SocketContext';
 
 export const ChatWindow = ({ contact }: { contact: any }) => {
     const { user } = useAuth();
+    const { onlineUsers } = useSocket();
     const [messages, setMessages] = useState<any[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [selectedMsgInfo, setSelectedMsgInfo] = useState<any>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const isContactOnline = contact?.isTeam || onlineUsers.includes(contact?.id);
 
     const readByList = [
         { name: 'Ali Mamak', time: '23:45', initials: 'AM', color: 'bg-emerald-500' },
@@ -117,9 +121,9 @@ export const ChatWindow = ({ contact }: { contact: any }) => {
                     <div>
                         <div className="font-bold text-gray-900">{contact?.name || 'Sohbet'}</div>
                         <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                            <span className={`w-2 h-2 ${isContactOnline ? 'bg-green-500' : 'bg-gray-300'} rounded-full`}></span>
                             <span className="text-[11px] text-gray-500 font-medium uppercase tracking-wider">
-                                {contact?.isTeam ? 'Aktif Kanal' : 'Çevrimiçi'}
+                                {contact?.isTeam ? 'Aktif Kanal' : (isContactOnline ? 'Çevrimiçi' : 'Çevrimdışı')}
                             </span>
                         </div>
                     </div>
@@ -131,8 +135,6 @@ export const ChatWindow = ({ contact }: { contact: any }) => {
                 
                 {messages.filter(msg => {
                     const content = msg.content || '';
-                    const myName = (user?.fullName || user?.email?.split('@')[0] || '').toLowerCase();
-                    const contactName = (contact?.name || '').toLowerCase();
                     const msgSenderName = (msg.sender_name || '').toLowerCase();
 
                     // If viewing Team Chat
@@ -142,13 +144,19 @@ export const ChatWindow = ({ contact }: { contact: any }) => {
                     }
 
                     // If viewing Private Chat
-                    if (content.startsWith(`@@PM:${contact?.name}@@`) && msgSenderName === myName) {
-                        // I sent it to contact
-                        return true;
+                    const myFullName = (user?.fullName || '').toLowerCase();
+                    const myEmailName = (user?.email?.split('@')[0] || '').toLowerCase();
+                    const contactNameLower = (contact?.name || '').toLowerCase();
+
+                    // Sent by me to contact
+                    if (msgSenderName === myFullName || msgSenderName === myEmailName) {
+                        return content.toLowerCase().includes(`@@pm:${contactNameLower}@@`);
                     }
-                    if (content.startsWith(`@@PM:${user?.fullName || user?.email?.split('@')[0]}@@`) && msgSenderName === contactName) {
-                        // Contact sent it to me
-                        return true;
+                    
+                    // Sent by contact to me
+                    if (msgSenderName === contactNameLower) {
+                        return content.toLowerCase().includes(`@@pm:${myFullName}@@`) || 
+                               content.toLowerCase().includes(`@@pm:${myEmailName}@@`);
                     }
 
                     return false;

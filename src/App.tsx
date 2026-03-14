@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { Users, FileText, LayoutDashboard, MessageSquare, LogOut, Shield, Menu, X } from 'lucide-react';
 import { useAuth, AuthProvider } from './context/AuthContext.tsx';
-import { SocketProvider } from './context/SocketContext.tsx';
+import { SocketProvider, useSocket } from './context/SocketContext.tsx';
 import { supabase } from './lib/supabaseClient';
 import { playNotificationSound } from './utils/notificationSound';
 
@@ -57,9 +57,54 @@ export default function App() {
 
 function MainLayout() {
     const { logout, user } = useAuth();
+    const { socket } = useSocket();
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [unreadCounts, setUnreadCounts] = useState({
+        deals: 0,
+        customers: 0,
+        proformas: 0,
+        messages: 0
+    });
     const pageTitle = location.pathname.split('/').pop()?.toUpperCase() || 'DASHBOARD';
+
+    // Reset counts when visiting pages
+    useEffect(() => {
+        const path = location.pathname;
+        if (path === '/deals' || path === '/') setUnreadCounts(prev => ({ ...prev, deals: 0 }));
+        if (path === '/customers') setUnreadCounts(prev => ({ ...prev, customers: 0 }));
+        if (path === '/offers') setUnreadCounts(prev => ({ ...prev, proformas: 0 }));
+        if (path === '/messages') setUnreadCounts(prev => ({ ...prev, messages: 0 }));
+    }, [location.pathname]);
+
+    // Socket.io listeners for deals, customers, proformas
+    useEffect(() => {
+        if (!socket) return;
+        
+        const handleDataChange = ({ type, payload }: { type: string; payload: any }) => {
+            if (payload?.deleted) return;
+
+            const path = location.pathname;
+            if (type === 'deals' && path !== '/deals' && path !== '/') {
+                setUnreadCounts(prev => ({ ...prev, deals: prev.deals + 1 }));
+            }
+            if (type === 'customers' && path !== '/customers') {
+                setUnreadCounts(prev => ({ ...prev, customers: prev.customers + 1 }));
+            }
+            if (type === 'proformas' || type === 'offers') {
+                if (location.pathname !== '/offers') {
+                    setUnreadCounts(prev => ({ ...prev, proformas: prev.proformas + 1 }));
+                }
+            }
+        };
+
+        socket.on('data_change', handleDataChange);
+        return () => { socket.off('data_change', handleDataChange); };
+    }, [socket, location.pathname]);
+
+    useEffect(() => {
+        console.log('📊 Unread Counts Updated:', unreadCounts);
+    }, [unreadCounts]);
 
     useEffect(() => {
         if (!user) return;
@@ -76,11 +121,23 @@ function MainLayout() {
                 if (msgSenderName !== currentUserIdentifier) {
                     const content = payload.new.content || '';
                     const isTeamChat = !content.startsWith('@@PM:');
-                    const myPrefix = user.fullName || user.email.split('@')[0];
-                    const isPrivateForMe = content.startsWith(`@@PM:${myPrefix}@@`);
-
-                    if (isTeamChat || isPrivateForMe) {
+                    if (isTeamChat) {
                         playNotificationSound();
+                    } else {
+                        const myFullName = (user.fullName || '').toLowerCase();
+                        const myEmailName = (user.email.split('@')[0] || '').toLowerCase();
+                        const contentLower = content.toLowerCase();
+
+                        if (contentLower.includes(`@@pm:${myFullName}@@`) || 
+                            contentLower.includes(`@@pm:${myEmailName}@@`)) {
+                            playNotificationSound();
+                            if (location.pathname !== '/messages') {
+                                setUnreadCounts(prev => ({ ...prev, messages: prev.messages + 1 }));
+                            }
+                        }
+                    }
+                    if (isTeamChat && location.pathname !== '/messages') {
+                        setUnreadCounts(prev => ({ ...prev, messages: prev.messages + 1 }));
                     }
                 }
             })
@@ -127,6 +184,11 @@ function MainLayout() {
                             onClick={() => setIsMobileMenuOpen(false)}
                         >
                             <LayoutDashboard size={22} /> <span>İŞLER</span>
+                            {unreadCounts.deals > 0 && (
+                                <span className="ml-auto bg-red-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-full ring-2 ring-white/20 shadow-xl animate-pulse flex items-center justify-center min-w-[22px]">
+                                    {unreadCounts.deals}
+                                </span>
+                            )}
                         </Link>
                     )}
                     {(user?.permissions?.customers !== false || user?.email === 'fevziye.mamak35@gmail.com') && (
@@ -136,6 +198,11 @@ function MainLayout() {
                             onClick={() => setIsMobileMenuOpen(false)}
                         >
                             <Users size={22} /> <span>Müşteriler</span>
+                            {unreadCounts.customers > 0 && (
+                                <span className="ml-auto bg-red-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-full ring-2 ring-white/20 shadow-xl animate-pulse flex items-center justify-center min-w-[22px]">
+                                    {unreadCounts.customers}
+                                </span>
+                            )}
                         </Link>
                     )}
                     {(user?.permissions?.offers !== false || user?.email === 'fevziye.mamak35@gmail.com') && (
@@ -145,6 +212,11 @@ function MainLayout() {
                             onClick={() => setIsMobileMenuOpen(false)}
                         >
                             <FileText size={22} /> <span>Proformalar</span>
+                            {unreadCounts.proformas > 0 && (
+                                <span className="ml-auto bg-red-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-full ring-2 ring-white/20 shadow-xl animate-pulse flex items-center justify-center min-w-[22px]">
+                                    {unreadCounts.proformas}
+                                </span>
+                            )}
                         </Link>
                     )}
                     {(user?.permissions?.messages !== false || user?.email === 'fevziye.mamak35@gmail.com') && (
@@ -154,6 +226,11 @@ function MainLayout() {
                             onClick={() => setIsMobileMenuOpen(false)}
                         >
                             <MessageSquare size={22} /> <span>Mesajlar</span>
+                            {unreadCounts.messages > 0 && (
+                                <span className="ml-auto bg-red-600 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full ring-2 ring-white/20 shadow-xl animate-pulse flex items-center justify-center min-w-[22px]">
+                                    {unreadCounts.messages}
+                                </span>
+                            )}
                         </Link>
                     )}
                 </nav>
@@ -191,6 +268,7 @@ function MainLayout() {
                     >
                         <LogOut size={22} /> <span>Çıkış Yap</span>
                     </button>
+
                 </div>
             </aside>
 

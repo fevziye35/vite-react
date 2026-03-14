@@ -217,6 +217,7 @@ export default function DealsPage() {
         if (!quickAddForm.title) return;
         handleSaveDeal({
             id: Date.now().toString(),
+            isNew: true,
             title: quickAddForm.title,
             amount: quickAddForm.amount,
             currency: quickAddForm.currency,

@@ -510,68 +510,86 @@ app.get('/api/deals', authenticateToken, checkPermission('deals'), (req, res) =>
 });
 
 app.post('/api/deals', authenticateToken, checkPermission('deals'), (req, res) => {
-    const id = generateId();
-    const now = getNow();
-    const { 
-        title, customer_id, customer_name, target_products, target_volume, 
-        target_country, expected_closing_date, stage, 
-        probability, expected_revenue, currency, assigned_to, notes, 
-        offer_id, items 
-    } = req.body;
+    try {
+        const id = generateId();
+        const now = getNow();
+        const { 
+            title, customer_id, customer_name, target_products, target_volume, 
+            target_country, expected_closing_date, stage, 
+            probability, expected_revenue, currency, assigned_to, notes, 
+            offer_id, items 
+        } = req.body;
 
-    db.prepare(`
-        INSERT INTO deals (id, title, customer_id, customer_name, offer_id, target_products, target_volume, target_country, expected_closing_date, stage, probability, expected_revenue, currency, assigned_to, notes, items, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, title, customer_id, customer_name, offer_id, JSON.stringify(target_products || []), target_volume, target_country, expected_closing_date, stage, probability, expected_revenue, currency, assigned_to, notes, items ? JSON.stringify(items) : null, now, now);
+        console.log('📦 Creating deal:', { id, title, customer_name });
 
-    const newDeal = { id, ...req.body, created_at: now, updated_at: now };
-    broadcast('deals', newDeal);
-    res.json(newDeal);
+        db.prepare(`
+            INSERT INTO deals (id, title, customer_id, customer_name, offer_id, target_products, target_volume, target_country, expected_closing_date, stage, probability, expected_revenue, currency, assigned_to, notes, items, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(id, title, customer_id, customer_name, offer_id, JSON.stringify(target_products || []), target_volume, target_country, expected_closing_date, stage, probability, expected_revenue, currency, assigned_to, notes, items ? JSON.stringify(items) : null, now, now);
+
+        const newDeal = { id, ...req.body, created_at: now, updated_at: now };
+        broadcast('deals', newDeal);
+        res.json(newDeal);
+    } catch (error) {
+        console.error('❌ Error creating deal:', error);
+        res.status(500).json({ error: 'Deal creation failed: ' + error.message });
+    }
 });
 
 app.put('/api/deals/:id', authenticateToken, checkPermission('deals'), (req, res) => {
-    const now = getNow();
-    const { 
-        title, customer_id, customer_name, target_products, target_volume, 
-        target_country, expected_closing_date, stage, 
-        probability, expected_revenue, assigned_to, notes, 
-        offer_id, items 
-    } = req.body;
+    try {
+        const now = getNow();
+        const { 
+            title, customer_id, customer_name, target_products, target_volume, 
+            target_country, expected_closing_date, stage, 
+            probability, expected_revenue, currency, assigned_to, notes, 
+            offer_id, items 
+        } = req.body;
 
-    db.prepare(`
-        UPDATE deals SET 
-            title = COALESCE(?, title),
-            customer_id = COALESCE(?, customer_id),
-            customer_name = COALESCE(?, customer_name),
-            target_products = COALESCE(?, target_products),
-            target_volume = COALESCE(?, target_volume),
-            target_country = COALESCE(?, target_country),
-            expected_closing_date = COALESCE(?, expected_closing_date),
-            stage = COALESCE(?, stage),
-            probability = COALESCE(?, probability),
-            expected_revenue = COALESCE(?, expected_revenue),
-            currency = COALESCE(?, currency),
-            assigned_to = COALESCE(?, assigned_to),
-            notes = COALESCE(?, notes),
-            offer_id = COALESCE(?, offer_id),
-            items = COALESCE(?, items),
-            updated_at = ?
-        WHERE id = ?
-    `).run(
-        title, customer_id, customer_name,
-        target_products ? JSON.stringify(target_products) : null,
-        target_volume, target_country, expected_closing_date, stage,
-        probability, expected_revenue, currency,
-        assigned_to, notes, offer_id, 
-        items ? JSON.stringify(items) : null,
-        now, req.params.id
-    );
+        console.log('📦 Updating deal:', req.params.id);
 
-    const updated = db.prepare('SELECT * FROM deals WHERE id = ?').get(req.params.id);
-    updated.target_products = JSON.parse(updated.target_products || '[]');
-    updated.items = updated.items ? JSON.parse(updated.items) : [];
-    broadcast('deals', updated);
-    res.json(updated);
+        db.prepare(`
+            UPDATE deals SET 
+                title = COALESCE(?, title),
+                customer_id = COALESCE(?, customer_id),
+                customer_name = COALESCE(?, customer_name),
+                target_products = COALESCE(?, target_products),
+                target_volume = COALESCE(?, target_volume),
+                target_country = COALESCE(?, target_country),
+                expected_closing_date = COALESCE(?, expected_closing_date),
+                stage = COALESCE(?, stage),
+                probability = COALESCE(?, probability),
+                expected_revenue = COALESCE(?, expected_revenue),
+                currency = COALESCE(?, currency),
+                assigned_to = COALESCE(?, assigned_to),
+                notes = COALESCE(?, notes),
+                offer_id = COALESCE(?, offer_id),
+                items = COALESCE(?, items),
+                updated_at = ?
+            WHERE id = ?
+        `).run(
+            title, customer_id, customer_name,
+            target_products ? JSON.stringify(target_products) : null,
+            target_volume, target_country, expected_closing_date, stage,
+            probability, expected_revenue, currency,
+            assigned_to, notes, offer_id, 
+            items ? JSON.stringify(items) : null,
+            now, req.params.id
+        );
+
+        const updated = db.prepare('SELECT * FROM deals WHERE id = ?').get(req.params.id);
+        if (updated) {
+            updated.target_products = JSON.parse(updated.target_products || '[]');
+            updated.items = updated.items ? JSON.parse(updated.items) : [];
+            broadcast('deals', updated);
+            res.json(updated);
+        } else {
+            res.status(404).json({ error: 'Deal not found' });
+        }
+    } catch (error) {
+        console.error('❌ Error updating deal:', error);
+        res.status(500).json({ error: 'Deal update failed: ' + error.message });
+    }
 });
 
 app.delete('/api/deals/:id', authenticateToken, checkPermission('deals'), (req, res) => {
