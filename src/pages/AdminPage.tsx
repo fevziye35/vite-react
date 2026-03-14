@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Plus, Shield, Trash2, Edit2, CheckCircle2, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://makfacrm.loca.lt';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 const MODULES = [
     { id: 'deals', label: 'İŞLER' },

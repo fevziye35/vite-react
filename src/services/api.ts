@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { Product, Customer, Offer, LogisticsOffer, LogisticsCompany } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://makfacrm.loca.lt';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 // Create axios instance with auth header
 const api = axios.create({

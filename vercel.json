@@ -1,8 +1,36 @@
 {
     "rewrites": [
         {
+            "source": "/api/:path*",
+            "destination": "https://makfacrm.loca.lt/api/:path*"
+        },
+        {
+            "source": "/socket.io/:path*",
+            "destination": "https://makfacrm.loca.lt/socket.io/:path*"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
+        }
+    ],
+    "headers": [
+        {
+            "source": "/api/:path*",
+            "headers": [
+                {
+                    "key": "Bypass-Tunnel-Reminder",
+                    "value": "true"
+                }
+            ]
+        },
+        {
+            "source": "/socket.io/:path*",
+            "headers": [
+                {
+                    "key": "Bypass-Tunnel-Reminder",
+                    "value": "true"
+                }
+            ]
         }
     ]
 }
