@@ -102,6 +102,18 @@ const mapLogisticsCompany = (l: any): LogisticsCompany => ({
     customFields: l.custom_fields || {}
 });
 
+export const userService = {
+    getAll: async () => {
+        const { data } = await api.get('/api/users');
+        return data.map((u: any) => ({
+            id: u.id,
+            email: u.email,
+            fullName: u.full_name,
+            role: u.role
+        }));
+    }
+};
+
 // --- SERVICES ---
 
 export const productService = {

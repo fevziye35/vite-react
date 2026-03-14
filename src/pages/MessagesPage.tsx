@@ -1,20 +1,41 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChatWindow } from '../components/chat/ChatWindow';
 import { HighlightText } from '../components/ui/HighlightText';
 import { Badge } from '../components/ui/Badge';
+import { useSocket } from '../context/SocketContext';
 
-const INITIAL_CONTACTS = [
-    { id: 1, name: 'Ekip Sohbeti', initials: 'ES', color: 'bg-blue-100', textColor: 'text-blue-600', time: '15:40', lastMessage: 'Genel mesajlaşma kanalı aktif.' },
-    { id: 2, name: 'Ali Mamak', initials: 'AM', color: 'bg-emerald-100', textColor: 'text-emerald-600', time: 'Dün', lastMessage: 'Sadece gösterim amaçlıdır.' },
-];
+
+import { userService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const MessagesPage = () => {
+    const { user } = useAuth();
+    const { onlineUsers } = useSocket();
     const [searchTerm, setSearchTerm] = useState('');
-    const [contacts] = useState(INITIAL_CONTACTS);
+    const [selectedContact, setSelectedContact] = useState<any>(null);
+    const [users, setUsers] = useState<any[]>([]);
+
+    useEffect(() => {
+        userService.getAll().then(data => {
+            setUsers(data);
+        });
+    }, []);
+
+    const contacts = [
+        { id: 'team', name: 'Ekip Sohbeti', initials: 'ES', color: 'bg-blue-100', textColor: 'text-blue-600', isTeam: true, isOnline: true },
+        ...users.filter(u => u.id !== user?.id).map(u => ({
+            id: u.id,
+            name: u.fullName || u.email,
+            initials: (u.fullName || u.email).substring(0, 2).toUpperCase(),
+            color: 'bg-emerald-100',
+            textColor: 'text-emerald-600',
+            isTeam: false,
+            isOnline: onlineUsers.includes(u.id)
+        }))
+    ];
 
     const filteredContacts = contacts.filter(c => 
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.lastMessage.toLowerCase().includes(searchTerm.toLowerCase())
+        c.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -67,7 +88,11 @@ const MessagesPage = () => {
 
                 <div className="flex-1 overflow-y-auto">
                     {filteredContacts.map(contact => (
-                        <div key={contact.id} className="flex items-center gap-4 p-3 hover:bg-[#f5f6f6] cursor-pointer group">
+                        <div 
+                            key={contact.id} 
+                            onClick={() => setSelectedContact(contact)}
+                            className={`flex items-center gap-4 p-3 hover:bg-[#f5f6f6] cursor-pointer group ${selectedContact?.id === contact.id ? 'bg-[#f5f6f6]' : ''}`}
+                        >
                             <div className={`w-12 h-12 ${contact.color} rounded-full flex items-center justify-center ${contact.textColor} font-bold shrink-0`}>
                                 {contact.initials}
                             </div>
@@ -76,12 +101,12 @@ const MessagesPage = () => {
                                     <h2 className="font-semibold text-gray-900 truncate">
                                         <HighlightText text={contact.name} highlight={searchTerm} />
                                     </h2>
-                                    <span className={`text-xs ${contact.time === '15:40' ? 'text-green-500 font-medium' : 'text-gray-400'}`}>
-                                        {contact.time}
-                                    </span>
                                 </div>
-                                <p className="text-sm text-gray-500 truncate">
-                                    <HighlightText text={contact.lastMessage} highlight={searchTerm} />
+                                <p className="text-sm text-gray-500 truncate mt-1 flex items-center gap-1.5">
+                                    {!contact.isTeam && (
+                                        <span className={`w-2 h-2 rounded-full ${contact.isOnline ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                                    )}
+                                    {contact.isTeam ? 'Genel mesajlaşma kanalı' : (contact.isOnline ? 'Çevrim içi' : 'Çevrim dışı')}
                                 </p>
                             </div>
                         </div>
@@ -97,7 +122,7 @@ const MessagesPage = () => {
             {/* Sağ tarafta ChatWindow */}
             <div className="flex-1 relative bg-[#f8f9fa] flex flex-col">
                 <div className="relative z-10 flex-1 flex flex-col h-full w-full">
-                    <ChatWindow />
+                    <ChatWindow contact={selectedContact || contacts[0]} />
                 </div>
             </div>
         </div>

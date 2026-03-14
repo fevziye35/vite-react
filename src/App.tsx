@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { Users, FileText, LayoutDashboard, MessageSquare, LogOut, Shield, Menu, X } from 'lucide-react';
 import { useAuth, AuthProvider } from './context/AuthContext.tsx';
 import { SocketProvider } from './context/SocketContext.tsx';
+import { supabase } from './lib/supabaseClient';
+import { playNotificationSound } from './utils/notificationSound';
 
 // Sayfaların doğru yerlerde olduğundan emin olalım
 import LoginPage from './pages/LoginPage';
@@ -59,6 +61,36 @@ function MainLayout() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const pageTitle = location.pathname.split('/').pop()?.toUpperCase() || 'DASHBOARD';
 
+    useEffect(() => {
+        if (!user) return;
+
+        const channel = supabase
+            .channel('global:messages')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+                const currentUserIdentifier = (user.fullName || user.email.split('@')[0] || '').toLowerCase();
+                const msgSenderName = (payload.new.sender_name || '').toLowerCase();
+                
+                // Play sound if:
+                // 1. Not from current user
+                // 2. Either Team Chat OR Private message sent specifically to current user
+                if (msgSenderName !== currentUserIdentifier) {
+                    const content = payload.new.content || '';
+                    const isTeamChat = !content.startsWith('@@PM:');
+                    const myPrefix = user.fullName || user.email.split('@')[0];
+                    const isPrivateForMe = content.startsWith(`@@PM:${myPrefix}@@`);
+
+                    if (isTeamChat || isPrivateForMe) {
+                        playNotificationSound();
+                    }
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [user]);
+
     return (
         <div className="flex min-h-screen bg-[#F8FAFC]">
             {/* Mobile Menu Overlay */}
@@ -89,22 +121,38 @@ function MainLayout() {
                 </div>
                 <nav className="space-y-3 flex-1 font-bold">
                     {(user?.permissions?.deals !== false || user?.email === 'fevziye.mamak35@gmail.com') && (
-                        <Link to="/deals" className="flex items-center gap-4 p-4 rounded-2xl text-slate-400 hover:text-white transition-all italic" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link 
+                            to="/deals" 
+                            className={`flex items-center gap-4 p-4 rounded-2xl transition-all italic ${location.pathname === '/' || location.pathname === '/deals' ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]' : 'text-slate-400 hover:text-white'}`}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        >
                             <LayoutDashboard size={22} /> <span>İŞLER</span>
                         </Link>
                     )}
                     {(user?.permissions?.customers !== false || user?.email === 'fevziye.mamak35@gmail.com') && (
-                        <Link to="/customers" className="flex items-center gap-4 p-4 rounded-2xl text-slate-400 hover:text-white transition-all italic" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link 
+                            to="/customers" 
+                            className={`flex items-center gap-4 p-4 rounded-2xl transition-all italic ${location.pathname === '/customers' ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]' : 'text-slate-400 hover:text-white'}`}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        >
                             <Users size={22} /> <span>Müşteriler</span>
                         </Link>
                     )}
                     {(user?.permissions?.offers !== false || user?.email === 'fevziye.mamak35@gmail.com') && (
-                        <Link to="/offers" className="flex items-center gap-4 p-4 rounded-2xl text-slate-400 hover:text-white transition-all italic" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link 
+                            to="/offers" 
+                            className={`flex items-center gap-4 p-4 rounded-2xl transition-all italic ${location.pathname === '/offers' ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]' : 'text-slate-400 hover:text-white'}`}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        >
                             <FileText size={22} /> <span>Proformalar</span>
                         </Link>
                     )}
                     {(user?.permissions?.messages !== false || user?.email === 'fevziye.mamak35@gmail.com') && (
-                        <Link to="/messages" className="flex items-center gap-4 p-4 rounded-2xl text-slate-400 hover:text-white transition-all italic" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link 
+                            to="/messages" 
+                            className={`flex items-center gap-4 p-4 rounded-2xl transition-all italic ${location.pathname === '/messages' ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]' : 'text-slate-400 hover:text-white'}`}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        >
                             <MessageSquare size={22} /> <span>Mesajlar</span>
                         </Link>
                     )}
@@ -166,17 +214,17 @@ function MainLayout() {
                     </div>
                 </header>
 
-                <div className="flex-1 overflow-y-auto p-8">
+                <div className="flex-1 overflow-y-auto p-4 md:p-8">
                     <Routes>
-                    <Route path="/" element={<DealsPage />} />
-                    <Route path="/deals" element={<DealsPage />} />
-                    <Route path="/messages" element={<MessagesPage />} />
-                    <Route path="/customers" element={<CustomersPage />} />
-                    <Route path="/offers" element={<ProformalarPage />} />
-                    <Route path="/admin" element={<AdminPage />} />
-                </Routes>
-            </div>
-        </main>
-    </div>
-);
+                        <Route path="/" element={<DealsPage />} />
+                        <Route path="/deals" element={<DealsPage />} />
+                        <Route path="/messages" element={<MessagesPage />} />
+                        <Route path="/customers" element={<CustomersPage />} />
+                        <Route path="/offers" element={<ProformalarPage />} />
+                        <Route path="/admin" element={<AdminPage />} />
+                    </Routes>
+                </div>
+            </main>
+        </div>
+    );
 }

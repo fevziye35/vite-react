@@ -31,13 +31,33 @@ const sendEmailNotification = (dealId, note) => {
 };
 
 // --- REAL-TIME HELPERS ---
+const onlineUsers = new Map(); // socketId -> userId
+
 const broadcast = (type, payload) => {
     io.emit('data_change', { type, payload });
 };
 
+const broadcastOnlineUsers = () => {
+    const uniqueUserIds = Array.from(new Set(onlineUsers.values()));
+    io.emit('user_status', uniqueUserIds);
+};
+
 io.on('connection', (socket) => {
     console.log('👤 New client connected', socket.id);
-    socket.on('disconnect', () => console.log('👤 Client disconnected'));
+
+    socket.on('identify', (userId) => {
+        if (userId) {
+            onlineUsers.set(socket.id, userId);
+            console.log(`👤 User identified: ${userId}`);
+            broadcastOnlineUsers();
+        }
+    });
+
+    socket.on('disconnect', () => {
+        console.log('👤 Client disconnected', socket.id);
+        onlineUsers.delete(socket.id);
+        broadcastOnlineUsers();
+    });
 });
 
 // Notification Helper
@@ -309,6 +329,17 @@ app.get('/api/auth/me', authenticateToken, (req, res) => {
             permissions: JSON.parse(user.permissions || 'null')
         } 
     });
+});
+
+// GET PUBLIC USER LIST
+app.get('/api/users', authenticateToken, (req, res) => {
+    try {
+        const users = db.prepare('SELECT id, email, full_name, role FROM users').all();
+        res.json(users);
+    } catch (error) {
+        console.error('List users error:', error);
+        res.status(500).json({ error: 'Kullanıcılar listelenemedi' });
+    }
 });
 
 // ==================== PRODUCTS ====================

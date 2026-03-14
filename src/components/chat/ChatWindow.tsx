@@ -2,9 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import { Send, Trash2 } from 'lucide-react';
-import { playNotificationSound } from '../../utils/notificationSound';
 
-export const ChatWindow = () => {
+export const ChatWindow = ({ contact }: { contact: any }) => {
     const { user } = useAuth();
     const [messages, setMessages] = useState<any[]>([]);
     const [newMessage, setNewMessage] = useState('');
@@ -37,13 +36,6 @@ export const ChatWindow = () => {
             .channel('public:messages')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
                 setMessages((prev) => [...prev, payload.new]);
-                
-                // Play sound if message is not from current user
-                const currentUserIdentifier = (user?.fullName || user?.email?.split('@')[0] || '').toLowerCase();
-                const msgSenderName = (payload.new.sender_name || '').toLowerCase();
-                if (msgSenderName !== currentUserIdentifier) {
-                    playNotificationSound();
-                }
             })
             .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, (payload) => {
                 setMessages((prev) => prev.filter(m => m.id !== payload.old.id));
@@ -61,14 +53,20 @@ export const ChatWindow = () => {
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !user) return;
+        if (!newMessage.trim() || !user || !contact) return;
 
         const senderName = user.fullName || user.email.split('@')[0];
+        let contentToSave = newMessage;
+
+        // If it's a private message, add prefix
+        if (!contact.isTeam) {
+            contentToSave = `@@PM:${contact.name}@@${newMessage}`;
+        }
 
         // Send to Supabase
         const { error } = await supabase.from('messages').insert([
             { 
-                content: newMessage, 
+                content: contentToSave, 
                 sender_name: senderName
             }
         ]);
@@ -113,14 +111,16 @@ export const ChatWindow = () => {
             {/* Professional CRM Header */}
             <div className="bg-white p-4 border-b border-gray-200 flex justify-between items-center z-20 shadow-sm">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center font-bold">
-                        ES
+                    <div className={`w-10 h-10 ${contact?.color || 'bg-blue-100'} ${contact?.textColor || 'text-blue-600'} rounded-lg flex items-center justify-center font-bold`}>
+                        {contact?.initials || '??'}
                     </div>
                     <div>
-                        <div className="font-bold text-gray-900">Ekip Sohbeti</div>
+                        <div className="font-bold text-gray-900">{contact?.name || 'Sohbet'}</div>
                         <div className="flex items-center gap-1.5">
                             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                            <span className="text-[11px] text-gray-500 font-medium uppercase tracking-wider">Aktif Kanal</span>
+                            <span className="text-[11px] text-gray-500 font-medium uppercase tracking-wider">
+                                {contact?.isTeam ? 'Aktif Kanal' : 'Çevrimiçi'}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -129,14 +129,41 @@ export const ChatWindow = () => {
             {/* Message History Area */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6 relative scrollbar-hide bg-[#f8f9fa]">
                 
-                {messages.map((msg) => {
-                    // Robust "isMe" check: compare lowercase name, email prefix, or handle legacy 'Fevziye'
+                {messages.filter(msg => {
+                    const content = msg.content || '';
+                    const myName = (user?.fullName || user?.email?.split('@')[0] || '').toLowerCase();
+                    const contactName = (contact?.name || '').toLowerCase();
+                    const msgSenderName = (msg.sender_name || '').toLowerCase();
+
+                    // If viewing Team Chat
+                    if (contact?.isTeam) {
+                        // Show messages that are NOT private
+                        return !content.startsWith('@@PM:');
+                    }
+
+                    // If viewing Private Chat
+                    if (content.startsWith(`@@PM:${contact?.name}@@`) && msgSenderName === myName) {
+                        // I sent it to contact
+                        return true;
+                    }
+                    if (content.startsWith(`@@PM:${user?.fullName || user?.email?.split('@')[0]}@@`) && msgSenderName === contactName) {
+                        // Contact sent it to me
+                        return true;
+                    }
+
+                    return false;
+                }).map((msg) => {
+                    // Robust "isMe" check
                     const currentUserIdentifier = (user?.fullName || user?.email?.split('@')[0] || '').toLowerCase();
                     const msgSenderName = (msg.sender_name || '').toLowerCase();
                     
-                    const isMe = msgSenderName === currentUserIdentifier || 
-                                 msgSenderName === 'fevziye' || 
-                                 (msgSenderName.includes('fevziye') && currentUserIdentifier.includes('fevziye'));
+                    const isMe = msgSenderName === currentUserIdentifier;
+                    
+                    // Strip the prefix for display
+                    let displayContent = msg.content;
+                    if (displayContent.startsWith('@@PM:')) {
+                        displayContent = displayContent.split('@@').slice(2).join('@@');
+                    }
                     
                     return (
                         <div key={msg.id} className={`flex flex-col relative z-10 ${isMe ? 'items-end' : 'items-start'}`}>
@@ -149,22 +176,12 @@ export const ChatWindow = () => {
                                     : 'bg-white text-gray-800 border-gray-200 rounded-tl-none'
                             }`}>
                                 <p className="text-[13px] leading-relaxed whitespace-pre-wrap break-words font-medium">
-                                    {msg.content}
+                                    {displayContent}
                                 </p>
                                 <div className={`text-[10px] mt-2 flex items-center gap-2 ${isMe ? 'text-blue-100' : 'text-gray-400'}`}>
                                     <span>{msg.created_at ? new Date(msg.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : ''}</span>
                                     {isMe && (
                                         <div className="flex items-center gap-1 ml-auto">
-                                            <div 
-                                                className="cursor-pointer hover:opacity-80 transition-opacity"
-                                                onClick={() => setSelectedMsgInfo(msg)}
-                                                title="Kimin okuduğunu gör"
-                                            >
-                                                <svg viewBox="0 0 16 15" width="16" height="16" fill="currentColor">
-                                                    <path d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879 5.517 7.424a.36.36 0 0 0-.477.04l-.42.427a.362.362 0 0 0 .027.53l3.703 2.905c.135.105.327.103.458-.005l5.807-7.495a.362.362 0 0 0-.005-.51z" />
-                                                    <path d="M11.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L4.666 9.879 1.517 7.424a.36.36 0 0 0-.477.04l-.42.427a.362.362 0 0 0 .027.53l3.703 2.905c.135.105.327.103.458-.005l5.807-7.495a.362.362 0 0 0-.005-.51z" />
-                                                </svg>
-                                            </div>
                                             <div
                                                 className="text-red-400 cursor-pointer hover:scale-110 transition-transform active:opacity-70 px-1"
                                                 onClick={() => handleDeleteMessage(msg.id)}

@@ -64,7 +64,7 @@ function useLocalStorage<T>(key: string, initialValue: T) {
 export default function DealsPage() {
     const { user } = useAuth();
     console.log('DealsPage Rendered - Source: src/pages/DealsPage.tsx');
-    const [activeTab, setActiveTab] = useLocalStorage('deals_activeTab', 'Takip edilen işler');
+    const [activeTab, setActiveTab] = useState('Takip edilen işler');
     const [deals, setDeals] = useState<any[]>([]);
 
     const fetchDeals = async () => {
