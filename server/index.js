@@ -216,6 +216,7 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(400).json({ error: 'Email and password are required' });
         }
         email = email.trim().toLowerCase();
+        password = password.trim();
 
         const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
         if (!user) {
@@ -1101,9 +1102,37 @@ app.delete('/api/admin/users/:id', authenticateToken, requireSuperAdmin, (req, r
 
 // ==================== START SERVER ====================
 startCronJobs();
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     console.log(`📡 Real-time: Socket.io enabled`);
     console.log(`📦 Database: SQLite (crm.db)`);
     console.log(`🔐 Auth: JWT-based authentication`);
+
+    // Tünel başlatma (iç içe çökmeleri engellemek için ES methoduyla)
+    const startTunnel = async () => {
+        try {
+            const localtunnel = (await import('localtunnel')).default;
+            const tunnel = await localtunnel({ port: PORT, subdomain: 'makfacrm' });
+            
+            console.log(`\n================================`);
+            console.log(`🚀 MAKFA CRM GLOBALLY ACCESSIBLE AT:`);
+            console.log(`🌍 ${tunnel.url}`);
+            console.log(`=================================\n`);
+            
+            tunnel.on('close', () => {
+                console.log('\n⚠️ Tunnel closed! Restarting in 5s...');
+                setTimeout(startTunnel, 5000);
+            });
+            
+            tunnel.on('error', (err) => {
+                console.log('\n❌ Tunnel Error:', err.message);
+                tunnel.close();
+            });
+        } catch (err) {
+            console.log('\n❌ Tunnel failed to connect:', err.message);
+            setTimeout(startTunnel, 5000);
+        }
+    };
+    
+    startTunnel();
 });

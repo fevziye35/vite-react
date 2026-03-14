@@ -65,8 +65,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             return true;
         } catch (error: any) {
-            console.error('Login error:', error.response?.data?.error || error.message);
-            return false;
+            console.error('Login error details:', {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message
+            });
+            
+            // If it's a validation/credential error, return false to show "Invalid credentials"
+            if (error.response?.status === 401 || error.response?.status === 400) {
+                return false;
+            }
+            
+            // For other errors (network, 500), throw so the UI can show a more specific error
+            throw error;
         }
     };
 

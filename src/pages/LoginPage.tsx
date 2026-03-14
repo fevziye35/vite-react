@@ -33,8 +33,12 @@ export default function LoginPage() {
             } else {
                 setError('Geçersiz e-posta veya şifre.');
             }
-        } catch (err) {
-            setError('Giriş yapılırken bir hata oluştu.');
+        } catch (err: any) {
+            if (err.code === 'ERR_NETWORK' || !err.response) {
+                setError('Sunucu bağlantısı kurulamadı. Lütfen internetinizi veya tünel bağlantısını kontrol edin.');
+            } else {
+                setError('Giriş yapılırken bir hata oluştu: ' + (err.response?.data?.error || err.message));
+            }
         } finally {
             setIsLoading(false);
         }

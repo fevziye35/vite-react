@@ -1,8 +1,14 @@
 
 import Database from 'better-sqlite3';
 import bcrypt from 'bcryptjs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const db = new Database('server/crm.db');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// The crm.db is in the same directory as db.js (server/)
+const db = new Database(path.join(__dirname, 'server', 'crm.db'));
 
 async function resetPassword(email, newPassword) {
     const passwordHash = await bcrypt.hash(newPassword, 10);
