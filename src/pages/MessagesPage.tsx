@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ChatWindow } from '../components/chat/ChatWindow';
 import { HighlightText } from '../components/ui/HighlightText';
-import { Badge } from '../components/ui/Badge';
 import { useSocket } from '../context/SocketContext';
 
 
@@ -14,45 +13,45 @@ const MessagesPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedContact, setSelectedContact] = useState<any>(null);
     const [users, setUsers] = useState<any[]>([]);
+    const [showChat, setShowChat] = useState(false); // Mobile toggle
 
     useEffect(() => {
         userService.getAll().then(data => {
-            setUsers(data);
+            setUsers(data || []);
         });
     }, []);
 
     const contacts = [
-        { id: 'team', name: 'Ekip Sohbeti', initials: 'ES', color: 'bg-blue-100', textColor: 'text-blue-600', isTeam: true, isOnline: true },
+        { id: 'team', name: 'Ekip Sohbeti', initials: 'ES', color: 'bg-[#00a884]', textColor: 'text-white', isTeam: true, isOnline: true },
         ...users.filter(u => u.id !== user?.id).map(u => ({
             id: u.id,
             name: u.fullName || u.email,
             initials: (u.fullName || u.email).substring(0, 2).toUpperCase(),
-            color: 'bg-emerald-100',
-            textColor: 'text-emerald-600',
+            color: 'bg-[#f0f2f5]',
+            textColor: 'text-gray-600',
             isTeam: false,
             isOnline: onlineUsers.includes(u.id)
         }))
     ];
+
+    const handleContactSelect = (contact: any) => {
+        setSelectedContact(contact);
+        setShowChat(true);
+    };
 
     const filteredContacts = contacts.filter(c => 
         c.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
-        <div className="flex bg-[#f0f2f5] h-[calc(100vh-6rem)] rounded-2xl overflow-hidden shadow-xl border border-gray-200">
-            {/* Sol tarafta Sohbet Odaları ve Kişiler listesi */}
-            <div className="w-[350px] bg-white border-r border-gray-200 flex flex-col hidden md:flex shrink-0">
-                <div className="bg-[#f0f2f5] p-3 flex items-center justify-between border-b border-gray-200">
+        <div className="flex bg-[#f0f2f5] h-[calc(100vh-6rem)] md:rounded-2xl overflow-hidden shadow-xl border border-gray-200">
+            {/* Sohbet Listesi */}
+            <div className={`${showChat ? 'hidden md:flex' : 'flex'} w-full md:w-[350px] bg-white border-r border-gray-200 flex-col shrink-0`}>
+                <div className="bg-[#f0f2f5] p-3 flex items-center justify-between border-b border-gray-200 min-h-[60px]">
                     <div className="w-10 h-10 bg-gray-300 rounded-full overflow-hidden shadow-sm">
-                        <img src={`https://ui-avatars.com/api/?name=Fevziye&background=0D8ABC&color=fff`} alt="Profile" />
+                        <img src={`https://ui-avatars.com/api/?name=${user?.fullName || 'User'}&background=0D8ABC&color=fff`} alt="Profile" />
                     </div>
                     <div className="flex gap-4 text-gray-500">
-                        {/* Icons */}
-                        <button className="hover:bg-gray-200 p-2 rounded-full transition-colors">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-                                <path d="M12.072 1.761a10.05 10.05 0 0 0-9.303 5.65.977.977 0 0 0 1.756.855 8.098 8.098 0 0 1 7.496-4.553.977.977 0 1 0 .051-1.952z"></path>
-                            </svg>
-                        </button>
                         <button className="hover:bg-gray-200 p-2 rounded-full transition-colors">
                             <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                                 <path d="M19.005 3.175H4.674C3.642 3.175 3 3.789 3 4.821V21.02l3.544-3.514h12.461c1.033 0 2.064-1.06 2.064-2.093V4.821c-.001-1.032-1.032-1.646-2.064-1.646zm-4.989 9.869H7.041V11.1h6.975v1.944zm3-4H7.041V7.1h9.975v1.944z"></path>
@@ -73,57 +72,79 @@ const MessagesPage = () => {
                         </svg>
                         <input 
                             type="text" 
-                            placeholder="Aratın veya yeni sohbet başlatın" 
+                            placeholder="Sohbet aratın" 
                             className="bg-transparent border-none outline-none w-full text-sm text-gray-700 placeholder-gray-500"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        {searchTerm && (
-                            <Badge variant="neutral" className="bg-gray-200 text-gray-500 border-none text-[10px] animate-in fade-in zoom-in duration-200">
-                                {filteredContacts.length}
-                            </Badge>
-                        )}
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto bg-white">
                     {filteredContacts.map(contact => (
                         <div 
                             key={contact.id} 
-                            onClick={() => setSelectedContact(contact)}
-                            className={`flex items-center gap-4 p-3 hover:bg-[#f5f6f6] cursor-pointer group ${selectedContact?.id === contact.id ? 'bg-[#f5f6f6]' : ''}`}
+                            onClick={() => handleContactSelect(contact)}
+                            className={`flex items-center gap-4 p-4 hover:bg-[#f5f6f6] cursor-pointer group border-b border-gray-50 transition-colors ${selectedContact?.id === contact.id ? 'bg-[#f0f2f5]' : ''}`}
                         >
-                            <div className={`w-12 h-12 ${contact.color} rounded-full flex items-center justify-center ${contact.textColor} font-bold shrink-0`}>
+                            <div className={`w-12 h-12 ${contact.color} rounded-full flex items-center justify-center ${contact.textColor} font-bold shrink-0 shadow-sm text-lg`}>
                                 {contact.initials}
                             </div>
-                            <div className="flex-1 min-w-0 border-b border-gray-100 pb-3">
-                                <div className="flex justify-between items-center mb-1">
-                                    <h2 className="font-semibold text-gray-900 truncate">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-center mb-0.5">
+                                    <h2 className="font-semibold text-[16px] text-gray-900 truncate">
                                         <HighlightText text={contact.name} highlight={searchTerm} />
                                     </h2>
+                                    <span className="text-[11px] text-gray-400">
+                                        {contact.isOnline ? 'şimdi' : ''}
+                                    </span>
                                 </div>
-                                <p className="text-sm text-gray-500 truncate mt-1 flex items-center gap-1.5">
-                                    {!contact.isTeam && (
-                                        <span className={`w-2 h-2 rounded-full ${contact.isOnline ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                                    )}
-                                    {contact.isTeam ? 'Genel mesajlaşma kanalı' : (contact.isOnline ? 'Çevrim içi' : 'Çevrim dışı')}
+                                <p className="text-[14px] text-gray-500 truncate flex items-center gap-1.5 font-medium">
+                                    {contact.isTeam && <span className="text-[#00a884] shrink-0 font-bold">#ekip</span>}
+                                    {contact.isTeam ? 'Bu kanalda ekipçe mesajlaşabilirsiniz' : (contact.isOnline ? 'Aktif' : 'Şu an burada değil')}
                                 </p>
                             </div>
                         </div>
                     ))}
                     {filteredContacts.length === 0 && (
-                        <div className="p-8 text-center text-gray-400 text-sm italic">
-                            Sonuç bulunamadı
+                        <div className="p-12 text-center text-gray-400">
+                            <p className="text-sm italic">Sohbet bulunamadı</p>
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Sağ tarafta ChatWindow */}
-            <div className="flex-1 relative bg-[#f8f9fa] flex flex-col">
-                <div className="relative z-10 flex-1 flex flex-col h-full w-full">
-                    <ChatWindow contact={selectedContact || contacts[0]} />
-                </div>
+            {/* Mesaj Penceresi */}
+            <div className={`${!showChat ? 'hidden md:flex' : 'flex'} flex-1 relative bg-[#efeae2] flex flex-col`}>
+                {selectedContact ? (
+                    <div className="flex-1 flex flex-col h-full w-full animate-in fade-in duration-300">
+                        <ChatWindow 
+                            contact={selectedContact} 
+                            onBack={() => setShowChat(false)} 
+                        />
+                    </div>
+                ) : (
+                    <div className="hidden md:flex flex-1 flex-col items-center justify-center text-center p-12 bg-[#f8f9fa] border-b-[6px] border-[#25d366]">
+                        <div className="w-64 h-64 bg-gray-100 rounded-full flex items-center justify-center mb-8 shadow-inner overflow-hidden">
+                             <img 
+                                src="https://static.whatsapp.net/rsrc.php/v3/yV/r/7K986e68wO4.png" 
+                                alt="WhatsApp Web" 
+                                className="w-48 opacity-40 grayscale"
+                            />
+                        </div>
+                        <h1 className="text-3xl font-light text-gray-600 mb-3">CRM Mesajlaşma</h1>
+                        <p className="text-gray-500 max-w-md leading-relaxed text-[14px]">
+                            Ekiplerinizle ve müşterilerinizle gerçek zamanlı iletişim kurun.<br/>
+                            Bir sohbet seçerek başlayabilirsiniz.
+                        </p>
+                        <div className="mt-auto flex items-center gap-2 text-gray-400 text-xs pb-4">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/><path d="M13 7h-2v6h6v-2h-4z"/>
+                            </svg>
+                            Uçtan uca şifreli
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

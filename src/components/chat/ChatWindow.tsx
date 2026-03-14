@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
-import { Send, Trash2 } from 'lucide-react';
+import { Send, Trash2, ArrowLeft, MoreVertical, Phone, Video } from 'lucide-react';
 import { useSocket } from '../../context/SocketContext';
 
-export const ChatWindow = ({ contact }: { contact: any }) => {
+export const ChatWindow = ({ contact, onBack }: { contact: any; onBack?: () => void }) => {
     const { user } = useAuth();
     const { onlineUsers } = useSocket();
     const [messages, setMessages] = useState<any[]>([]);
@@ -111,22 +111,44 @@ export const ChatWindow = ({ contact }: { contact: any }) => {
     };
 
     return (
-        <div className="flex flex-col h-full w-full bg-[#f8f9fa] overflow-hidden border-l border-gray-200">
-            {/* Professional CRM Header */}
-            <div className="bg-white p-4 border-b border-gray-200 flex justify-between items-center z-20 shadow-sm">
-                <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 ${contact?.color || 'bg-blue-100'} ${contact?.textColor || 'text-blue-600'} rounded-lg flex items-center justify-center font-bold`}>
+        <div className="flex flex-col h-full w-full bg-[#efeae2] overflow-hidden border-l border-gray-200 relative">
+            {/* WhatsApp Patterns Overlay */}
+            <div className="absolute inset-0 opacity-[0.06] pointer-events-none bg-[url('https://static.whatsapp.net/rsrc.php/v3/yl/r/r2OPEENxL17.png')] bg-repeat z-0" />
+
+            {/* Header */}
+            <div className="bg-[#f0f2f5] p-3 border-b border-gray-200 flex justify-between items-center z-20 shadow-sm min-h-[60px]">
+                <div className="flex items-center gap-2 md:gap-3">
+                    {/* Back button for mobile */}
+                    <button 
+                        onClick={onBack}
+                        className="md:hidden p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-600"
+                    >
+                        <ArrowLeft size={20} />
+                    </button>
+
+                    <div className={`w-10 h-10 ${contact?.color || 'bg-blue-100'} ${contact?.textColor || 'text-blue-600'} rounded-full flex items-center justify-center font-bold shadow-sm transition-transform active:scale-95 cursor-pointer`}>
                         {contact?.initials || '??'}
                     </div>
-                    <div>
-                        <div className="font-bold text-gray-900">{contact?.name || 'Sohbet'}</div>
+                    <div className="cursor-pointer">
+                        <div className="font-bold text-gray-900 text-[15px] leading-tight">{contact?.name || 'Sohbet'}</div>
                         <div className="flex items-center gap-1.5">
-                            <span className={`w-2 h-2 ${isContactOnline ? 'bg-green-500' : 'bg-gray-300'} rounded-full`}></span>
-                            <span className="text-[11px] text-gray-500 font-medium uppercase tracking-wider">
-                                {contact?.isTeam ? 'Aktif Kanal' : (isContactOnline ? 'Çevrimiçi' : 'Çevrimdışı')}
+                            <span className="text-[12px] text-gray-500 font-medium">
+                                {contact?.isTeam ? 'grup' : (isContactOnline ? 'çevrimiçi' : 'çevrimdışı')}
                             </span>
                         </div>
                     </div>
+                </div>
+
+                <div className="flex items-center gap-1 md:gap-3 text-gray-500">
+                    <button className="p-2 hover:bg-gray-200 rounded-full hidden sm:flex">
+                        <Video size={18} />
+                    </button>
+                    <button className="p-2 hover:bg-gray-200 rounded-full hidden sm:flex">
+                        <Phone size={18} />
+                    </button>
+                    <button className="p-2 hover:bg-gray-200 rounded-full">
+                        <MoreVertical size={20} />
+                    </button>
                 </div>
             </div>
 

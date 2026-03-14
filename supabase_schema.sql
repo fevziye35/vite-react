@@ -142,6 +142,88 @@ create table public.tasks (
   link text
 );
 
+-- LOGISTICS COMPANIES
+create table public.logistics_companies (
+  id uuid default uuid_generate_v4() primary key,
+  company_name text,
+  contact_person text,
+  phone text,
+  email text,
+  service_intensity text,
+  own_assets text,
+  office_address text,
+  notes text,
+  meeting_status text,
+  custom_fields jsonb default '{}'::jsonb,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- TIMELINE EVENTS
+create table public.timeline_events (
+  id uuid default uuid_generate_v4() primary key,
+  deal_id uuid references public.deals(id) on delete cascade,
+  type text not null,
+  title text,
+  "user" text,
+  content text,
+  assignee text,
+  due_date timestamp with time zone,
+  was_sent_as_message boolean default false,
+  icon text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- PROFORMAS
+create table public.proformas (
+  id uuid default uuid_generate_v4() primary key,
+  proforma_number text unique,
+  date timestamp with time zone default timezone('utc'::text, now()),
+  customer_id uuid references public.customers(id),
+  offer_id uuid references public.offers(id),
+  customer_name text,
+  customer_address text,
+  company_name text,
+  company_address text,
+  company_contact text,
+  items jsonb default '[]'::jsonb,
+  total_price numeric,
+  first_payment_amount numeric,
+  final_payment_amount numeric,
+  currency text,
+  validity_days integer,
+  brand text,
+  destination text,
+  quantity text,
+  production_time text,
+  payment_terms text,
+  beneficiary_name text,
+  bank_name text,
+  bank_address text,
+  swift_code text,
+  iban text,
+  status text default 'Draft',
+  document_type text default 'proforma',
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- SHIPMENTS
+create table public.shipments (
+  id uuid default uuid_generate_v4() primary key,
+  proforma_id uuid references public.proformas(id),
+  customer_id uuid references public.customers(id),
+  booking_reference text,
+  vessel_name text,
+  etd date,
+  eta date,
+  container_count integer,
+  container_type text,
+  status text,
+  forwarder_name text,
+  tracking_url text,
+  notes text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 -- ENABLE ROW LEVEL SECURITY (RLS)
 -- For simplicity, we will enable public read/write access for now, 
 -- BUT for a real team app you should restrict this.
@@ -150,6 +232,10 @@ alter table public.products enable row level security;
 alter table public.offers enable row level security;
 alter table public.offer_items enable row level security;
 alter table public.deals enable row level security;
+alter table public.proformas enable row level security;
+alter table public.shipments enable row level security;
+alter table public.timeline_events enable row level security;
+alter table public.logistics_companies enable row level security;
 alter table public.logistics_offers enable row level security;
 alter table public.meetings enable row level security;
 alter table public.tasks enable row level security;
@@ -160,6 +246,10 @@ create policy "Allow all access for authenticated users" on public.products for 
 create policy "Allow all access for authenticated users" on public.offers for all using (true);
 create policy "Allow all access for authenticated users" on public.offer_items for all using (true);
 create policy "Allow all access for authenticated users" on public.deals for all using (true);
+create policy "Allow all access for authenticated users" on public.proformas for all using (true);
+create policy "Allow all access for authenticated users" on public.shipments for all using (true);
+create policy "Allow all access for authenticated users" on public.timeline_events for all using (true);
+create policy "Allow all access for authenticated users" on public.logistics_companies for all using (true);
 create policy "Allow all access for authenticated users" on public.logistics_offers for all using (true);
 create policy "Allow all access for authenticated users" on public.meetings for all using (true);
 create policy "Allow all access for authenticated users" on public.tasks for all using (true);
