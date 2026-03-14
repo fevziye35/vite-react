@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import axios from 'axios';
 
-const API_URL = '';
+const API_URL = import.meta.env.VITE_API_URL || 'https://makfacrm.loca.lt';
 
 interface User {
     id: string;
