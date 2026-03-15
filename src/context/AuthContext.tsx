@@ -1,14 +1,11 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || '';
+import { supabase } from '../services/supabase'; // Yeni oluşturduğumuz dosya
 
 interface User {
     id: string;
     email: string;
     fullName?: string;
     role?: string;
-    permissions?: Record<string, boolean> | null;
 }
 
 interface AuthContextType {
@@ -27,83 +24,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Check for existing token on mount
+        // Oturumu kontrol et (Bilgisayar kapansa da telefonun hatırlar)
         const initializeAuth = async () => {
-            try {
-                const token = localStorage.getItem('auth_token');
-                if (token) {
-                    // Verify token with server
-                    const response = await axios.get(`${API_URL}/api/auth/me`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    setUser(response.data.user);
-                }
-            } catch (error) {
-                console.error('Error checking session:', error);
-                // Token is invalid, clear it
-                localStorage.removeItem('auth_token');
-            } finally {
-                setIsLoading(false);
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                setUser({
+                    id: session.user.id,
+                    email: session.user.email || '',
+                    fullName: session.user.user_metadata?.fullName,
+                });
             }
+            setIsLoading(false);
         };
 
         initializeAuth();
+
+        // Oturum değişikliklerini dinle
+        const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (session?.user) {
+                setUser({
+                    id: session.user.id,
+                    email: session.user.email || '',
+                    fullName: session.user.user_metadata?.fullName,
+                });
+            } else {
+                setUser(null);
+            }
+        });
+
+        return () => {
+            authListener.subscription.unsubscribe();
+        };
     }, []);
 
     const login = async (email: string, password: string): Promise<boolean> => {
         try {
-            const response = await axios.post(`${API_URL}/api/auth/login`, {
-                email,
-                password
-            });
-
-            const { user: userData, token } = response.data;
-
-            // Store token
-            localStorage.setItem('auth_token', token);
-            setUser(userData);
-
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) throw error;
             return true;
-        } catch (error: any) {
-            console.error('Login error details:', {
-                status: error.response?.status,
-                data: error.response?.data,
-                message: error.message
-            });
-            
-            // If it's a validation/credential error, return false to show "Invalid credentials"
-            if (error.response?.status === 401 || error.response?.status === 400) {
-                return false;
-            }
-            
-            // For other errors (network, 500), throw so the UI can show a more specific error
-            throw error;
+        } catch (error) {
+            console.error('Giriş hatası:', error);
+            return false;
         }
     };
 
     const register = async (email: string, password: string, fullName?: string): Promise<{ success: boolean; error?: string }> => {
         try {
-            const response = await axios.post(`${API_URL}/api/auth/register`, {
+            const { error } = await supabase.auth.signUp({
                 email,
                 password,
-                fullName
+                options: {
+                    data: { fullName }
+                }
             });
-
-            const { user: userData, token } = response.data;
-
-            // Store token and login user
-            localStorage.setItem('auth_token', token);
-            setUser(userData);
-
+            if (error) throw error;
             return { success: true };
         } catch (error: any) {
-            const errorMessage = error.response?.data?.error || 'Registration failed';
-            return { success: false, error: errorMessage };
+            return { success: false, error: error.message };
         }
     };
 
-    const logout = () => {
-        localStorage.removeItem('auth_token');
+    const logout = async () => {
+        await supabase.auth.signOut();
         setUser(null);
     };
 
