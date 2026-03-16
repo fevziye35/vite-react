@@ -1,4 +1,4 @@
-Set-Content -Path package.json -Value '{
+{
   "name": "ali-mamak-crm",
   "private": true,
   "version": "0.0.0",
@@ -34,4 +34,4 @@ Set-Content -Path package.json -Value '{
     "typescript": "^5.2.2",
     "vite": "^5.0.8"
   }
-}'
+}
