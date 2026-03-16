@@ -19,10 +19,12 @@ function App() {
             <Route path="/proformas" element={<ProformalarPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/admin" element={<AdminPage />} />
+            <Route path="*" element={<Navigate to="/deals" replace />} />
           </Routes>
         </main>
       </div>
     </BrowserRouter>
   );
 }
+
 export default App;
