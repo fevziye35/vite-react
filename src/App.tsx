@@ -6,8 +6,6 @@ import ProformalarPage from './pages/ProformalarPage';
 import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
 
-// Hata payını azaltmak için AuthProvider ve ProtectedRoute'u 
-// şimdilik devre dışı bırakıp sadece sayfaları bağlıyoruz.
 function App() {
   return (
     <BrowserRouter>
@@ -21,7 +19,6 @@ function App() {
             <Route path="/proformas" element={<ProformalarPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/admin" element={<AdminPage />} />
-            <Route path="*" element={<Navigate to="/deals" replace />} />
           </Routes>
         </main>
       </div>
