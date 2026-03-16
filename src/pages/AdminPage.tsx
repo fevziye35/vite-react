@@ -1,45 +1,20 @@
 import React, { useState, useEffect } from 'react';
-
 import axios from 'axios';
-
 import { Plus, Shield, Trash2, Edit2, CheckCircle2, XCircle } from 'lucide-react';
-
 import { useAuth } from '../context/AuthContext';
-
-
-
 const API_URL = import.meta.env.VITE_API_URL || '';
-
-
-
 const MODULES = [
-
     { id: 'deals', label: 'İŞLER' },
-
     { id: 'customers', label: 'Müşteriler' },
-
     { id: 'offers', label: 'Proformalar' },
-
     { id: 'messages', label: 'Mesajlar' },
-
 ];
-
-
-
 export default function AdminPage() {
-
     const { user: currentUser } = useAuth();
-
     const [users, setUsers] = useState<any[]>([]);
-
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
     const [editingUser, setEditingUser] = useState<any>(null);
-
-
-
     const [formData, setFormData] = useState({
 
         email: '',
