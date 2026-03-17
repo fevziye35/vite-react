@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { dealService } from '../services/api';
-import { Plus, User, Trash2 } from 'lucide-react';
 
 export default function DealsPage() {
     const [deals, setDeals] = useState<any[]>([]);

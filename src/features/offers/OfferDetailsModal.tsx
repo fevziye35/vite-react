@@ -217,12 +217,12 @@ export function OfferDetailsModal({ isOpen, onClose, onUpdate, onOfferUpdated, o
                                             {item.description || 'Product'}
                                         </td>
                                         <td className="p-4 text-center text-secondary print:text-gray-600">{item.packaging}</td>
-                                        <td className="p-4 text-right font-mono text-primary print:text-black">{item.quantity.toLocaleString()}</td>
+                                        <td className="p-4 text-right font-mono text-primary print:text-black">{(item.quantity || 0).toLocaleString()}</td>
                                         <td className="p-4 text-right font-mono text-primary print:text-black">
-                                            {offer.currency === 'USD' ? '$' : '€'}{item.unitPrice.toFixed(2)}
+                                            {offer.currency === 'USD' ? '$' : '€'}{(item.unitPrice || 0).toFixed(2)}
                                         </td>
                                         <td className="p-4 text-right pr-6 font-bold text-primary print:text-black font-mono">
-                                            {offer.currency === 'USD' ? '$' : '€'}{item.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                            {offer.currency === 'USD' ? '$' : '€'}{(item.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                         </td>
                                     </tr>
                                 ))}

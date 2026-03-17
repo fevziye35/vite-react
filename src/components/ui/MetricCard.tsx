@@ -9,14 +9,18 @@ interface MetricCardProps {
     trend?: 'up' | 'down' | 'neutral';
     icon: LucideIcon;
     color?: string;
+    onClick?: () => void;
 }
 
-export function MetricCard({ title, value, change, trend, icon: Icon, color = "text-accent" }: MetricCardProps) {
+export function MetricCard({ title, value, change, trend, icon: Icon, color = "text-accent", onClick }: MetricCardProps) {
     const isPositive = trend === 'up';
     const isNegative = trend === 'down';
 
     return (
-        <Card className="hover:-translate-y-1 transition-transform duration-300">
+        <Card 
+            className={cn("transition-all duration-300", onClick && "cursor-pointer hover:-translate-y-1 hover:shadow-lg")}
+            onClick={onClick}
+        >
             <div className="flex items-start justify-between">
                 <div>
                     <p className="text-sm font-medium text-secondary">{title}</p>

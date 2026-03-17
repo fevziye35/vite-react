@@ -1,36 +1,28 @@
 {
-    "rewrites": [
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
         {
-            "source": "/api/:path*",
-            "destination": "https://makfacrm.loca.lt/api/:path*"
+          "key": "X-Frame-Options",
+          "value": "DENY"
         },
         {
-            "source": "/socket.io/:path*",
-            "destination": "https://makfacrm.loca.lt/socket.io/:path*"
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
         },
         {
-            "source": "/(.*)",
-            "destination": "/index.html"
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
         }
-    ],
-    "headers": [
-        {
-            "source": "/api/:path*",
-            "headers": [
-                {
-                    "key": "Bypass-Tunnel-Reminder",
-                    "value": "true"
-                }
-            ]
-        },
-        {
-            "source": "/socket.io/:path*",
-            "headers": [
-                {
-                    "key": "Bypass-Tunnel-Reminder",
-                    "value": "true"
-                }
-            ]
-        }
-    ]
+      ]
+    }
+  ]
 }

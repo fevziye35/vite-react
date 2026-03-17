@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Search, Edit, Trash2, FileText, Plus } from 'lucide-react';
+import { Edit, Trash2, Plus } from 'lucide-react';
 import { proformaService } from '../services/api';
 
 export default function ProformalarPage() {
     const [activeTab, setActiveTab] = useState('proforma');
     const [documents, setDocuments] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         loadDocuments();
@@ -13,11 +12,10 @@ export default function ProformalarPage() {
 
     const loadDocuments = async () => {
         try {
-            setLoading(true);
             const data = await proformaService.getAll(activeTab as any);
             setDocuments(data);
-        } finally {
-            setLoading(false);
+        } catch (error) {
+            console.error(error);
         }
     };
 

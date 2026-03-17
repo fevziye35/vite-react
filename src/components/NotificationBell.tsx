@@ -73,7 +73,7 @@ export const NotificationBell: React.FC = () => {
             >
                 <Bell size={20} />
                 {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center border-2 border-[#1e293b]">
+                    <span className="absolute top-1 right-1 bg-purple text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center border-2 border-[#1e293b]">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
@@ -97,10 +97,10 @@ export const NotificationBell: React.FC = () => {
                             notifications.map(notification => (
                                 <div
                                     key={notification.id}
-                                    className={`p-4 border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors relative group ${!notification.isRead ? 'bg-blue-600/5' : ''}`}
+                                    className={`p-4 border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors relative group ${!notification.isRead ? 'bg-purple/5' : ''}`}
                                 >
                                     <div className="flex justify-between items-start mb-1">
-                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${!notification.isRead ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-400'}`}>
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${!notification.isRead ? 'bg-purple text-white' : 'bg-slate-700 text-slate-400'}`}>
                                             {notification.type === 'activity_assignment' ? 'ATAMA' : 'BİLDİRİM'}
                                         </span>
                                         <span className="text-[10px] text-slate-500">
@@ -118,7 +118,7 @@ export const NotificationBell: React.FC = () => {
                                         {!notification.isRead && (
                                             <button
                                                 onClick={() => markAsRead(notification.id)}
-                                                className="p-1.5 text-blue-400 hover:bg-blue-400/10 rounded-lg"
+                                                className="p-1.5 text-purple hover:bg-purple/10 rounded-lg"
                                                 title="Okundu"
                                             >
                                                 <Check size={14} />
@@ -126,7 +126,7 @@ export const NotificationBell: React.FC = () => {
                                         )}
                                         <button
                                             onClick={() => deleteNotification(notification.id)}
-                                            className="p-1.5 text-rose-400 hover:bg-rose-400/10 rounded-lg"
+                                            className="p-1.5 text-purple hover:bg-purple/10 rounded-lg"
                                             title="Sil"
                                         >
                                             <Trash2 size={14} />

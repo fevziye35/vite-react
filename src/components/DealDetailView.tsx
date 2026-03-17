@@ -1296,8 +1296,8 @@ group
                                                                 icon: <MessageSquare size={14} />
                                                             };
                                                             timelineService.create({ ...newEvent, dealId: deal.id || 'new-deal' })
-                                                                .then(saved => setTimelineEvents((prev: any) => [{ ...saved, icon: newEvent.icon }, ...prev]))
-                                                                .catch(err => console.error("Message send failed", err));
+                                                                .then((saved: any) => setTimelineEvents((prev: any) => [{ ...saved, icon: newEvent.icon }, ...prev]))
+                                                                .catch((err: any) => console.error("Message send failed", err));
                                                             
                                                             setMessageInput('');
                                                             setActiveBarTab('Etkinlik');
@@ -1730,7 +1730,7 @@ group
                                                                                             date_string: dateStr,
                                                                                             time,
                                                                                             note: newNote
-                                                                                        }).then(res => {
+                                                                                        }).then((res: any) => {
                                                                                             setReservations(prev => [...prev, res]);
                                                                                             alert("Rezervasyon kaydedildi ve e-posta bildirimi gönderildi.");
                                                                                         });
@@ -1752,7 +1752,7 @@ group
                                                                                                 date_string: dateStr,
                                                                                                 time,
                                                                                                 note: newNote
-                                                                                            }).then(res => {
+                                                                                            }).then((res: any) => {
                                                                                                 setReservations(prev => [...prev, res]);
                                                                                                 alert("Rezervasyon kaydedildi ve e-posta bildirimi gönderildi.");
                                                                                             });
@@ -1887,8 +1887,8 @@ group
                                                         icon: <MessageSquare size={14} />
                                                     };
                                                     timelineService.create({ ...newEvent, dealId: deal.id || 'new-deal' })
-                                                        .then(saved => setTimelineEvents(prev => [{ ...saved, icon: newEvent.icon }, ...prev]))
-                                                        .catch(e => console.error("Chat message failed", e));
+                                                        .then((saved: any) => setTimelineEvents((prev: any) => [{ ...saved, icon: newEvent.icon }, ...prev]))
+                                                        .catch((e: any) => console.error("Chat message failed", e));
                                                     setChatInput('');
                                                 }
                                             }}

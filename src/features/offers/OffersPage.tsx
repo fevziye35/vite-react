@@ -27,10 +27,14 @@ export function OffersPage() {
             .finally(() => setLoading(false));
     }, []);
 
-    const filteredOffers = offers.filter(o =>
-        o.offerNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o.contactPerson.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredOffers = offers.filter(o => {
+        const offerNum = o?.offerNumber || '';
+        const contact = o?.contactPerson || '';
+        const search = (searchTerm || '').toLowerCase();
+        
+        return offerNum.toLowerCase().includes(search) || 
+               contact.toLowerCase().includes(search);
+    });
 
     const handleOfferUpdated = (updatedOffer: Offer) => {
         setOffers(prev => {
@@ -137,12 +141,12 @@ function OffersTable({ offers, onView }: { offers: Offer[], onView: (offer: Offe
                                     <div className="text-xs text-secondary mt-0.5">{offer.country}</div>
                                 </td>
                                 <td className="p-4 font-bold text-primary tabular-nums">
-                                    {offer.totalAmount.toLocaleString()} {offer.currency}
+                                    {(offer.totalAmount || 0).toLocaleString()} {offer.currency}
                                 </td>
                                 <td className="p-4">
                                     <StatusBadge status={offer.status} />
                                 </td>
-                                <td className="p-4 text-secondary">{new Date(offer.createdAt).toLocaleDateString()}</td>
+                                <td className="p-4 text-secondary">{offer.createdAt ? new Date(offer.createdAt).toLocaleDateString() : '-'}</td>
                                 <td className="p-4 text-secondary">{offer.validityDate}</td>
                                 <td className="p-4">
                                     <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onView(offer); }} className="text-gray-400 hover:text-accent">
@@ -197,10 +201,10 @@ function OffersKanban({ offers, onView }: { offers: Offer[], onView: (offer: Off
                                     <div className="flex items-center justify-between pt-3 border-t border-gray-50">
                                         <div className="font-bold text-accent text-lg flex items-baseline gap-1">
                                             <span className="text-xs font-medium text-gray-400">{offer.currency}</span>
-                                            {offer.totalAmount.toLocaleString()}
+                                            {(offer.totalAmount || 0).toLocaleString()}
                                         </div>
                                         <div className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-lg">
-                                            {new Date(offer.createdAt).toLocaleDateString()}
+                                            {offer.createdAt ? new Date(offer.createdAt).toLocaleDateString() : '-'}
                                         </div>
                                     </div>
                                 </Card>

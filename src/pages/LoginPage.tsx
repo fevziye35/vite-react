@@ -68,34 +68,34 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen bg-space flex items-center justify-center p-4 font-sans antialiased text-left">
-            <div className="w-full max-w-[420px] pb-12">
-                {/* Glassmorphism Card */}
-                <div className="bg-[#1b2735]/40 backdrop-blur-xl border border-white/10 rounded-[40px] p-10 shadow-2xl relative overflow-hidden italic">
-                    {/* Subtle gradient glow inside the card */}
-                    <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10 blur-3xl pointer-events-none" />
+        <div className="min-h-screen bg-[#f4f7f8] flex flex-col items-center justify-center p-4 font-sans antialiased text-left border-t-[6px] border-accent">
+            <div className="w-full max-w-[440px] pt-8">
+                {/* Logo Area */}
+                <div className="text-center mb-8">
+                    <h1 className="text-3xl font-bold text-[#1c2a3e] tracking-tight">Bitrix24 CRM</h1>
+                    <p className="text-muted text-sm mt-1">Lütfen kimlik bilgilerinizle giriş yapın</p>
+                </div>
 
+                {/* Login Card */}
+                <div className="bg-white rounded border border-[#eef2f4] p-8 shadow-card relative overflow-hidden">
                     <div className="relative z-10">
-                        <h1 className="text-4xl font-black text-white text-center mb-2 tracking-tighter">Giriş Yap</h1>
-                        <p className="text-blue-200/60 text-center mb-10 text-sm font-semibold">CRM sistemine erişmek için bilgilerinizi girin</p>
-
                         {error && (
-                            <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-2xl text-red-200 text-sm font-bold text-center animate-in fade-in slide-in-from-top-4 duration-200">
+                            <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded text-danger text-xs font-bold text-center">
                                 {error}
                             </div>
                         )}
 
-                        <form onSubmit={handleLogin} className="space-y-6">
-                            <div className="space-y-2 text-left">
-                                <label className="text-[10px] font-black text-blue-200/50 uppercase tracking-widest ml-1">E-Posta Adresi</label>
-                                <div className="relative group">
-                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <Mail size={20} className="text-blue-400/70 group-focus-within:text-blue-400 transition-colors" />
+                        <form onSubmit={handleLogin} className="space-y-4">
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-bold text-secondary uppercase tracking-wider ml-0.5">E-Posta</label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Mail size={16} className="text-muted" />
                                     </div>
                                     <input
                                         type="email"
-                                        className="w-full bg-white/5 border border-white/10 text-white p-4 pl-12 rounded-2xl outline-none focus:bg-white/10 focus:border-blue-500 transition-all placeholder:text-slate-500 font-bold"
-                                        placeholder="ornek@makfa.com"
+                                        className="w-full bg-[#f9fafb] border border-[#eef2f4] text-primary p-2.5 pl-10 rounded outline-none focus:border-accent transition-all placeholder:text-muted/50 text-sm"
+                                        placeholder="ornek@domain.com"
                                         value={email}
                                         onChange={e => setEmail(e.target.value)}
                                         required
@@ -103,15 +103,15 @@ export default function LoginPage() {
                                 </div>
                             </div>
 
-                            <div className="space-y-2 text-left">
-                                <label className="text-[10px] font-black text-blue-200/50 uppercase tracking-widest ml-1">Şifre</label>
-                                <div className="relative group">
-                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <Lock size={20} className="text-blue-400/70 group-focus-within:text-blue-400 transition-colors" />
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-bold text-secondary uppercase tracking-wider ml-0.5">Şifre</label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Lock size={16} className="text-muted" />
                                     </div>
                                     <input
                                         type="password"
-                                        className="w-full bg-white/5 border border-white/10 text-white p-4 pl-12 rounded-2xl outline-none focus:bg-white/10 focus:border-blue-500 transition-all placeholder:text-slate-500 font-bold"
+                                        className="w-full bg-[#f9fafb] border border-[#eef2f4] text-primary p-2.5 pl-10 rounded outline-none focus:border-accent transition-all placeholder:text-muted/50 text-sm"
                                         placeholder="••••••••"
                                         value={password}
                                         onChange={e => setPassword(e.target.value)}
@@ -120,15 +120,15 @@ export default function LoginPage() {
                                 </div>
                             </div>
 
-                            <div className="flex justify-between items-center text-sm px-1">
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                    <input type="checkbox" className="rounded-md border-white/20 bg-white/5 flex-shrink-0 text-blue-500 focus:ring-blue-500/50 w-4 h-4 cursor-pointer" />
-                                    <span className="text-slate-400 font-bold group-hover:text-slate-200 transition-colors">Beni Hatırla</span>
+                            <div className="flex justify-between items-center text-xs pt-1">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" className="rounded border-gray-300 text-accent focus:ring-accent w-3.5 h-3.5" />
+                                    <span className="text-muted font-medium">Beni Hatırla</span>
                                 </label>
                                 <button 
                                     type="button"
                                     onClick={() => setIsForgotModalOpen(true)}
-                                    className="text-blue-400 hover:text-blue-300 font-black transition-colors"
+                                    className="text-accent hover:underline font-bold"
                                 >
                                     Şifremi Unuttum
                                 </button>
@@ -137,19 +137,20 @@ export default function LoginPage() {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className={`w-full ${isLoading ? 'bg-blue-600/50 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500'} text-white font-black py-4 rounded-2xl shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] transition-all flex justify-center items-center gap-2 mt-8 text-lg group`}
+                                className={`w-full ${isLoading ? 'bg-accent/70' : 'bg-accent hover:bg-accent-hover'} text-white font-bold py-3 rounded shadow-sm transition-all flex justify-center items-center gap-2 mt-4 text-sm`}
                             >
-                                {isLoading ? 'SİSTEME GİRİŞ YAPILIYOR...' : 'SİSTEME GİRİŞ'}
-                                {!isLoading && <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />}
+                                {isLoading ? 'GİRİŞ YAPILIYOR...' : 'GİRİŞ YAP'}
+                                {!isLoading && <ArrowRight size={18} />}
                             </button>
                         </form>
                     </div>
                 </div>
 
-                {/* Footer text */}
-                <p className="text-center text-white/30 text-xs mt-8 font-bold tracking-wider">
-                    © {new Date().getFullYear()} MAKFA CRM. TÜM HAKLARI SAKLIDIR.
-                </p>
+                <div className="mt-12 text-center">
+                    <p className="text-muted text-[10px] font-bold uppercase tracking-[2px]">
+                        © {new Date().getFullYear()} BITRIX24 CRM - TÜM HAKLARI SAKLIDIR
+                    </p>
+                </div>
             </div>
 
             {/* Forgot Password Modal */}

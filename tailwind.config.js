@@ -7,58 +7,62 @@ export default {
     theme: {
         extend: {
             colors: {
-                // Apple-style Neutral Palette
-                background: '#F5F5F7', // Main app background
-                surface: '#FFFFFF', // Cards, Sidebar, Header
-                border: '#E5E5E5', // Subtle borders
+                // Bitrix24 Style Palette
+                background: '#f5f7f8',
+                surface: '#ffffff',
+                border: '#eef2f4',
 
                 // Typography
-                primary: '#1D1D1F', // Main text
-                secondary: '#86868B', // Secondary text
+                primary: '#333333',
+                secondary: '#525c69',
+                muted: '#959ca4',
 
                 // Brand Colors
                 accent: {
-                    DEFAULT: '#007AFF', // Apple Blue
-                    hover: '#0066CC',
-                    50: '#F0F7FF',
-                    100: '#E0EEFF',
-                    500: '#007AFF',
-                    600: '#0066CC',
-                    700: '#0055AA',
+                    DEFAULT: '#2fc6f6', // Bitrix Light Blue
+                    hover: '#29b0db',
+                    50: '#f0fbfe',
+                    100: '#e1f7fd',
+                    500: '#2fc6f6',
+                    600: '#29b0db',
+                    700: '#218fb2',
                 },
                 danger: {
-                    DEFAULT: '#FF3B30', // Apple Red
-                    hover: '#D63026',
+                    DEFAULT: '#af52de', // Changed from red to purple
+                    hover: '#9a45c6',
                 },
                 success: {
-                    DEFAULT: '#34C759', // Apple Green
+                    DEFAULT: '#7bd500', 
                 },
                 warning: {
-                    DEFAULT: '#FF9500', // Apple Orange
+                    DEFAULT: '#ffc600',
+                },
+                info: {
+                    DEFAULT: '#2067b0', // Darker Bitrix Blue
+                },
+                purple: {
+                    DEFAULT: '#af52de',
+                    hover: '#9a45c6',
                 },
 
-                // Glass Tokens
-                glass: {
-                    DEFAULT: 'rgba(255, 255, 255, 0.72)',
-                    border: 'rgba(255, 255, 255, 0.5)',
-                }
+                // UI Elements
+                sidebar: '#1c2a3e', // Dark Sidebar option
             },
             fontFamily: {
-                sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                sans: ['Open Sans', 'Helvetica Neue', 'Arial', 'sans-serif'],
             },
             boxShadow: {
                 'sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                'DEFAULT': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
-                'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)',
-                'xl': '0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02)',
-                'floating': '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
-                'glow': '0 0 0 4px rgba(0, 122, 255, 0.15)', // Blue focus ring
+                'DEFAULT': '0 2px 4px rgba(0,0,0,.04)',
+                'lg': '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                'card': '0 1px 2px rgba(0,0,0,.1)',
             },
             borderRadius: {
-                'xl': '12px',
-                '2xl': '16px',
-                '3xl': '24px',
-                '4xl': '32px',
+                'sm': '2px',
+                'md': '4px',
+                'lg': '6px',
+                'xl': '8px',
+                '2xl': '12px',
             },
             backdropBlur: {
                 'xs': '2px',

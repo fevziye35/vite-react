@@ -1,0 +1,20 @@
+src/components/layout/DashboardLayout.tsx(2,10): error TS2614: Module '"./Sidebar"' has no exported member 'Sidebar'. Did you mean to use 'import Sidebar from "./Sidebar"' instead?
+src/features/dashboard/DashboardPage.tsx(10,10): error TS2305: Module '"../../services/api"' has no exported member 'offerService'.
+src/features/logistics/LogisticsCompaniesPage.tsx(3,10): error TS2724: '"../../services/api"' has no exported member named 'logisticsCompanyService'. Did you mean 'logisticsService'?
+src/features/offers/CreateOfferPage.tsx(11,43): error TS2305: Module '"../../services/api"' has no exported member 'offerService'.
+src/features/offers/CreateOfferPage.tsx(99,54): error TS7006: Parameter 'i' implicitly has an 'any' type.
+src/features/offers/OfferDetailsModal.tsx(4,40): error TS2305: Module '"../../services/api"' has no exported member 'offerService'.
+src/features/offers/OfferDetailsModal.tsx(34,31): error TS2339: Property 'convertFromOffer' does not exist on type '{ getAll: () => Promise<never[]>; create: (d: any) => Promise<any>; update: (id: any, d: any) => Promise<any>; delete: (id: any) => Promise<boolean>; getByDealId: (id: any) => Promise<...>; }'.
+src/features/offers/OffersPage.tsx(6,10): error TS2305: Module '"../../services/api"' has no exported member 'offerService'.
+src/pages/DealsPage.tsx(3,1): error TS6192: All imports in import declaration are unused.
+src/pages/MessagesPage.tsx(3,10): error TS2305: Module '"../services/api"' has no exported member 'userService'.
+src/pages/MessagesPage.tsx(6,11): error TS6133: 'user' is declared but its value is never read.
+src/pages/MessagesPage.tsx(10,35): error TS7006: Parameter 'data' implicitly has an 'any' type.
+src/pages/ProformalarPage.tsx(2,10): error TS6133: 'Search' is declared but its value is never read.
+src/pages/ProformalarPage.tsx(2,32): error TS6133: 'FileText' is declared but its value is never read.
+src/pages/ProformalarPage.tsx(8,12): error TS6133: 'loading' is declared but its value is never read.
+src/pages/ProformalarPage.tsx(17,55): error TS2554: Expected 0 arguments, but got 1.
+src/services/api.ts(29,85): error TS6133: 'id' is declared but its value is never read.
+src/services/api.ts(29,123): error TS6133: 'id' is declared but its value is never read.
+src/services/api.ts(29,161): error TS6133: 'id' is declared but its value is never read.
+src/services/api.ts(40,67): error TS6133: 'id' is declared but its value is never read.
