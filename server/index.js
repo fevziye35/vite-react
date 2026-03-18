@@ -1204,7 +1204,3 @@ httpServer.listen(PORT, '0.0.0.0', () => {
     
     startTunnel();
 });
-
-// logging
-const fs = require('fs');
-const log = (msg) => fs.appendFileSync('backend.log', msg + '\n');
