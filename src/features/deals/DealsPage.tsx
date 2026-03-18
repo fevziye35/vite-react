@@ -137,7 +137,8 @@ export function DealsPage() {
         { key: 'Qualified', label: 'HAZIRLIK', color: 'bg-[#5cd4f3]' },
         { key: 'Offer Sent', label: 'TEKLİF GÖNDERİLDİ', color: 'bg-[#b8aae5]' },
         { key: 'Negotiation', label: 'MÜZAKERE', color: 'bg-[#ffc600]' },
-        { key: 'Proforma Sent', label: 'PROFORMA GÖNDERİLDİ', color: 'bg-[#7bd500]' },
+        { key: 'Proforma Sent', label: 'PROFORMA GÖNDERİLDİ', color: 'bg-[#ff8a00]' },
+        { key: 'Closed Lost', label: 'ANLAŞMA YOK', color: 'bg-[#ff5752]' },
         { key: 'Closed Won', label: 'KAZANILDI', color: 'bg-[#7bd500]' }
     ];
 
@@ -269,7 +270,7 @@ export function DealsPage() {
                                 ))}
                                 {deals.filter(d => d.stage === stage.key).length === 0 && (
                                     <div className="h-20 rounded border-2 border-dashed border-gray-200/50 flex items-center justify-center text-muted/40 text-[10px] font-bold uppercase tracking-wider">
-                                        ANLAŞMA YOK
+                                        BU AŞAMADA KAYIT YOK
                                     </div>
                                 )}
                             </div>
