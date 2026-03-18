@@ -146,14 +146,14 @@ export const ChatWindow = ({ contact, onBack }: { contact: any; onBack?: () => v
                         <>
                             <button 
                                 onClick={() => startCall(contact.id, contact.name, 'video')}
-                                className="p-2 hover:bg-blue-100 hover:text-blue-600 rounded-full hidden sm:flex transition-colors"
+                                className="p-2 hover:bg-blue-100 hover:text-blue-600 rounded-full flex transition-colors"
                                 title="Görüntülü Arama Yap"
                             >
                                 <Video size={18} />
                             </button>
                             <button 
                                 onClick={() => startCall(contact.id, contact.name, 'audio')}
-                                className="p-2 hover:bg-emerald-100 hover:text-emerald-600 rounded-full hidden sm:flex transition-colors"
+                                className="p-2 hover:bg-emerald-100 hover:text-emerald-600 rounded-full flex transition-colors"
                                 title="Sesli Arama Yap"
                             >
                                 <Phone size={18} />
@@ -163,14 +163,14 @@ export const ChatWindow = ({ contact, onBack }: { contact: any; onBack?: () => v
                         <>
                             <button 
                                 onClick={() => startGroupCall('video')}
-                                className="p-2 hover:bg-pink-100 hover:text-pink-600 rounded-full hidden sm:flex transition-colors"
+                                className="p-2 hover:bg-pink-100 hover:text-pink-600 rounded-full flex transition-colors"
                                 title="Görüntülü Ekip Araması Başlat"
                             >
                                 <Video size={18} />
                             </button>
                             <button 
                                 onClick={() => startGroupCall('audio')}
-                                className="p-2 hover:bg-purple-100 hover:text-purple-600 rounded-full hidden sm:flex transition-colors"
+                                className="p-2 hover:bg-purple-100 hover:text-purple-600 rounded-full flex transition-colors"
                                 title="Sesli Ekip Araması Başlat"
                             >
                                 <Phone size={18} />

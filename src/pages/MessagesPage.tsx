@@ -66,7 +66,7 @@ const MessagesPage = () => {
     );
 
     return (
-        <div className="flex h-[calc(100vh-140px)] bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+        <div className="flex h-[calc(100vh-120px)] md:h-[calc(100vh-140px)] bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 mb-16 md:mb-0">
             {/* Sidebar */}
             <div className={cn(
                 "w-full md:w-80 border-r border-gray-100 flex flex-col bg-[#f8fafb]",

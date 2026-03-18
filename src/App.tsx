@@ -51,7 +51,7 @@ function AppContent() {
   return (
     <div className="flex min-h-screen bg-background text-primary selection:bg-accent/30 font-sans">
       <Sidebar /> 
-      <main className="flex-1 ml-64 p-8 min-h-screen relative overflow-x-hidden">
+      <main className="flex-1 md:ml-64 p-2 sm:p-4 md:p-8 min-h-screen relative overflow-x-hidden">
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/customers" element={<CustomersPage />} />

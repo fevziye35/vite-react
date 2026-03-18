@@ -513,7 +513,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 )}
 
                 {callType === 'video' && isInCall && (
-                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-4 z-20 bg-gray-900/80 p-4 rounded-3xl backdrop-blur-md border border-gray-700">
+                    <div className="absolute bottom-20 md:bottom-8 left-1/2 -translate-x-1/2 flex gap-4 z-20 bg-gray-900/80 p-4 rounded-3xl backdrop-blur-md border border-gray-700">
                         <button onClick={toggleMute} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-sm ${isMuted ? 'bg-red-500 text-white' : 'bg-gray-700 text-white'}`} title={isMuted ? "Sesi Aç" : "Sesi Kapat"}>
                             {isMuted ? <MicOff size={24} /> : <Mic size={24} />}
                         </button>
@@ -555,7 +555,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             {/* CALLING / IN CALL WIDGET (AUDIO ONLY) */}
             {callType === 'audio' && (isCalling || isInCall) && !isRinging && !jitsiRoom && (
-                <div className="fixed bottom-8 right-8 z-[9999] bg-white p-5 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex flex-col items-center gap-4 w-[280px] animate-in slide-in-from-bottom-8 border border-gray-100">
+                <div className="fixed bottom-20 md:bottom-8 right-4 md:right-8 z-[9999] bg-white p-5 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex flex-col items-center gap-4 w-[280px] animate-in slide-in-from-bottom-8 border border-gray-100">
                     <div className={`relative w-20 h-20 ${isInCall ? 'bg-gradient-to-tr from-emerald-400 to-emerald-600' : 'bg-gradient-to-tr from-blue-400 to-blue-600'} rounded-full flex items-center justify-center shadow-lg`}>
                         {isCalling && !isInCall && (
                             <div className="absolute inset-0 rounded-full border-2 border-blue-400 animate-ping opacity-75"></div>
