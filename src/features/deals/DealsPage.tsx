@@ -268,28 +268,41 @@ export function DealsPage() {
                                 </span>
                             </div>
                             <div className="flex flex-col gap-2 min-h-[400px] p-1 bg-gray-100/30 rounded-b-lg">
-                                {deals.filter(d => d.stage === stage.key).map(deal => (
-                                    <div
-                                        key={deal.id}
-                                        className="bg-white p-3 rounded shadow-card border border-[#eef2f4] hover:shadow-md transition-all cursor-pointer group relative overflow-hidden"
-                                        onClick={() => openEdit(deal)}
-                                    >
-                                        <div className="absolute top-0 left-0 w-1 h-full bg-accent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                        
-                                        <div className="text-[11px] font-bold text-accent mb-1 truncate">{deal.customer || 'Adsız Müşteri'}</div>
-                                        <h4 className="text-[13px] font-semibold text-primary mb-2 line-clamp-2 leading-tight">{deal.title}</h4>
-                                        
-                                        <div className="flex justify-between items-center mt-3 pt-2 border-t border-gray-50">
-                                            <div className="text-[13px] font-bold text-[#2067b0]">
-                                                ${(deal.expectedRevenue || deal.amount || 0).toLocaleString()}
-                                            </div>
+                                {deals.filter(d => d.stage === stage.key).map(deal => {
+                                    const isStale = stage.key !== 'Closed Won' && stage.key !== 'Closed Lost' && ((Date.now() - new Date(deal.updated_at || deal.created_at || Date.now()).getTime()) > (3 * 24 * 60 * 60 * 1000));
+                                    
+                                    return (
+                                        <div
+                                            key={deal.id}
+                                            className={cn(
+                                                "bg-white p-3 rounded transition-all cursor-pointer group relative overflow-hidden",
+                                                isStale ? "border-2 border-red-500 shadow-[0_0px_10px_rgba(239,68,68,0.4)] animate-pulse" : "border border-[#eef2f4] shadow-card hover:shadow-md"
+                                            )}
+                                            onClick={() => openEdit(deal)}
+                                        >
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            
+                                            {isStale && (
+                                                <div className="absolute top-0 right-0 bg-red-500 text-white px-1.5 py-0.5 rounded-bl-md text-[9px] font-bold tracking-wider z-10">
+                                                    GECİKTİ
+                                                </div>
+                                            )}
+                                            
+                                            <div className={cn("text-[11px] font-bold mb-1 truncate", isStale ? "text-red-500" : "text-accent")}>{deal.customer || 'Adsız Müşteri'}</div>
+                                            <h4 className="text-[13px] font-semibold text-primary mb-2 line-clamp-2 leading-tight">{deal.title}</h4>
+                                            
+                                            <div className="flex justify-between items-center mt-3 pt-2 border-t border-gray-50">
+                                                <div className="text-[13px] font-bold text-[#2067b0]">
+                                                    ${(deal.expectedRevenue || deal.amount || 0).toLocaleString()}
+                                                </div>
                                             <div className="flex items-center gap-1 text-[10px] text-muted font-medium">
                                                 <Calendar size={10} />
                                                 {deal.expectedClose ? new Date(deal.expectedClose).toLocaleDateString() : 'Tarih yok'}
                                             </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                                 {deals.filter(d => d.stage === stage.key).length === 0 && (
                                     <div className="h-20 rounded border-2 border-dashed border-gray-200/50 flex items-center justify-center text-muted/40 text-[10px] font-bold uppercase tracking-wider">
                                         BU AŞAMADA KAYIT YOK
