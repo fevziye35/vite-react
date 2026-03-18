@@ -269,27 +269,37 @@ export function DealsPage() {
                             </div>
                             <div className="flex flex-col gap-2 min-h-[400px] p-1 bg-gray-100/30 rounded-b-lg">
                                 {deals.filter(d => d.stage === stage.key).map(deal => {
-                                    const isStale = stage.key !== 'Closed Won' && stage.key !== 'Closed Lost' && ((Date.now() - new Date(deal.updated_at || deal.created_at || Date.now()).getTime()) > (3 * 24 * 60 * 60 * 1000));
+                                    const diffMs = Date.now() - new Date(deal.updated_at || deal.created_at || Date.now()).getTime();
+                                    const daysInactive = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+                                    const isStale = stage.key !== 'Closed Won' && stage.key !== 'Closed Lost' && daysInactive >= 3;
+                                    const isUrgent = stage.key !== 'Closed Won' && stage.key !== 'Closed Lost' && daysInactive >= 7;
+                                    const isCritical = stage.key !== 'Closed Won' && stage.key !== 'Closed Lost' && daysInactive >= 10;
                                     
                                     return (
                                         <div
                                             key={deal.id}
                                             className={cn(
                                                 "bg-white p-3 rounded transition-all cursor-pointer group relative overflow-hidden",
-                                                isStale ? "border-2 border-red-500 shadow-[0_0px_10px_rgba(239,68,68,0.4)] animate-pulse" : "border border-[#eef2f4] shadow-card hover:shadow-md"
+                                                isCritical ? "border-2 border-red-600 bg-red-50 shadow-[0_0px_15px_rgba(220,38,38,0.6)] animate-pulse" :
+                                                isUrgent ? "border-2 border-red-500 shadow-[0_0px_12px_rgba(239,68,68,0.5)] animate-pulse" :
+                                                isStale ? "border-2 border-red-400 shadow-[0_0px_10px_rgba(239,68,68,0.4)] animate-pulse" : 
+                                                "border border-[#eef2f4] shadow-card hover:shadow-md"
                                             )}
                                             onClick={() => openEdit(deal)}
                                         >
                                             <div className="absolute top-0 left-0 w-1 h-full bg-accent opacity-0 group-hover:opacity-100 transition-opacity" />
                                             
                                             {isStale && (
-                                                <div className="absolute top-0 right-0 bg-red-500 text-white px-1.5 py-0.5 rounded-bl-md text-[9px] font-bold tracking-wider z-10">
-                                                    GECİKTİ
+                                                <div className={cn(
+                                                    "absolute top-0 right-0 text-white px-2 py-0.5 rounded-bl-md text-[9px] font-black tracking-widest z-10 flex items-center gap-1",
+                                                    isCritical ? "bg-red-700 animate-bounce" : isUrgent ? "bg-red-600" : "bg-red-500"
+                                                )}>
+                                                    <span>{daysInactive} GÜNDÜR BEKLİYOR!</span>
                                                 </div>
                                             )}
                                             
-                                            <div className={cn("text-[11px] font-bold mb-1 truncate", isStale ? "text-red-500" : "text-accent")}>{deal.customer || 'Adsız Müşteri'}</div>
-                                            <h4 className="text-[13px] font-semibold text-primary mb-2 line-clamp-2 leading-tight">{deal.title}</h4>
+                                            <div className={cn("text-[11px] font-bold mb-1 truncate", isStale ? "text-red-600" : "text-accent")}>{deal.customer || 'Adsız Müşteri'}</div>
+                                            <h4 className={cn("text-[13px] font-semibold mb-2 line-clamp-2 leading-tight", isCritical ? "text-red-900" : "text-primary")}>{deal.title}</h4>
                                             
                                             <div className="flex justify-between items-center mt-3 pt-2 border-t border-gray-50">
                                                 <div className="text-[13px] font-bold text-[#2067b0]">
