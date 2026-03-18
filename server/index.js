@@ -58,6 +58,63 @@ io.on('connection', (socket) => {
         onlineUsers.delete(socket.id);
         broadcastOnlineUsers();
     });
+
+    // --- WEBRTC SIGNALING ---
+    socket.on('call-offer', (data) => {
+        const targetSocketId = [...onlineUsers.entries()].find(([k, v]) => v === data.targetUserId)?.[0];
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('call-offer', {
+                offer: data.offer,
+                callerId: onlineUsers.get(socket.id),
+                callerName: data.callerName,
+                callType: data.callType
+            });
+        }
+    });
+
+    socket.on('call-answer', (data) => {
+        const targetSocketId = [...onlineUsers.entries()].find(([k, v]) => v === data.targetUserId)?.[0];
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('call-answer', {
+                answer: data.answer,
+                answererId: onlineUsers.get(socket.id)
+            });
+        }
+    });
+
+    socket.on('ice-candidate', (data) => {
+        const targetSocketId = [...onlineUsers.entries()].find(([k, v]) => v === data.targetUserId)?.[0];
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('ice-candidate', {
+                candidate: data.candidate,
+                senderId: onlineUsers.get(socket.id)
+            });
+        }
+    });
+
+    socket.on('end-call', (data) => {
+        const targetSocketId = [...onlineUsers.entries()].find(([k, v]) => v === data.targetUserId)?.[0];
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('end-call', {
+                senderId: onlineUsers.get(socket.id)
+            });
+        }
+    });
+
+    socket.on('group-call-offer', (data) => {
+        socket.broadcast.emit('group-call-offer', {
+            roomId: data.roomId,
+            callerId: onlineUsers.get(socket.id),
+            callerName: data.callerName,
+            callType: data.callType
+        });
+    });
+
+    socket.on('group-call-answered', (data) => {
+        socket.broadcast.emit('group-call-answered', {
+            roomId: data.roomId
+        });
+    });
 });
 
 // Notification Helper

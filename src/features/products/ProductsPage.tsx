@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-    Plus, Search, Calculator, Loader2, Edit2, ChevronRight, Download
+    Plus, Search, Calculator, Loader2, Edit2, ChevronRight, Trash2
 } from 'lucide-react';
 import { productService } from '../../services/api';
 import type { Product, ProductCategory, UnitType } from '../../types';
@@ -12,19 +12,6 @@ import { Input } from '../../components/ui/Input';
 import { useToast } from '../../components/ui/Toast';
 import { calculateContainerEconomics, CONTAINER_TYPES } from '../../utils/calculator';
 import { cn } from '../../utils/cn';
-
-// --- DEFAULTS ---
-const DEFAULT_PRODUCTS: Partial<Product>[] = [
-    { productName: "Sunflower Oil", category: "Oil", unitType: "liter", baseUnitPrice: 1.10, originCountry: "Ukraine", defaultContainerLoad20ft: 15120, defaultContainerLoad40ft: 25000 },
-    { productName: "Crude Sunflower Oil", category: "Oil", unitType: "ton", baseUnitPrice: 950, originCountry: "Ukraine", defaultContainerLoad20ft: 21000 },
-    { productName: "Corn Oil", category: "Oil", unitType: "liter", baseUnitPrice: 1.20, originCountry: "Ukraine", defaultContainerLoad20ft: 15120 },
-    { productName: "Pasta", category: "Food", unitType: "kg", baseUnitPrice: 0.75, originCountry: "Turkey", defaultContainerLoad20ft: 15000 },
-    { productName: "Wheat Flour", category: "Food", unitType: "ton", baseUnitPrice: 350, originCountry: "Turkey", defaultContainerLoad20ft: 24000 },
-    { productName: "Red Lentils", category: "Food", unitType: "ton", baseUnitPrice: 850, originCountry: "Turkey", defaultContainerLoad20ft: 24000 },
-    { productName: "Chickpeas", category: "Food", unitType: "ton", baseUnitPrice: 900, originCountry: "Turkey", defaultContainerLoad20ft: 24000 },
-    { productName: "Tomato Paste", category: "Food", unitType: "kg", baseUnitPrice: 1.10, originCountry: "Turkey", defaultContainerLoad20ft: 18000 },
-    { productName: "Fruit Juice", category: "Beverage", unitType: "liter", baseUnitPrice: 0.65, originCountry: "Turkey", defaultContainerLoad20ft: 17000 },
-];
 
 export function ProductsPage() {
     const toast = useToast();
@@ -42,6 +29,20 @@ export function ProductsPage() {
         'General': true
     });
 
+    const handleDeleteProduct = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (window.confirm('Bu ürünü silmek istediğinize emin misiniz?')) {
+            try {
+                await productService.delete(id);
+                toast.success('Ürün başarıyla silindi');
+                loadProducts();
+            } catch (error) {
+                console.error(error);
+                toast.error('Ürün silinemedi');
+            }
+        }
+    };
+
     useEffect(() => {
         loadProducts();
     }, []);
@@ -51,7 +52,6 @@ export function ProductsPage() {
     };
 
     async function loadProducts() {
-        setLoading(true);
         // Fallback timeout in case Supabase hangs
         const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000));
         try {
@@ -61,22 +61,6 @@ export function ProductsPage() {
             console.error('Failed to load products', error);
         } finally {
             setLoading(false);
-        }
-    }
-
-    async function handleSeedDefaults() {
-        setLoading(true);
-        try {
-            for (const p of DEFAULT_PRODUCTS) {
-                const exists = products.find(existing => existing.productName === p.productName);
-                if (!exists) {
-                    await productService.create(p as any);
-                }
-            }
-            loadProducts();
-        } catch (error) {
-            console.error(error);
-            toast.error('Varsayılanlar yüklenemedi');
         }
     }
 
@@ -108,9 +92,6 @@ export function ProductsPage() {
                         <p className="text-secondary mt-1">Ürün kataloğunuzu ve fiyatlandırmayı yönetin</p>
                     </div>
                     <div className="flex gap-3">
-                        <Button variant="outline" onClick={handleSeedDefaults} title="Load Default Products">
-                            <Download className="mr-2 h-4 w-4" /> Varsayılanlar
-                        </Button>
                         <Button onClick={() => { setEditingProduct(null); setIsAddModalOpen(true); }} className="shadow-lg shadow-accent/20">
                             <Plus className="mr-2 h-4 w-4" /> Ürün Ekle
                         </Button>
@@ -175,6 +156,9 @@ export function ProductsPage() {
                                             <div className="flex items-center gap-2 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setEditingProduct(product); setIsAddModalOpen(true); }} className="h-8 w-8">
                                                     <Edit2 className="h-4 w-4 text-gray-400 hover:text-accent" />
+                                                </Button>
+                                                <Button size="icon" variant="ghost" onClick={(e) => handleDeleteProduct(product.id!, e)} className="h-8 w-8">
+                                                    <Trash2 className="h-4 w-4 text-gray-400 hover:text-danger" />
                                                 </Button>
                                             </div>
                                         </div>
@@ -397,8 +381,14 @@ function ProductModal({ isOpen, onClose, existingProduct, onSave }: { isOpen: bo
                 packagingOptions: packaging
             };
 
-            await productService.create(productToSave as any);
-            toast.success(existingProduct ? 'Product updated successfully' : 'Product created successfully');
+            if (existingProduct?.id) {
+                await productService.update(existingProduct.id, productToSave as any);
+                toast.success('Product updated successfully');
+            } else {
+                await productService.create(productToSave as any);
+                toast.success('Product created successfully');
+            }
+            
             onSave();
             onClose();
         } catch (error) {

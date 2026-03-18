@@ -72,7 +72,7 @@ export default function LoginPage() {
             <div className="w-full max-w-[440px] pt-8">
                 {/* Logo Area */}
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-[#1c2a3e] tracking-tight">Bitrix24 CRM</h1>
+                    <h1 className="text-3xl font-bold text-[#1c2a3e] tracking-tight">MAKFA CRM</h1>
                     <p className="text-muted text-sm mt-1">Lütfen kimlik bilgilerinizle giriş yapın</p>
                 </div>
 
@@ -148,7 +148,7 @@ export default function LoginPage() {
 
                 <div className="mt-12 text-center">
                     <p className="text-muted text-[10px] font-bold uppercase tracking-[2px]">
-                        © {new Date().getFullYear()} BITRIX24 CRM - TÜM HAKLARI SAKLIDIR
+                        © {new Date().getFullYear()} MAKFA - TÜM HAKLARI SAKLIDIR
                     </p>
                 </div>
             </div>

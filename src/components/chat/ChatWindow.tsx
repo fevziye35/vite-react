@@ -3,10 +3,12 @@ import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import { Send, Trash2, ArrowLeft, MoreVertical, Phone, Video } from 'lucide-react';
 import { useSocket } from '../../context/SocketContext';
+import { useCall } from '../../context/CallContext';
 
 export const ChatWindow = ({ contact, onBack }: { contact: any; onBack?: () => void }) => {
     const { user } = useAuth();
     const { onlineUsers } = useSocket();
+    const { startCall, startGroupCall } = useCall();
     const [messages, setMessages] = useState<any[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [selectedMsgInfo, setSelectedMsgInfo] = useState<any>(null);
@@ -140,13 +142,42 @@ export const ChatWindow = ({ contact, onBack }: { contact: any; onBack?: () => v
                 </div>
 
                 <div className="flex items-center gap-1 md:gap-3 text-gray-500">
-                    <button className="p-2 hover:bg-gray-200 rounded-full hidden sm:flex">
-                        <Video size={18} />
-                    </button>
-                    <button className="p-2 hover:bg-gray-200 rounded-full hidden sm:flex">
-                        <Phone size={18} />
-                    </button>
-                    <button className="p-2 hover:bg-gray-200 rounded-full">
+                    {!contact?.isTeam ? (
+                        <>
+                            <button 
+                                onClick={() => startCall(contact.id, contact.name, 'video')}
+                                className="p-2 hover:bg-blue-100 hover:text-blue-600 rounded-full hidden sm:flex transition-colors"
+                                title="Görüntülü Arama Yap"
+                            >
+                                <Video size={18} />
+                            </button>
+                            <button 
+                                onClick={() => startCall(contact.id, contact.name, 'audio')}
+                                className="p-2 hover:bg-emerald-100 hover:text-emerald-600 rounded-full hidden sm:flex transition-colors"
+                                title="Sesli Arama Yap"
+                            >
+                                <Phone size={18} />
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button 
+                                onClick={() => startGroupCall('video')}
+                                className="p-2 hover:bg-pink-100 hover:text-pink-600 rounded-full hidden sm:flex transition-colors"
+                                title="Görüntülü Ekip Araması Başlat"
+                            >
+                                <Video size={18} />
+                            </button>
+                            <button 
+                                onClick={() => startGroupCall('audio')}
+                                className="p-2 hover:bg-purple-100 hover:text-purple-600 rounded-full hidden sm:flex transition-colors"
+                                title="Sesli Ekip Araması Başlat"
+                            >
+                                <Phone size={18} />
+                            </button>
+                        </>
+                    )}
+                    <button className="p-2 hover:bg-gray-200 rounded-full transition-colors">
                         <MoreVertical size={20} />
                     </button>
                 </div>

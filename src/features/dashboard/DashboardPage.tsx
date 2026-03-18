@@ -51,7 +51,7 @@ export function DashboardPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold text-primary tracking-tight">Gösterge Paneli</h1>
-                    <p className="text-secondary mt-1">Hoş geldiniz, Ali Mamak Ekibi</p>
+                    <p className="text-secondary mt-1">Hoş geldiniz</p>
                 </div>
                 <div className="flex gap-3">
                     {quickActions.map((action) => (

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/layout/Sidebar'; 
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
+import { CallProvider } from './context/CallContext';
 import { ToastProvider } from './components/ui/Toast';
 
 // Pages
@@ -58,6 +59,7 @@ function AppContent() {
           <Route path="/suppliers" element={<SuppliersPage />} />
           <Route path="/offers" element={<OffersPage />} />
           <Route path="/offers/new" element={<CreateOfferPage />} />
+          <Route path="/offers/:id/edit" element={<CreateOfferPage />} />
           <Route path="/deals" element={<DealsPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/meetings" element={<MeetingsPage />} />
@@ -82,7 +84,9 @@ function App() {
       <ToastProvider>
         <AuthProvider>
           <SocketProvider>
-            <AppContent />
+            <CallProvider>
+              <AppContent />
+            </CallProvider>
           </SocketProvider>
         </AuthProvider>
       </ToastProvider>

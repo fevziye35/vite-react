@@ -1,4 +1,4 @@
-import { X, Printer, FileText, ArrowRight, Loader2, Ban, Edit } from 'lucide-react';
+import { X, Printer, FileText, ArrowRight, Loader2, Ban, Edit, Trash2 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import type { Offer } from '../../types';
 import { proformaService, dealService, offerService } from '../../services/api';
@@ -99,6 +99,26 @@ export function OfferDetailsModal({ isOpen, onClose, onUpdate, onOfferUpdated, o
                         </div>
                     </div>
                     <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={async () => {
+                                if (window.confirm('Bu teklifi kalıcı olarak silmek istediğinize emin misiniz?')) {
+                                    try {
+                                        await offerService.delete(offer.id!);
+                                        toast.success('Teklif başarıyla silindi');
+                                        if (onUpdate) onUpdate();
+                                        onClose();
+                                    } catch (error) {
+                                        console.error(error);
+                                        toast.error('Teklif silinemedi');
+                                    }
+                                }
+                            }}
+                            className="bg-danger/10 text-danger hover:bg-danger/20 border-danger/20 border"
+                        >
+                            <Trash2 size={16} className="mr-2" />
+                            Sil
+                        </Button>
                         <Button
                             variant="secondary"
                             onClick={() => { onClose(); navigate(`/offers/${offer.id}/edit`); }}

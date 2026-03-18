@@ -106,6 +106,19 @@ export function SuppliersPage() {
         setSupplierProducts(supplierProducts.filter((_, i) => i !== index));
     };
 
+    const handleDeleteSupplier = async (id: string) => {
+        if (window.confirm('Bu tedarikçiyi silmek istediğinize emin misiniz?')) {
+            try {
+                await supplierService.delete(id);
+                toast.success('Tedarikçi başarıyla silindi');
+                loadData();
+            } catch (error) {
+                console.error(error);
+                toast.error('Tedarikçi silinemedi');
+            }
+        }
+    };
+
     return (
         <div className="space-y-6 pb-10">
             <div className="flex justify-between items-center">
@@ -133,9 +146,14 @@ export function SuppliersPage() {
                                     </div>
                                 </div>
                             </div>
-                            <Button variant="ghost" size="sm" onClick={() => handleOpenModal(supplier)} className="text-gray-400 hover:text-accent">
-                                <Edit size={16} />
-                            </Button>
+                            <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="icon" onClick={() => handleOpenModal(supplier)} className="h-8 w-8 text-gray-400 hover:text-accent">
+                                    <Edit size={16} />
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => handleDeleteSupplier(supplier.id!)} className="h-8 w-8 text-gray-400 hover:text-danger">
+                                    <Trash2 size={16} />
+                                </Button>
+                            </div>
                         </div>
 
                         <div className="space-y-3 text-sm text-secondary mb-6 pl-1">

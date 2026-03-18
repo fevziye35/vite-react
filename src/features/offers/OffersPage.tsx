@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-    Plus, LayoutGrid, Table as TableIcon, Search, Loader2, Eye
+    Plus, LayoutGrid, Table as TableIcon, Search, Loader2, Eye, Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { offerService } from '../../services/api';
@@ -11,20 +11,26 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
+import { useToast } from '../../components/ui/Toast';
 
 export function OffersPage() {
     const navigate = useNavigate();
+    const toast = useToast();
     const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
     const [searchTerm, setSearchTerm] = useState('');
     const [offers, setOffers] = useState<Offer[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
 
-    useEffect(() => {
+    const loadOffers = () => {
         offerService.getAll()
             .then(setOffers)
             .catch(console.error)
             .finally(() => setLoading(false));
+    };
+
+    useEffect(() => {
+        loadOffers();
     }, []);
 
     const filteredOffers = offers.filter(o => {
@@ -41,6 +47,20 @@ export function OffersPage() {
             // Robust comparison
             return prev.map(o => String(o.id) === String(updatedOffer.id) ? updatedOffer : o);
         });
+    };
+
+    const handleDeleteOffer = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (window.confirm('Bu teklifi silmek istediğinize emin misiniz?')) {
+            try {
+                await offerService.delete(id);
+                toast.success('Teklif başarıyla silindi');
+                loadOffers();
+            } catch (error) {
+                console.error(error);
+                toast.error('Teklif silinemedi');
+            }
+        }
     };
 
     if (loading) return <div className="flex justify-center items-center h-[calc(100vh-4rem)]"><Loader2 className="animate-spin text-accent" size={32} /></div>;
@@ -104,15 +124,15 @@ export function OffersPage() {
             </div>
 
             {viewMode === 'kanban' ? (
-                <OffersKanban offers={filteredOffers} onView={setSelectedOffer} />
+                <OffersKanban offers={filteredOffers} onView={setSelectedOffer} onDelete={handleDeleteOffer} />
             ) : (
-                <OffersTable offers={filteredOffers} onView={setSelectedOffer} />
+                <OffersTable offers={filteredOffers} onView={setSelectedOffer} onDelete={handleDeleteOffer} />
             )}
         </div>
     );
 }
 
-function OffersTable({ offers, onView }: { offers: Offer[], onView: (offer: Offer) => void }) {
+function OffersTable({ offers, onView, onDelete }: { offers: Offer[], onView: (offer: Offer) => void, onDelete: (id: string, e: React.MouseEvent) => void }) {
     return (
         <Card noPadding className="overflow-hidden bg-white/80 backdrop-blur-sm">
             <div className="overflow-x-auto">
@@ -149,9 +169,14 @@ function OffersTable({ offers, onView }: { offers: Offer[], onView: (offer: Offe
                                 <td className="p-4 text-secondary">{offer.createdAt ? new Date(offer.createdAt).toLocaleDateString() : '-'}</td>
                                 <td className="p-4 text-secondary">{offer.validityDate}</td>
                                 <td className="p-4">
-                                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onView(offer); }} className="text-gray-400 hover:text-accent">
-                                        <Eye className="h-4 w-4" />
-                                    </Button>
+                                    <div className="flex items-center gap-1">
+                                        <Button variant="ghost" size="icon" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onView(offer); }} className="text-gray-400 hover:text-accent">
+                                            <Eye className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(offer.id!, e); }} className="text-gray-400 hover:text-danger">
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -162,7 +187,7 @@ function OffersTable({ offers, onView }: { offers: Offer[], onView: (offer: Offe
     );
 }
 
-function OffersKanban({ offers, onView }: { offers: Offer[], onView: (offer: Offer) => void }) {
+function OffersKanban({ offers, onView, onDelete }: { offers: Offer[], onView: (offer: Offer) => void, onDelete: (id: string, e: React.MouseEvent) => void }) {
     const columns: OfferStatus[] = ['Draft', 'Sent', 'Negotiation', 'Accepted', 'Lost'];
 
     return (
@@ -188,9 +213,22 @@ function OffersKanban({ offers, onView }: { offers: Offer[], onView: (offer: Off
                                 >
                                     <div className="flex justify-between items-start mb-3">
                                         <span className="text-xs font-bold text-secondary bg-gray-50 px-2 py-1 rounded-lg">{offer.offerNumber}</span>
-                                        <button className="text-gray-400 hover:text-accent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                            <Eye size={16} />
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <button 
+                                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onView(offer); }} 
+                                                className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 rounded-md transition-colors shadow-sm"
+                                                title="Görüntüle"
+                                            >
+                                                <Eye size={16} />
+                                            </button>
+                                            <button 
+                                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(offer.id!, e); }} 
+                                                className="p-1.5 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 rounded-md transition-colors shadow-sm"
+                                                title="Sil"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <h4 className="font-bold text-primary mb-1 text-base">{offer.contactPerson}</h4>

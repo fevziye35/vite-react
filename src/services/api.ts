@@ -33,8 +33,18 @@ export const dealService = {
         return data ? data[0] : null;
     },
     delete: async (id: string) => {
-        await supabase.from('deals').delete().eq('id', id);
-        return true;
+        try {
+            await supabase.from('timeline_events').delete().eq('deal_id', id);
+            await supabase.from('tasks').delete().eq('deal_id', id);
+            await supabase.from('reservations').delete().eq('deal_id', id);
+            
+            const { error } = await supabase.from('deals').delete().eq('id', id);
+            if (error) throw error;
+            return true;
+        } catch (error) {
+            console.error("Deal delete error:", error);
+            throw error;
+        }
     }
 };
 
@@ -100,8 +110,53 @@ export const customerService = {
         return data;
     },
     delete: async (id: string) => {
-        await supabase.from('customers').delete().eq('id', id);
-        return true;
+        try {
+            // Delete timeline events for deals
+            const { data: deals } = await supabase.from('deals').select('id').eq('customer_id', id);
+            if (deals && deals.length > 0) {
+                const dealIds = deals.map((d: any) => d.id);
+                for (const dId of dealIds) {
+                    await supabase.from('timeline_events').delete().eq('deal_id', dId);
+                    await supabase.from('tasks').delete().eq('deal_id', dId);
+                    await supabase.from('reservations').delete().eq('deal_id', dId);
+                }
+                await supabase.from('deals').delete().in('id', dealIds);
+            }
+
+            // Delete offers and related items
+            const { data: offers } = await supabase.from('offers').select('id').eq('customer_id', id);
+            if (offers && offers.length > 0) {
+                const offerIds = offers.map((o: any) => o.id);
+                for (const oId of offerIds) {
+                    await supabase.from('offer_items').delete().eq('offer_id', oId);
+                }
+                await supabase.from('offers').delete().in('id', offerIds);
+            }
+
+            // Delete proformas and shipments
+            const { data: proformas } = await supabase.from('proformas').select('id').eq('customer_id', id);
+            if (proformas && proformas.length > 0) {
+                const proformaIds = proformas.map((p: any) => p.id);
+                await supabase.from('shipments').delete().in('proforma_id', proformaIds);
+                await supabase.from('proformas').delete().in('id', proformaIds);
+            }
+
+            // Cleanup any other orphans
+            await supabase.from('shipments').delete().eq('customer_id', id);
+            await supabase.from('meetings').delete().eq('customer_id', id);
+
+            // Finally, delete the customer
+            const { error } = await supabase.from('customers').delete().eq('id', id);
+            
+            if (error) {
+                console.error("Customer deletion error:", error);
+                throw error;
+            }
+            return true;
+        } catch (error) {
+            console.error("Cascade delete error:", error);
+            throw error;
+        }
     }
 };
 
@@ -116,15 +171,45 @@ export const productService = {
         }));
     },
     create: async (p: any) => {
-        const { data } = await supabase.from('products').insert([{
+        const payload: any = {
             product_name: p.productName || p.product_name,
             category: p.category,
             unit_type: p.unitType || p.unit_type,
             base_unit_price: parseFloat(p.baseUnitPrice || p.base_unit_price) || 0,
-            hs_code: p.hsCode || p.hs_code,
-            origin_country: p.originCountry || p.origin_country
-        }]).select();
+        };
+        // Only attach if they explicitly exist, to avoid sending `undefined` to a non-existent column
+        if (p.hsCode || p.hs_code) payload.hs_code = p.hsCode || p.hs_code;
+        if (p.originCountry || p.origin_country) payload.origin_country = p.originCountry || p.origin_country;
+
+        const { data, error } = await supabase.from('products').insert([payload]).select();
+        
+        if (error) {
+            console.error("Supabase Products Insert Error:", error);
+            throw error;
+        }
+
         return data ? data[0] : null;
+    },
+    update: async (id: string, updates: any) => {
+        const payload: any = {};
+        if (updates.productName) payload.product_name = updates.productName;
+        if (updates.category) payload.category = updates.category;
+        if (updates.unitType) payload.unit_type = updates.unitType;
+        if (updates.baseUnitPrice !== undefined) payload.base_unit_price = parseFloat(updates.baseUnitPrice) || 0;
+        if (updates.originCountry) payload.origin_country = updates.originCountry;
+        if (updates.hsCode) payload.hs_code = updates.hsCode;
+
+        const { data, error } = await supabase.from('products').update(payload).eq('id', id).select();
+        if (error) {
+            console.error("Supabase Products Update Error:", error);
+            throw error;
+        }
+        return data ? data[0] : null;
+    },
+    delete: async (id: string) => {
+        const { error } = await supabase.from('products').delete().eq('id', id);
+        if (error) throw error;
+        return true;
     }
 };
 
@@ -367,18 +452,29 @@ export const offerService = {
     getById: async (id: string) => {
         const { data } = await supabase.from('offers').select('*').eq('id', id).single();
         if (!data) return null;
+        
+        let parsedItems = [];
+        if (Array.isArray(data.items)) {
+            parsedItems = data.items;
+        } else if (typeof data.items === 'string') {
+            try { parsedItems = JSON.parse(data.items); } catch(e) {}
+        }
+
         return {
             ...data,
-            offerNumber: data.offer_number,
-            contactPerson: data.contact_person,
-            totalAmount: data.total_amount,
-            validityDate: data.validity_date,
-            customerId: data.customer_id,
-            portOfLoading: data.port_of_loading,
-            portOfDischarge: data.port_of_discharge,
-            paymentTerms: data.payment_terms,
-            freightCost: data.freight_cost,
-            insuranceCost: data.insurance_cost
+            offerNumber: data.offer_number || '',
+            contactPerson: data.contact_person || '',
+            totalAmount: data.total_amount || 0,
+            validityDate: data.validity_date || '',
+            customerId: data.customer_id || '',
+            portOfLoading: data.port_of_loading || '',
+            portOfDischarge: data.port_of_discharge || '',
+            paymentTerms: data.payment_terms || '',
+            freightCost: data.freight_cost || 0,
+            insuranceCost: data.insurance_cost || 0,
+            currency: data.currency || 'USD',
+            incoterm: data.incoterm || 'FOB',
+            items: parsedItems
         };
     },
     create: async (offer: any) => {
@@ -413,6 +509,16 @@ export const offerService = {
         
         const { data } = await supabase.from('offers').update(mapped).eq('id', id).select();
         return data ? data[0] : null;
+    },
+    delete: async (id: string) => {
+        try {
+            const { error } = await supabase.from('offers').delete().eq('id', id);
+            if (error) throw error;
+            return true;
+        } catch (error) {
+            console.error("Offer delete error:", error);
+            throw error;
+        }
     }
 };
 
