@@ -24,12 +24,22 @@ export const dealService = {
     },
     update: async (id: string, updates: any) => {
         const mapped = { ...updates };
-        if (updates.expectedRevenue) mapped.expected_revenue = updates.expectedRevenue;
-        if (updates.customerId) mapped.customer_id = updates.customerId;
+        if (updates.expectedRevenue !== undefined) mapped.expected_revenue = updates.expectedRevenue;
+        if (updates.customerId !== undefined) mapped.customer_id = updates.customerId;
+        if (updates.expectedClosingDate !== undefined) mapped.expected_closing_date = updates.expectedClosingDate;
+        
+        // Remove virtual or relational populated fields that don't exist in base 'deals' table
+        delete mapped.id;
         delete mapped.expectedRevenue;
         delete mapped.customerId;
+        delete mapped.expectedClosingDate;
+        delete mapped.customers;
+        delete mapped.customer;
+        delete mapped.created_at;
+        delete mapped.created_by;
         
-        const { data } = await supabase.from('deals').update(mapped).eq('id', id).select();
+        const { data, error } = await supabase.from('deals').update(mapped).eq('id', id).select();
+        if (error) console.error("Deal update error:", error);
         return data ? data[0] : null;
     },
     delete: async (id: string) => {
