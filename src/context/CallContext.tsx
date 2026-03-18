@@ -610,7 +610,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     </div>
                     <iframe 
                         allow="camera; microphone; fullscreen; display-capture; autoplay"
-                        src={`https://meet.jit.si/${jitsiRoom}#config.startWithVideoMuted=${callType === 'audio'}`}
+                        src={`https://meet.ffmuc.net/${jitsiRoom}#config.startWithVideoMuted=${callType === 'audio'}`}
                         className="w-full h-full border-none"
                     />
                 </div>
