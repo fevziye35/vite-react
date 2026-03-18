@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Kanban, List, Plus, Calendar, Loader2 } from 'lucide-react';
+import { Kanban, List, Plus, Calendar, Loader2, Trash2 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { dealService, proformaService } from '../../services/api';
 import { Modal } from '../../components/ui/Modal';
@@ -113,6 +113,20 @@ export function DealsPage() {
         }
     }
 
+    async function handleDeleteDeal() {
+        if (!window.confirm('Bu anlaşmayı kalıcı olarak silmek istediğinize emin misiniz?')) return;
+        
+        try {
+            await dealService.delete(formData.id);
+            setDeals(prevDeals => prevDeals.filter(d => String(d.id) !== String(formData.id)));
+            setIsModalOpen(false);
+            toast.success('Anlaşma başarıyla silindi');
+        } catch (error) {
+            console.error(error);
+            toast.error('Anlaşma silinemedi');
+        }
+    }
+
     function openEdit(deal: any) {
         setFormData({
             ...deal,
@@ -159,6 +173,9 @@ export function DealsPage() {
                             </Button>
                             <Button type="button" variant="outline" size="sm" onClick={handleCancelDeal} className="text-danger border-danger/20 hover:bg-danger/5">
                                 İptal Et (Kayıp)
+                            </Button>
+                            <Button type="button" variant="outline" size="sm" onClick={handleDeleteDeal} className="text-red-500 border-red-500/20 hover:bg-red-500/10" title="Kalıcı Olarak Sil">
+                                <Trash2 size={16} />
                             </Button>
                         </div>
                     )}
