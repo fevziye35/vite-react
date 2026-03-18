@@ -609,7 +609,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         </button>
                     </div>
                     <iframe 
-                        allow="camera; microphone; fullscreen; display-capture; autoplay"
+                        allow="camera *; microphone *; fullscreen *; display-capture *; autoplay *"
                         src={`https://meet.systemli.org/${jitsiRoom}#config.startWithVideoMuted=${callType === 'audio'}&config.prejoinConfig.enabled=false&config.prejoinPageEnabled=false&userInfo.displayName="%20${encodeURIComponent(user?.fullName || user?.email?.split('@')[0] || 'User')}%20"`}
                         className="w-full h-full border-none"
                     />
