@@ -205,6 +205,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const getLocalMedia = async (type: CallType) => {
         try {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Tarayıcınız mikrofon/kamera erişimini engelliyor. Canlı sunucuda (Live) sesli ve görüntülü arama yapabilmek için bağlantınızın güvenli (HTTPS) olması veya ayarlardan izin vermeniz zorunludur.');
+                return null;
+            }
+
             const constraints = type === 'video' 
                 ? { audio: true, video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" } } 
                 : { audio: true, video: false };
@@ -217,9 +222,13 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             
             return stream;
-        } catch (err) {
+        } catch (err: any) {
             console.error('Microphone/Camera error:', err);
-            alert('Kamera veya Mikrofona erişilemedi. Lütfen izin verin.');
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                alert('Kamera veya Mikrofona erişilemedi. Lütfen tarayıcınızın adres çubuğundaki kilit simgesine tıklayarak izin verin.');
+            } else {
+                alert('Kamera veya Mikrofona erişilemedi. Cihazınızın bağlı olduğundan emin olun.');
+            }
             return null;
         }
     };
@@ -278,9 +287,9 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await pc.setLocalDescription(offer);
 
         socket?.emit('call-offer', {
-            targetUserId,
-            offer,
-            callerName: user?.fullName || user?.email?.split('@')[0],
+            targetUserId: targetUserId,
+            offer: offer,
+            callerName: user?.fullName || user?.email || 'Bilinmeyen Kullanıcı',
             callType: type
         });
     };

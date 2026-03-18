@@ -85,30 +85,31 @@ export function CreateOfferPage() {
                 if (id) {
                     const offer = await offerService.getById(id);
                     if (offer) {
-                        setSelectedCustomer(offer.customerId);
-                        setCurrency(offer.currency as Currency);
-                        setIncoterm(offer.incoterm as Incoterm);
-                        setValidityDate(offer.validityDate);
-                        setLoadingPort(offer.portOfLoading);
-                        setDischargePort(offer.portOfDischarge);
-                        setPaymentTerms(offer.paymentTerms);
-                        setFreightCost(offer.freightCost);
-                        setInsuranceCost(offer.insuranceCost);
-                        // Reconstruct items (Note: some cost data might be missing if not saved in original simplified model)
-                        // Assuming basic reconstruction for now
-                        setLineItems(offer.items.map(i => ({
+                        setSelectedCustomer(offer.customerId || '');
+                        setCurrency((offer.currency || 'USD') as Currency);
+                        setIncoterm((offer.incoterm || 'FOB') as Incoterm);
+                        setValidityDate(offer.validityDate || new Date().toISOString().split('T')[0]);
+                        setLoadingPort(offer.portOfLoading || '');
+                        setDischargePort(offer.portOfDischarge || '');
+                        setPaymentTerms(offer.paymentTerms || '');
+                        setFreightCost(Number(offer.freightCost) || 0);
+                        setInsuranceCost(Number(offer.insuranceCost) || 0);
+                        
+                        // Safely reconstruct items
+                        const itemsList = Array.isArray(offer.items) ? offer.items : [];
+                        setLineItems(itemsList.map((i: any) => ({
                             id: Math.random().toString(36).substr(2, 9),
-                            productId: i.productId,
-                            productCost: 0, // Missing in basic offer model, would need extended model
+                            productId: i.productId || '',
+                            productCost: 0,
                             customsCost: 0,
                             logisticsCost: 0,
                             otherCost: 0,
                             totalBaseCost: 0,
                             marginPercent: 0,
-                            packaging: i.packaging,
-                            quantity: i.quantity,
-                            unitPrice: i.unitPrice,
-                            total: i.total
+                            packaging: i.packaging || '',
+                            quantity: Number(i.quantity) || 0,
+                            unitPrice: Number(i.unitPrice) || 0,
+                            total: Number(i.total) || 0
                         })));
                     }
                 }
