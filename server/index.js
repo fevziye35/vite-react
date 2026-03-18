@@ -61,14 +61,25 @@ io.on('connection', (socket) => {
 
     // --- WEBRTC SIGNALING ---
     socket.on('call-offer', (data) => {
+        console.log('--- CALL OFFER RECEIVED ---');
+        console.log('From socket:', socket.id);
+        console.log('Caller ID:', onlineUsers.get(socket.id));
+        console.log('Target ID:', data.targetUserId);
+        
         const targetSocketId = [...onlineUsers.entries()].find(([k, v]) => v === data.targetUserId)?.[0];
+        console.log('Found Target Socket ID:', targetSocketId);
+        
         if (targetSocketId) {
+            console.log('EMITTING call-offer to target socket:', targetSocketId);
             io.to(targetSocketId).emit('call-offer', {
                 offer: data.offer,
                 callerId: onlineUsers.get(socket.id),
                 callerName: data.callerName,
                 callType: data.callType
             });
+        } else {
+            console.log('WARNING: TARGET SOCKET NOT FOUND IN ONLINEUSERS!');
+            console.log('Current online users array:', Array.from(onlineUsers.entries()));
         }
     });
 
@@ -1193,3 +1204,7 @@ httpServer.listen(PORT, '0.0.0.0', () => {
     
     startTunnel();
 });
+
+// logging
+const fs = require('fs');
+const log = (msg) => fs.appendFileSync('backend.log', msg + '\n');
