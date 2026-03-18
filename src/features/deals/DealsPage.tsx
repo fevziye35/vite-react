@@ -37,12 +37,17 @@ export function DealsPage() {
     async function handleSave(e: React.FormEvent) {
         e.preventDefault();
         try {
-            await dealService.create({ ...formData, customerId: formData.customerId });
+            if (isEditing) {
+                await dealService.update(formData.id, { ...formData, customerId: formData.customerId });
+                toast.success('Anlaşma başarıyla güncellendi');
+            } else {
+                await dealService.create({ ...formData, customerId: formData.customerId });
+                toast.success('Anlaşma başarıyla oluşturuldu');
+            }
             setIsModalOpen(false);
             setFormData({ stage: 'Qualified', probability: 50 });
             setIsEditing(false);
             loadDeals();
-            toast.success('Anlaşma başarıyla kaydedildi');
         } catch (error) {
             console.error(error);
             toast.error('Anlaşma kaydedilemedi.');
