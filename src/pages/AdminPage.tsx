@@ -21,7 +21,7 @@ export default function AdminPage() {
         role: 'Admin',
         permissions: {
             deals: true,
-            customers: true,
+            customers: true,  
             offers: true,
             messages: true
         }
