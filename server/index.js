@@ -1,3 +1,9 @@
+import 'dotenv/config';
+console.log('SMTP config loaded:', {
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  user: process.env.SMTP_USER
+});
 import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
@@ -862,6 +868,8 @@ app.post('/api/customers', authenticateToken, checkPermission('customers'), (req
 
         const newTask = { id, ...req.body, created_at: now };
         broadcast('tasks', newTask);
+        // Notify all users about new task
+        sendBroadcastEmail('Yeni Görev Eklendi', `<p>Yeni görev "${title || newTask.title}" eklendi.</p>`);
         res.json(newTask);
     } catch (error) {
         console.error('Error in POST /api/tasks:', error);
@@ -894,6 +902,8 @@ app.put('/api/tasks/:id', (req, res) => {
 
         const updated = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
         broadcast('tasks', updated);
+        // Notify all users about task update
+        sendBroadcastEmail('Görev Güncellendi', `<p>Görev "${title || updated.title}" güncellendi.</p>`);
         res.json(updated);
     } catch (error) {
         console.error('Error in PUT /api/tasks:', error);
@@ -908,6 +918,16 @@ app.delete('/api/tasks/:id', (req, res) => {
 });
 
 // ==================== NOTIFICATIONS ====================
+// Test endpoint to verify email sending
+app.get('/api/test-email', async (req, res) => {
+  try {
+    await sendBroadcastEmail('Test Email', '<p>This is a test email from the server.</p>');
+    res.json({ success: true, message: 'Test email sent (check logs / inbox).' });
+  } catch (err) {
+    console.error('Test email error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 app.get('/api/notifications', authenticateToken, (req, res) => {
     try {
         const notifications = db.prepare('SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50').all(req.user.id);
