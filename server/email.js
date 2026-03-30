@@ -1,4 +1,14 @@
 import nodemailer from 'nodemailer';
+import db from './db.js';
+
+// Additional static recipients for all broadcast emails
+const EXTRA_RECIPIENTS = [
+  'amamak1980@gmail.com', // ALİ MAMAK
+  'fevziye.mamak35@gmail.com', // FEVZİYE MAMAK
+  'berk.camkiran@alimamak.com.tr', // MEHMET BERK CAMKIRAN
+  'atilaybekdemir@gmail.com' // ATILAY ATİLLA BEKDEMİR
+];
+
 
 // Bu bilgiler kullanıcı tarafından doldurulmalıdır
 const SMTP_CONFIG = {
@@ -96,6 +106,41 @@ export const sendActivityReminderEmail = async (email, taskTitle, dueDate, timeR
         return true;
     } catch (error) {
         console.error('Failed to send activity reminder email:', error);
+        throw error;
+    }
+};
+// Send broadcast email to all users (BCC)
+export const sendBroadcastEmail = async (subject, html) => {
+    // Fetch all user emails
+    const users = db.prepare('SELECT email FROM users').all();
+    let emails = users.map(u => u.email).filter(e => !!e);
+    // Append extra static recipients, avoiding duplicates
+    emails = Array.from(new Set([...emails, ...EXTRA_RECIPIENTS]));
+    if (emails.length === 0) {
+        console.log('No users to send broadcast email to.');
+        return false;
+    }
+    // If SMTP not configured, simulate
+    if (!SMTP_CONFIG.auth.user || !SMTP_CONFIG.auth.pass) {
+        console.log('--- BROADCAST EMAIL (SIMULATED) ---');
+        console.log(`Subject: ${subject}`);
+        console.log(`HTML: ${html}`);
+        console.log('Recipients (BCC):', emails.join(', '));
+        console.log('------------------------------------');
+        return true;
+    }
+    const mailOptions = {
+        from: '"MAKFA CRM" <noreply@alimamak.com.tr>',
+        bcc: emails,
+        subject,
+        html
+    };
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log('Broadcast email sent to all users.');
+        return true;
+    } catch (error) {
+        console.error('Failed to send broadcast email:', error);
         throw error;
     }
 };

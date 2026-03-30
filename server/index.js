@@ -3,6 +3,7 @@ import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import db from './db.js';
+import { sendBroadcastEmail } from './email.js';
 import { randomUUID } from 'crypto';
 import { sendResetPasswordEmail } from './email.js';
 import startCronJobs from './cron.js';
@@ -429,6 +430,8 @@ app.post('/api/products', (req, res) => {
 
     const newProduct = { id, ...req.body, packaging_options: packaging_options || [] };
     broadcast('products', newProduct);
+        // Notify all users about new product
+        sendBroadcastEmail('Yeni Ürün Eklendi', `<p>Yeni ürün "${product_name}" eklendi.</p>`);
     res.json(newProduct);
 });
 
@@ -443,6 +446,8 @@ app.put('/api/products/:id', (req, res) => {
     const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
     updated.packaging_options = JSON.parse(updated.packaging_options || '[]');
     broadcast('products', updated);
+        // Notify all users about product update
+        sendBroadcastEmail('Ürün Güncellendi', `<p>Ürün "${updated.product_name}" güncellendi.</p>`);
     res.json(updated);
 });
 
@@ -465,6 +470,8 @@ app.post('/api/customers', (req, res) => {
 
     const newCustomer = { id, ...req.body, tags: tags || [], created_at: now, updated_at: now };
     broadcast('customers', newCustomer);
+        // Notify all users about new customer
+        sendBroadcastEmail('Yeni Müşteri Eklendi', `<p>Yeni müşteri "${company_name}" eklendi.</p>`);
     res.json(newCustomer);
 });
 
@@ -480,6 +487,8 @@ app.put('/api/customers/:id', authenticateToken, checkPermission('customers'), (
     const updated = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
     updated.tags = JSON.parse(updated.tags || '[]');
     broadcast('customers', updated);
+        // Notify all users about customer update
+        sendBroadcastEmail('Müşteri Güncellendi', `<p>Müşteri "${updated.company_name}" güncellendi.</p>`);
     res.json(updated);
 });
 
