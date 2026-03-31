@@ -22,7 +22,7 @@ export default function AdminPage() {
         permissions: {
             deals: true,
             customers: true,  
-            offers: true,
+            offers: true, 
             messages: true
         }
     });
