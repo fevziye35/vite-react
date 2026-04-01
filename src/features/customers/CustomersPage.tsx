@@ -10,6 +10,7 @@ import { Badge } from '../../components/ui/Badge';
 import { HighlightText } from '../../components/ui/HighlightText';
 import { CustomerDetailModal } from './CustomerDetailModal';
 import { useSocket } from '../../context/SocketContext';
+import { sendActivityMail } from '../../emailNotification';
 
 export function CustomersPage() {
     const toast = useToast();
@@ -21,31 +22,36 @@ export function CustomersPage() {
     const [formData, setFormData] = useState<Partial<Customer>>({});
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
+    const { socket } = useSocket();
+
+    // Merkezi Veri Değişim ve Bildirim Fonksiyonu
+    const handleDataChange = ({ type, payload }: { type: string; payload: any }) => {
+        if (type === 'customers') {
+            if (payload.deleted) {
+                setCustomers(prev => prev.filter(c => c.id !== payload.id));
+                sendActivityMail('Müşteri Silindi', payload);
+            } else {
+                setCustomers(prev => {
+                    const exists = prev.find(c => c.id === payload.id);
+                    if (exists) {
+                        sendActivityMail('Müşteri Bilgisi Güncellendi', payload);
+                        return prev.map(c => c.id === payload.id ? payload : c);
+                    }
+                    sendActivityMail('Yeni Müşteri Eklendi', payload);
+                    return [payload, ...prev];
+                });
+            }
+        }
+    };
+
     useEffect(() => {
         loadCustomers();
     }, []);
 
-    const { socket } = useSocket();
-
     useEffect(() => {
         if (!socket) return;
 
-        const handleDataChange = ({ type, payload }: { type: string; payload: any }) => {
-            if (type === 'customers') {
-                if (payload.deleted) {
-                    setCustomers(prev => prev.filter(c => c.id !== payload.id));
-                } else {
-                    setCustomers(prev => {
-                        const exists = prev.find(c => c.id === payload.id);
-                        if (exists) {
-                            return prev.map(c => c.id === payload.id ? payload : c);
-                        }
-                        return [payload, ...prev];
-                    });
-                }
-            }
-        };
-
+        // Socket üzerinden gelen her değişikliği bildirim fonksiyonuna bağlıyoruz
         socket.on('data_change', handleDataChange);
         return () => {
             socket.off('data_change', handleDataChange);
@@ -75,7 +81,7 @@ export function CustomersPage() {
             }
             setIsCreateModalOpen(false);
             setFormData({});
-            loadCustomers();
+            // loadCustomers(); // Socket zaten listeyi güncelleyip mail atacak
         } catch (error) {
             console.error(error);
             toast.error(formData.id ? 'Müşteri güncellenemedi' : 'Müşteri oluşturulamadı');
@@ -89,7 +95,6 @@ export function CustomersPage() {
             try {
                 await customerService.delete(id);
                 toast.success('Müşteri silindi');
-                loadCustomers();
             } catch (error) {
                 console.error(error);
                 toast.error('Müşteri silinemedi');
@@ -97,7 +102,6 @@ export function CustomersPage() {
         }
     }
 
-    // Transform customers data (tags)
     const displayCustomers = customers.map(c => ({
         ...c,
         tags: Array.isArray(c.tags) ? c.tags : (c.tags ? [c.tags] : [])
@@ -128,13 +132,6 @@ export function CustomersPage() {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        {searchTerm && (
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                <Badge variant="neutral" className="bg-blue-500/20 text-blue-400 border-none text-[10px] animate-in fade-in zoom-in duration-200">
-                                    {filteredCustomers.length} bulundu
-                                </Badge>
-                            </div>
-                        )}
                     </div>
                     <Button onClick={() => { setFormData({}); setIsCreateModalOpen(true); }} className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20 border-none">
                         <Plus size={18} className="mr-2" />
@@ -143,7 +140,6 @@ export function CustomersPage() {
                 </div>
             </div>
 
-            {/* Customer Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filteredCustomers.length === 0 ? (
                     <div className="col-span-full py-12 text-center text-gray-400">
@@ -169,9 +165,9 @@ export function CustomersPage() {
                                     <MoreHorizontal size={16} />
                                 </Button>
                                 {openMenuId === customer.id && (
-                                    <div className="absolute top-full right-0 mt-2 w-36 bg-[#1e293b] rounded-xl shadow-xl border border-white/10 overflow-hidden z-20 animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="absolute top-full right-0 mt-2 w-36 bg-[#1e293b] rounded-xl shadow-xl border border-white/10 overflow-hidden z-20">
                                         <button 
-                                            className="w-full text-left px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-white flex items-center gap-2 transition-colors"
+                                            className="w-full text-left px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-white flex items-center gap-2"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 setFormData(customer);
@@ -182,7 +178,7 @@ export function CustomersPage() {
                                             <Edit2 size={14} /> Düzenle
                                         </button>
                                         <button 
-                                            className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-red-400/10 flex items-center gap-2 transition-colors"
+                                            className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-red-400/10 flex items-center gap-2"
                                             onClick={(e) => handleDelete(customer.id!, e)}
                                         >
                                             <Trash2 size={14} /> Sil
@@ -192,110 +188,52 @@ export function CustomersPage() {
                             </div>
 
                             <div className="p-6">
-                                <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-xl font-bold text-blue-400 mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                                <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-xl font-bold text-blue-400 mb-4 shadow-lg">
                                     {customer.companyName.charAt(0)}
                                 </div>
-
                                 <h3 className="text-lg font-bold text-white mb-1 line-clamp-1">
                                     <HighlightText text={customer.companyName} highlight={searchTerm} />
                                 </h3>
-                                <p className="text-white/60 text-sm mb-4">
-                                    {customer.contactPerson ? (
-                                        <HighlightText text={customer.contactPerson} highlight={searchTerm} />
-                                    ) : (
-                                        'İlgili kişi yok'
-                                    )}
+                                <p className="text-white/60 text-sm mb-4 truncate">
+                                    {customer.contactPerson || 'İlgili kişi yok'}
                                 </p>
-
-                                <div className="space-y-2 mb-6">
-                                    <div className="flex items-center gap-2 text-xs text-white/50">
-                                        <MapPin size={14} className="text-blue-400" />
-                                        <span className="truncate">{customer.city}, {customer.country}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs text-white/50">
-                                        <Mail size={14} className="text-blue-400" />
-                                        <span className="truncate">{customer.email}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs text-white/50">
-                                        <Phone size={14} className="text-blue-400" />
-                                        <span className="truncate">{customer.phone}</span>
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-wrap gap-2">
-                                    {Array.isArray(customer.tags) && customer.tags.slice(0, 3).map((tag: string) => (
-                                        <Badge key={tag} variant="neutral" className="text-[10px] px-2 py-0.5 bg-white/5 border-white/10 text-white/70">
-                                            {tag}
-                                        </Badge>
-                                    ))}
-                                    {Array.isArray(customer.tags) && customer.tags.length > 3 && (
-                                        <span className="text-[10px] text-gray-400 self-center">+{customer.tags.length - 3}</span>
-                                    )}
+                                <div className="space-y-2 mb-6 text-xs text-white/50">
+                                    <div className="flex items-center gap-2"><MapPin size={14} className="text-blue-400" /><span className="truncate">{customer.city}, {customer.country}</span></div>
+                                    <div className="flex items-center gap-2"><Mail size={14} className="text-blue-400" /><span className="truncate">{customer.email}</span></div>
+                                    <div className="flex items-center gap-2"><Phone size={14} className="text-blue-400" /><span className="truncate">{customer.phone}</span></div>
                                 </div>
                             </div>
-
-                            <div className="px-6 py-3 bg-white/5 border-t border-white/5 flex justify-between items-center text-xs font-medium text-white/40 group-hover:bg-blue-400/5 transition-colors">
+                            <div className="px-6 py-3 bg-white/5 border-t border-white/5 flex justify-between items-center text-xs font-medium text-white/40">
                                 <span>Detayları Gör</span>
-                                <span className="text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">Aç →</span>
+                                <span className="text-blue-400 opacity-0 group-hover:opacity-100">Aç →</span>
                             </div>
                         </Card>
                     ))
                 )}
             </div>
 
-            {/* Detailed View Modal */}
-            <CustomerDetailModal
-                isOpen={!!selectedCustomer}
-                onClose={() => setSelectedCustomer(null)}
-                customer={selectedCustomer}
-            />
+            <CustomerDetailModal isOpen={!!selectedCustomer} onClose={() => setSelectedCustomer(null)} customer={selectedCustomer} />
 
-            {/* Create Modal */}
             <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title={formData.id ? "Müşteriyi Düzenle" : "Yeni Müşteri Ekle"} className="bg-[#1e293b] text-white">
                 <form onSubmit={handleSave} className="space-y-4 p-6 bg-[#1e293b]">
                     <div>
                         <label className="block text-sm font-medium text-white/70 mb-1.5">Şirket Adı</label>
-                        <input
-                            required
-                            type="text"
-                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-400/20 focus:border-blue-400/40 transition-all font-bold"
-                            value={formData.companyName || ''}
-                            onChange={e => setFormData({ ...formData, companyName: e.target.value })}
-                        />
+                        <input required type="text" className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white" value={formData.companyName || ''} onChange={e => setFormData({ ...formData, companyName: e.target.value })} />
                     </div>
-                    {/* Simplified form for brevity, same fields as before but styled */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-white/70 mb-1.5">İlgili Kişi</label>
-                            <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-400/20 focus:border-blue-400/40 transition-all" value={formData.contactPerson || ''} onChange={e => setFormData({ ...formData, contactPerson: e.target.value })} />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-white/70 mb-1.5">E-posta</label>
-                            <input type="email" className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-400/20 focus:border-blue-400/40 transition-all" value={formData.email || ''} onChange={e => setFormData({ ...formData, email: e.target.value })} />
-                        </div>
+                        <div><label className="block text-sm font-medium text-white/70 mb-1.5">İlgili Kişi</label><input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white" value={formData.contactPerson || ''} onChange={e => setFormData({ ...formData, contactPerson: e.target.value })} /></div>
+                        <div><label className="block text-sm font-medium text-white/70 mb-1.5">E-posta</label><input type="email" className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white" value={formData.email || ''} onChange={e => setFormData({ ...formData, email: e.target.value })} /></div>
                     </div>
-                    {/* ... rest of fields ... */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-white/70 mb-1.5">Telefon</label>
-                            <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-400/20 focus:border-blue-400/40 transition-all" value={formData.phone || ''} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-white/70 mb-1.5">Ülke</label>
-                            <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-400/20 focus:border-blue-400/40 transition-all" value={formData.country || ''} onChange={e => setFormData({ ...formData, country: e.target.value })} />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-white/70 mb-1.5">Şehir</label>
-                        <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-400/20 focus:border-blue-400/40 transition-all" value={formData.city || ''} onChange={e => setFormData({ ...formData, city: e.target.value })} />
+                        <div><label className="block text-sm font-medium text-white/70 mb-1.5">Telefon</label><input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white" value={formData.phone || ''} onChange={e => setFormData({ ...formData, phone: e.target.value })} /></div>
+                        <div><label className="block text-sm font-medium text-white/70 mb-1.5">Ülke</label><input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white" value={formData.country || ''} onChange={e => setFormData({ ...formData, country: e.target.value })} /></div>
                     </div>
                     <div className="pt-4 flex justify-end gap-3">
-                        <Button type="button" variant="ghost" className="text-white/60 hover:text-white" onClick={() => setIsCreateModalOpen(false)}>İptal</Button>
-                        <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white border-none px-8">Müşteriyi Kaydet</Button>
+                        <Button type="button" variant="ghost" onClick={() => setIsCreateModalOpen(false)}>İptal</Button>
+                        <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-8">Kaydet</Button>
                     </div>
                 </form>
             </Modal>
         </div>
     );
 }
-
