@@ -704,3 +704,39 @@ export const notificationService = {
         return true;
     }
 };
+
+export const messageService = {
+    // Tüm mesajları getirir
+    getAll: async () => {
+        const { data, error } = await supabase
+            .from('messages')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        return data || [];
+    },
+
+    // Arama özelliği için: İsim veya içeriğe göre filtreleme yapar
+    search: async (query: string) => {
+        const { data, error } = await supabase
+            .from('messages')
+            .select('*')
+            .or(`sender_name.ilike.%${query}%,content.ilike.%${query}%`)
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        return data || [];
+    },
+
+    // Yeni mesaj (veya görüntülü arama kaydı) oluşturur
+    create: async (message: any) => {
+        const { data, error } = await supabase
+            .from('messages')
+            .insert([message])
+            .select();
+        
+        if (error) throw error;
+        return data ? data[0] : null;
+    }
+};
