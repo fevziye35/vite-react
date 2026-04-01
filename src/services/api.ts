@@ -1,4 +1,20 @@
 import { supabase } from './supabaseClient';
+import emailjs from '@emailjs/browser';
+
+// --- YARDIMCI MAİL FONKSİYONU ---
+const sendEmailNotification = async (templateParams: any, templateId: string) => {
+    try {
+        await emailjs.send(
+            'YOUR_SERVICE_ID', // EmailJS Service ID
+            templateId,        // EmailJS Template ID
+            templateParams,
+            'YOUR_PUBLIC_KEY'   // EmailJS Public Key
+        );
+        console.log("Bildirim maili başarıyla gönderildi!");
+    } catch (error) {
+        console.error("Mail gönderimi başarısız:", error);
+    }
+};
 
 export const dealService = {
     getAll: async () => {
@@ -28,7 +44,6 @@ export const dealService = {
         if (updates.customerId !== undefined) mapped.customer_id = updates.customerId;
         if (updates.expectedClosingDate !== undefined) mapped.expected_closing_date = updates.expectedClosingDate;
         
-        // Remove virtual or relational populated fields that don't exist in base 'deals' table
         delete mapped.id;
         delete mapped.expectedRevenue;
         delete mapped.customerId;
@@ -121,7 +136,6 @@ export const customerService = {
     },
     delete: async (id: string) => {
         try {
-            // Delete timeline events for deals
             const { data: deals } = await supabase.from('deals').select('id').eq('customer_id', id);
             if (deals && deals.length > 0) {
                 const dealIds = deals.map((d: any) => d.id);
@@ -133,7 +147,6 @@ export const customerService = {
                 await supabase.from('deals').delete().in('id', dealIds);
             }
 
-            // Delete offers and related items
             const { data: offers } = await supabase.from('offers').select('id').eq('customer_id', id);
             if (offers && offers.length > 0) {
                 const offerIds = offers.map((o: any) => o.id);
@@ -143,7 +156,6 @@ export const customerService = {
                 await supabase.from('offers').delete().in('id', offerIds);
             }
 
-            // Delete proformas and shipments
             const { data: proformas } = await supabase.from('proformas').select('id').eq('customer_id', id);
             if (proformas && proformas.length > 0) {
                 const proformaIds = proformas.map((p: any) => p.id);
@@ -151,17 +163,11 @@ export const customerService = {
                 await supabase.from('proformas').delete().in('id', proformaIds);
             }
 
-            // Cleanup any other orphans
             await supabase.from('shipments').delete().eq('customer_id', id);
             await supabase.from('meetings').delete().eq('customer_id', id);
 
-            // Finally, delete the customer
             const { error } = await supabase.from('customers').delete().eq('id', id);
-            
-            if (error) {
-                console.error("Customer deletion error:", error);
-                throw error;
-            }
+            if (error) throw error;
             return true;
         } catch (error) {
             console.error("Cascade delete error:", error);
@@ -187,17 +193,11 @@ export const productService = {
             unit_type: p.unitType || p.unit_type,
             base_unit_price: parseFloat(p.baseUnitPrice || p.base_unit_price) || 0,
         };
-        // Only attach if they explicitly exist, to avoid sending `undefined` to a non-existent column
         if (p.hsCode || p.hs_code) payload.hs_code = p.hsCode || p.hs_code;
         if (p.originCountry || p.origin_country) payload.origin_country = p.originCountry || p.origin_country;
 
         const { data, error } = await supabase.from('products').insert([payload]).select();
-        
-        if (error) {
-            console.error("Supabase Products Insert Error:", error);
-            throw error;
-        }
-
+        if (error) throw error;
         return data ? data[0] : null;
     },
     update: async (id: string, updates: any) => {
@@ -210,10 +210,7 @@ export const productService = {
         if (updates.hsCode) payload.hs_code = updates.hsCode;
 
         const { data, error } = await supabase.from('products').update(payload).eq('id', id).select();
-        if (error) {
-            console.error("Supabase Products Update Error:", error);
-            throw error;
-        }
+        if (error) throw error;
         return data ? data[0] : null;
     },
     delete: async (id: string) => {
@@ -291,10 +288,7 @@ export const logisticsService = {
             carrier: offer.carrier
         };
         const { data, error } = await supabase.from('logistics_offers').insert([mapped]).select();
-        if (error) {
-            console.error("Logistics Create Error:", error);
-            throw error;
-        }
+        if (error) throw error;
         return data ? data[0] : null;
     },
     update: async (id: string, updates: any) => {
@@ -316,10 +310,7 @@ export const logisticsService = {
         delete mapped.contactPerson;
 
         const { data, error } = await supabase.from('logistics_offers').update(mapped).eq('id', id).select();
-        if (error) {
-            console.error("Logistics Update Error:", error);
-            throw error;
-        }
+        if (error) throw error;
         return data ? data[0] : null;
     },
     delete: async (id: string) => {
@@ -392,16 +383,9 @@ export const supplierService = {
     getAll: async () => {
         try {
             const { data, error } = await supabase.from('suppliers').select('*').order('name', { ascending: true });
-            if (error) {
-                console.error("Supabase Suppliers Error:", error.message);
-                return [];
-            }
-            return (data || []).map(s => ({
-                ...s,
-                contactPerson: s.contact_person
-            }));
+            if (error) return [];
+            return (data || []).map(s => ({ ...s, contactPerson: s.contact_person }));
         } catch (e) {
-            console.error("SupplierService error:", e);
             return [];
         }
     },
@@ -413,23 +397,15 @@ export const supplierService = {
             phone: supplier.phone,
             products: supplier.products || []
         }]).select();
-        
-        if (error) {
-            console.error("Detailed Add Supplier Error:", error);
-            throw new Error(`Tedarikçi eklenemedi: ${error.message}`);
-        }
+        if (error) throw error;
         return data ? data[0] : null;
     },
     update: async (id: string, updates: any) => {
         const mapped = { ...updates };
         if (updates.contactPerson) mapped.contact_person = updates.contactPerson;
         delete mapped.contactPerson;
-        
         const { data, error } = await supabase.from('suppliers').update(mapped).eq('id', id).select();
-        if (error) {
-            console.error("Detailed Update Supplier Error:", error);
-            throw error;
-        }
+        if (error) throw error;
         return data ? data[0] : null;
     },
     delete: async (id: string) => {
@@ -462,28 +438,12 @@ export const offerService = {
     getById: async (id: string) => {
         const { data } = await supabase.from('offers').select('*').eq('id', id).single();
         if (!data) return null;
-        
-        let parsedItems = [];
-        if (Array.isArray(data.items)) {
-            parsedItems = data.items;
-        } else if (typeof data.items === 'string') {
-            try { parsedItems = JSON.parse(data.items); } catch(e) {}
-        }
-
+        let parsedItems = Array.isArray(data.items) ? data.items : [];
         return {
             ...data,
             offerNumber: data.offer_number || '',
             contactPerson: data.contact_person || '',
             totalAmount: data.total_amount || 0,
-            validityDate: data.validity_date || '',
-            customerId: data.customer_id || '',
-            portOfLoading: data.port_of_loading || '',
-            portOfDischarge: data.port_of_discharge || '',
-            paymentTerms: data.payment_terms || '',
-            freightCost: data.freight_cost || 0,
-            insuranceCost: data.insurance_cost || 0,
-            currency: data.currency || 'USD',
-            incoterm: data.incoterm || 'FOB',
             items: parsedItems
         };
     },
@@ -506,29 +466,30 @@ export const offerService = {
             total_amount: offer.totalAmount,
             items: offer.items
         };
-        const { data } = await supabase.from('offers').insert([mapped]).select();
+        const { data, error } = await supabase.from('offers').insert([mapped]).select();
+        
+        if (data && !error) {
+            // MAİL BİLDİRİMİ (TEKLİF)
+            await sendEmailNotification({
+                subject: 'Yeni Teklif!',
+                customer: mapped.contact_person,
+                amount: `${mapped.total_amount} ${mapped.currency}`,
+                offer_no: mapped.offer_number
+            }, 'YOUR_OFFER_TEMPLATE_ID');
+        }
+        
         return data ? data[0] : null;
     },
     update: async (id: string, updates: any) => {
         const mapped: any = { ...updates };
         if (updates.offerNumber) mapped.offer_number = updates.offerNumber;
-        if (updates.contactPerson) mapped.contact_person = updates.contactPerson;
-        if (updates.totalAmount) mapped.total_amount = updates.totalAmount;
-        if (updates.validityDate) mapped.validity_date = updates.validityDate;
-        if (updates.customerId) mapped.customer_id = updates.customerId;
-        
         const { data } = await supabase.from('offers').update(mapped).eq('id', id).select();
         return data ? data[0] : null;
     },
     delete: async (id: string) => {
-        try {
-            const { error } = await supabase.from('offers').delete().eq('id', id);
-            if (error) throw error;
-            return true;
-        } catch (error) {
-            console.error("Offer delete error:", error);
-            throw error;
-        }
+        const { error } = await supabase.from('offers').delete().eq('id', id);
+        if (error) throw error;
+        return true;
     }
 };
 
@@ -537,7 +498,6 @@ export const userService = {
         try {
             const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: true });
             if (error) throw error;
-            
             return (data || []).map(u => ({
                 id: u.id,
                 email: (u.email || '').toLowerCase().trim(),
@@ -546,7 +506,6 @@ export const userService = {
                 permissions: u.permissions || { deals: true, customers: true, offers: true, messages: true }
             }));
         } catch (e) {
-            console.error("UserService error:", e);
             return [];
         }
     },
@@ -558,11 +517,7 @@ export const userService = {
             role: userData.role || 'Admin',
             permissions: userData.permissions || { deals: true, customers: true, offers: true, messages: true }
         }], { onConflict: 'email' }).select();
-        
-        if (error) {
-            console.error("User Create/Upsert Error:", error);
-            throw error;
-        }
+        if (error) throw error;
         return data ? data[0] : null;
     },
     update: async (id: string, updates: any) => {
@@ -572,22 +527,46 @@ export const userService = {
             permissions: updates.permissions,
             email: updates.email?.toLowerCase().trim()
         };
-
-        const { data, error } = await supabase.from('profiles').upsert([{ 
-            id: id,
-            ...mapped
-        }]).select();
-        
-        if (error) {
-            console.error("User Update Error:", error);
-            throw error;
-        }
+        const { data, error } = await supabase.from('profiles').upsert([{ id: id, ...mapped }]).select();
+        if (error) throw error;
         return data ? data[0] : null;
     },
     delete: async (id: string) => {
         const { error } = await supabase.from('profiles').delete().eq('id', id);
         if (error) throw error;
         return true;
+    }
+};
+
+export const messageService = {
+    getAll: async () => {
+        const { data, error } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    },
+    search: async (query: string) => {
+        const { data, error } = await supabase
+            .from('messages')
+            .select('*')
+            .or(`sender_name.ilike.%${query}%,content.ilike.%${query}%`)
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    },
+    create: async (message: any) => {
+        const { data, error } = await supabase.from('messages').insert([message]).select();
+        
+        if (data && !error) {
+            // MAİL BİLDİRİMİ (MESAJ)
+            await sendEmailNotification({
+                from_name: message.sender_name,
+                message_content: message.content,
+                to_email: 'fevziye@makfaglobal.com'
+            }, 'YOUR_MESSAGE_TEMPLATE_ID');
+        }
+        
+        if (error) throw error;
+        return data ? data[0] : null;
     }
 };
 
@@ -620,54 +599,24 @@ export const getStats = async () => {
 
         const plannedContainers = allShipments.reduce((sum, s) => sum + (Number(s.container_count) || 0), 0);
 
-        const last6Months = Array.from({ length: 6 }, (_, i) => {
+        const revenueTrend = Array.from({ length: 6 }, (_, i) => {
             const d = new Date();
             d.setMonth(d.getMonth() - (5 - i));
-            return {
-                month: d.toLocaleString('tr', { month: 'short' }),
-                monthIndex: d.getMonth(),
-                year: d.getFullYear(),
-                value: 0
-            };
+            return { month: d.toLocaleString('tr', { month: 'short' }), value: 0, m: d.getMonth(), y: d.getFullYear() };
         });
 
         allProformas.forEach(p => {
             const date = new Date(p.created_at);
-            const m = date.getMonth();
-            const y = date.getFullYear();
-            const bucket = last6Months.find(b => b.monthIndex === m && b.year === y);
-            if (bucket) {
-                bucket.value += (Number(p.total_price) || 0);
-            }
+            const bucket = revenueTrend.find(b => b.m === date.getMonth() && b.y === date.getFullYear());
+            if (bucket) bucket.value += (Number(p.total_price) || 0);
         });
-
-        const categoryMap: Record<string, number> = {};
-        allDeals.forEach(d => {
-            const cat = d.stage || 'Yeni';
-            categoryMap[cat] = (categoryMap[cat] || 0) + (Number(d.expected_revenue) || 0);
-        });
-        const categoryData = Object.entries(categoryMap)
-            .map(([name, value]) => ({ name, value }))
-            .sort((a, b) => b.value - a.value);
-
-        const countryMap: Record<string, number> = {};
-        allCustomers.forEach(c => {
-            const country = c.country || 'Diğer';
-            countryMap[country] = (countryMap[country] || 0) + 1;
-        });
-        const countryData = Object.entries(countryMap)
-            .map(([name, value]) => ({ name, value }))
-            .sort((a, b) => b.value - a.value)
-            .slice(0, 5);
 
         return {
             activeDealsCount: activeDeals.length,
             offersSentMonth: offersThisMonth,
             totalPipeline,
             plannedContainers,
-            revenueTrend: last6Months.map(({ month, value }) => ({ month, value })),
-            categoryData,
-            countryData,
+            revenueTrend: revenueTrend.map(({ month, value }) => ({ month, value })),
             recentOffers: allOffers.slice(0, 5).map(o => ({
                 id: o.id,
                 offerNumber: o.offer_number || 'OFF-' + o.id.substring(0, 8),
@@ -678,65 +627,22 @@ export const getStats = async () => {
             }))
         };
     } catch (e) {
-        console.error("Stats fetch error:", e);
         return null;
     }
 };
 
-export const updateSettings = async (s: any) => s;
-
 export const notificationService = {
     getAll: async () => {
         const { data } = await supabase.from('notifications').select('*').order('created_at', { ascending: false });
-        return (data || []).map(n => ({
-            ...n,
-            isRead: n.is_read,
-            createdAt: n.created_at
-        }));
+        return (data || []).map(n => ({ ...n, isRead: n.is_read, createdAt: n.created_at }));
     },
     markAsRead: async (id: string) => {
-        const { data } = await supabase.from('notifications').update({ is_read: true }).eq('id', id).select();
-        return data;
+        return await supabase.from('notifications').update({ is_read: true }).eq('id', id).select();
     },
     delete: async (id: string) => {
-        const { error } = await supabase.from('notifications').delete().eq('id', id);
-        if (error) throw error;
+        await supabase.from('notifications').delete().eq('id', id);
         return true;
     }
 };
 
-export const messageService = {
-    // Tüm mesajları getirir
-    getAll: async () => {
-        const { data, error } = await supabase
-            .from('messages')
-            .select('*')
-            .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        return data || [];
-    },
-
-    // Arama özelliği için: İsim veya içeriğe göre filtreleme yapar
-    search: async (query: string) => {
-        const { data, error } = await supabase
-            .from('messages')
-            .select('*')
-            .or(`sender_name.ilike.%${query}%,content.ilike.%${query}%`)
-            .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        return data || [];
-    },
-
-    // Yeni mesaj (veya görüntülü arama kaydı) oluşturur
-    create: async (message: any) => {
-        const { data, error } = await supabase
-            .from('messages')
-            .insert([message])
-            .select();
-        
-        if (error) throw error;
-        return data ? data[0] : null;
-    }
-};
+export const updateSettings = async (s: any) => s;
