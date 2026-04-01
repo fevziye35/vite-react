@@ -75,13 +75,23 @@ export function CustomersPage() {
             if (formData.id) {
                 await customerService.update(formData.id, formData);
                 toast.success('Müşteri güncellendi');
+                
+                // --- EKLEDİĞİMİZ SATIR (GÜNCELLEME) ---
+                await sendActivityMail('Müşteri Bilgisi Güncellendi', formData);
             } else {
                 await customerService.create(formData as any);
                 toast.success('Müşteri oluşturuldu');
+                
+                // --- EKLEDİĞİMİZ SATIR (YENİ KAYIT) ---
+                await sendActivityMail('Yeni Müşteri Eklendi', formData);
             }
+            
             setIsCreateModalOpen(false);
             setFormData({});
-            // loadCustomers(); // Socket zaten listeyi güncelleyip mail atacak
+            
+            // Socket hatası olduğu için listeyi manuel yenileyelim:
+            loadCustomers(); 
+            
         } catch (error) {
             console.error(error);
             toast.error(formData.id ? 'Müşteri güncellenemedi' : 'Müşteri oluşturulamadı');
