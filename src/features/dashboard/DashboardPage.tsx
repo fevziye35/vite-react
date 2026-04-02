@@ -116,7 +116,7 @@ export function DashboardPage() {
                     <h3 className="font-bold text-lg mb-6 text-primary">Gelir Trendi <span className="text-secondary text-sm font-normal ml-2">(Proformalar)</span></h3>
                     <div className="h-80 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={stats.revenueTrend}>
+                            <AreaChart data={stats.revenueTrend || []}>
                                 <defs>
                                     <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor={CHART_COLOR} stopOpacity={0.2} />
@@ -149,7 +149,7 @@ export function DashboardPage() {
                     <h3 className="font-bold text-lg mb-6 text-primary">Aşamalara Göre Boru Hattı</h3>
                     <div className="h-80 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={stats.categoryData} layout="vertical">
+                            <BarChart data={stats.categoryData || []} layout="vertical">
                                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E5E5E5" />
                                 <XAxis type="number" hide />
                                 <YAxis dataKey="name" type="category" width={100} tick={{ fill: '#86868B', fontSize: 13 }} axisLine={false} tickLine={false} />
@@ -181,7 +181,7 @@ export function DashboardPage() {
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={stats.countryData}
+                                    data={stats.countryData || []}
                                     cx="50%"
                                     cy="50%"
                                     innerRadius={60}
@@ -191,7 +191,7 @@ export function DashboardPage() {
                                     onClick={() => navigate('/customers')}
                                     style={{ cursor: 'pointer' }}
                                 >
-                                    {stats.countryData.map((_: any, index: number) => (
+                                    {(stats.countryData || []).map((_: any, index: number) => (
                                         <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                                     ))}
                                 </Pie>
@@ -200,12 +200,12 @@ export function DashboardPage() {
                         </ResponsiveContainer>
                     </div>
                     <div className="flex justify-center flex-wrap gap-4 mt-6">
-                        {stats.countryData.map((entry: any, index: number) => (
-                            <div key={entry.name} className="flex items-center gap-2 text-sm text-secondary cursor-pointer hover:text-primary transition-colors" onClick={() => navigate('/customers')}>
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }} />
-                                <div className="text-xs font-semibold">{entry.name} ({entry.value})</div>
-                            </div>
-                        ))}
+                        {(stats.countryData || []).map((entry: any, index: number) => (
+                                <div key={entry.name} className="flex items-center gap-2 text-sm text-secondary cursor-pointer hover:text-primary transition-colors" onClick={() => navigate('/customers')}>
+                                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }} />
+                                    <div className="text-xs font-semibold">{entry.name} ({entry.value})</div>
+                                </div>
+                            ))}
                     </div>
                 </Card>
 
@@ -228,7 +228,7 @@ export function DashboardPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
-                                    {stats.recentOffers.map((offer: any) => (
+                                    {(stats.recentOffers || []).map((offer: any) => (
                                         <tr key={offer.id} className="hover:bg-gray-50/50 transition cursor-pointer group" onClick={() => navigate('/offers')}>
                                             <td className="p-4 pl-6">
                                                 <div className="font-bold text-primary group-hover:text-accent transition-colors">{offer.contactPerson || 'Bilinmiyor'}</div>
@@ -250,7 +250,7 @@ export function DashboardPage() {
                                             <td className="p-4 text-secondary text-xs">{new Date(offer.createdAt).toLocaleDateString('tr-TR')}</td>
                                         </tr>
                                     ))}
-                                    {stats.recentOffers.length === 0 && (
+                                    {(stats.recentOffers || []).length === 0 && (
                                         <tr>
                                             <td colSpan={5} className="p-8 text-center text-secondary">Teklif bulunamadı. Başlamak için bir tane oluşturun!</td>
                                         </tr>

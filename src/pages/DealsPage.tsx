@@ -10,13 +10,18 @@ export default function DealsPage() {
 
     const handleSave = async () => {
         if (!form.title) return;
-        await dealService.create({
-            title: form.title,
-            customer: form.customer,
-            expected_revenue: form.amount
-        });
-        setForm({ title: '', amount: '', customer: '' });
-        refresh();
+        try {
+            await dealService.create({
+                title: form.title,
+                customer: form.customer,
+                expected_revenue: form.amount
+            });
+            setForm({ title: '', amount: '', customer: '' });
+            refresh();
+        } catch (e: any) {
+            alert(`Kayıt eklenemedi: ${e.message || e}`);
+            console.error('Deal creation error caught in UI:', e);
+        }
     };
 
     return (

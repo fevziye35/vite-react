@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Clock, Users, Video, MapPin, Plus, Loader2, ExternalLink } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { meetingService } from '../../services/api';
+import { meetingService, customerService } from '../../services/api';
 import { Modal } from '../../components/ui/Modal';
 import { useToast } from '../../components/ui/Toast';
 
@@ -34,7 +34,7 @@ export function MeetingsPage() {
     useEffect(() => {
         loadMeetings();
         // Load customers for dropdown
-        import('../../services/api').then(mod => mod.customerService.getAll().then(setCustomers));
+        customerService.getAll().then(setCustomers);
     }, []);
 
     async function loadMeetings() {

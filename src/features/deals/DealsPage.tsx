@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Kanban, List, Plus, Calendar, Loader2, Trash2 } from 'lucide-react';
 import { cn } from '../../utils/cn';
-import { dealService, proformaService } from '../../services/api';
+import { dealService, proformaService, customerService } from '../../services/api';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -145,7 +145,7 @@ export function DealsPage() {
     // Load customers for dropdown
     const [customers, setCustomers] = useState<any[]>([]);
     useEffect(() => {
-        import('../../services/api').then(mod => mod.customerService.getAll().then(setCustomers));
+        customerService.getAll().then(setCustomers);
     }, []);
 
 
