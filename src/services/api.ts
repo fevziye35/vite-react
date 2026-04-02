@@ -113,31 +113,17 @@ export const dealService = {
     },
 
     delete: async (id: string) => {
-
         try {
-
-            await supabase.from('timeline_events').delete().eq('deal_id', id);
-
-            await supabase.from('tasks').delete().eq('deal_id', id);
-
-            await supabase.from('reservations').delete().eq('deal_id', id);
-
-           
-
+            try { await supabase.from('timeline_events').delete().eq('deal_id', id); } catch (e) {}
+            try { await supabase.from('tasks').delete().eq('deal_id', id); } catch (e) {}
+            try { await supabase.from('reservations').delete().eq('deal_id', id); } catch (e) {}
             const { error } = await supabase.from('deals').delete().eq('id', id);
-
             if (error) throw error;
-
             return true;
-
         } catch (error) {
-
             console.error("Deal delete error:", error);
-
             throw error;
-
         }
-
     }
 
 };
@@ -267,101 +253,48 @@ export const customerService = {
     },
 
     delete: async (id: string) => {
-
         try {
-
-            // Delete timeline events for deals
-
+            // Delete associated deals and their children
             const { data: deals } = await supabase.from('deals').select('id').eq('customer_id', id);
-
             if (deals && deals.length > 0) {
-
                 const dealIds = deals.map((d: any) => d.id);
-
                 for (const dId of dealIds) {
-
-                    await supabase.from('timeline_events').delete().eq('deal_id', dId);
-
-                    await supabase.from('tasks').delete().eq('deal_id', dId);
-
-                    await supabase.from('reservations').delete().eq('deal_id', dId);
-
+                    try { await supabase.from('timeline_events').delete().eq('deal_id', dId); } catch (e) {}
+                    try { await supabase.from('tasks').delete().eq('deal_id', dId); } catch (e) {}
+                    try { await supabase.from('reservations').delete().eq('deal_id', dId); } catch (e) {}
                 }
-
                 await supabase.from('deals').delete().in('id', dealIds);
-
             }
 
-
-
-            // Delete offers and related items
-
+            // Delete offers
             const { data: offers } = await supabase.from('offers').select('id').eq('customer_id', id);
-
             if (offers && offers.length > 0) {
-
                 const offerIds = offers.map((o: any) => o.id);
-
                 for (const oId of offerIds) {
-
-                    await supabase.from('offer_items').delete().eq('offer_id', oId);
-
+                    try { await supabase.from('offer_items').delete().eq('offer_id', oId); } catch (e) {}
                 }
-
                 await supabase.from('offers').delete().in('id', offerIds);
-
             }
 
-
-
-            // Delete proformas and shipments
-
+            // Delete proformas
             const { data: proformas } = await supabase.from('proformas').select('id').eq('customer_id', id);
-
             if (proformas && proformas.length > 0) {
-
                 const proformaIds = proformas.map((p: any) => p.id);
-
-                await supabase.from('shipments').delete().in('proforma_id', proformaIds);
-
+                try { await supabase.from('shipments').delete().in('proforma_id', proformaIds); } catch (e) {}
                 await supabase.from('proformas').delete().in('id', proformaIds);
-
             }
 
-
-
-            // Cleanup any other orphans
-
-            await supabase.from('shipments').delete().eq('customer_id', id);
-
-            await supabase.from('meetings').delete().eq('customer_id', id);
-
-
-
-            // Finally, delete the customer
+            // Cleanup other associations
+            try { await supabase.from('shipments').delete().eq('customer_id', id); } catch (e) {}
+            try { await supabase.from('meetings').delete().eq('customer_id', id); } catch (e) {}
 
             const { error } = await supabase.from('customers').delete().eq('id', id);
-
-           
-
-            if (error) {
-
-                console.error("Customer deletion error:", error);
-
-                throw error;
-
-            }
-
+            if (error) throw error;
             return true;
-
         } catch (error) {
-
             console.error("Cascade delete error:", error);
-
             throw error;
-
         }
-
     }
 
 };
@@ -778,6 +711,23 @@ export const timelineService = {
 
     }
 
+};
+ 
+ export const reservationService = {
+    getByDealId: async (dealId: string) => {
+        const { data } = await supabase.from('reservations').select('*').eq('deal_id', dealId);
+        return data || [];
+    },
+    create: async (res: any) => {
+        const { data, error } = await supabase.from('reservations').insert([res]).select();
+        if (error) throw error;
+        return data ? data[0] : null;
+    },
+    delete: async (id: string) => {
+        const { error } = await supabase.from('reservations').delete().eq('id', id);
+        if (error) throw error;
+        return true;
+    }
 };
 
 

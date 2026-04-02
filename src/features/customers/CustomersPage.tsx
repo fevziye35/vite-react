@@ -105,6 +105,8 @@ export function CustomersPage() {
             try {
                 await customerService.delete(id);
                 toast.success('Müşteri silindi');
+                // Socket hatası olduğu için listeyi manuel yenileyelim:
+                loadCustomers(); 
             } catch (error) {
                 console.error(error);
                 toast.error('Müşteri silinemedi');
