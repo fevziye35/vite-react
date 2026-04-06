@@ -1,5 +1,5 @@
 
-import { supabase } from './supabaseClient';
+import { supabase, supabaseUrl, supabaseAnonKey } from './supabaseClient';
 import { sendActivityMail } from '../emailNotification';
 
 
@@ -1074,33 +1074,47 @@ export const userService = {
     },
 
     create: async (userData: any) => {
-
         const email = userData.email?.toLowerCase().trim();
+        const password = userData.password;
 
-        const { data, error } = await supabase.from('profiles').upsert([{
+        if (!password) {
+            throw new Error('E-posta ve şifre zorunludur.');
+        }
 
+        const { createClient } = await import('@supabase/supabase-js');
+        const tempClient = createClient(supabaseUrl, supabaseAnonKey, {
+            auth: { persistSession: false }
+        });
+
+        // 2. Register user in Supabase Auth
+        const { data: authData, error: authError } = await tempClient.auth.signUp({
+            email,
+            password,
+            options: {
+                data: { fullName: userData.fullName }
+            }
+        });
+
+        if (authError) {
+            console.error("Auth Register Error:", authError);
+            throw authError;
+        }
+
+        // 3. Create/Upsert the profile with the correct ID from Auth
+        const { data, error: profileError } = await supabase.from('profiles').upsert([{
+            id: authData.user?.id, // CRITICAL: Link the profile to the auth user
             full_name: userData.fullName,
-
             email: email,
-
             role: userData.role || 'Admin',
-
             permissions: userData.permissions || { deals: true, customers: true, offers: true, messages: true }
-
         }], { onConflict: 'email' }).select();
 
-       
-
-        if (error) {
-
-            console.error("User Create/Upsert Error:", error);
-
-            throw error;
-
+        if (profileError) {
+            console.error("Profile Upsert Error:", profileError);
+            throw profileError;
         }
 
         return data ? data[0] : null;
-
     },
 
     update: async (id: string, updates: any) => {
