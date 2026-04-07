@@ -1,4 +1,9 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 console.log('SMTP config loaded:', {
   host: process.env.SMTP_HOST,
   port: process.env.SMTP_PORT,
@@ -9,12 +14,22 @@ import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import db from './db.js';
-import { sendBroadcastEmail } from './email.js';
+import { sendBroadcastEmail, sendResetPasswordEmail, sendInviteEmail } from './email.js';
 import { randomUUID } from 'crypto';
-import { sendResetPasswordEmail } from './email.js';
 import startCronJobs from './cron.js';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+        autoRefreshToken: false,
+        persistSession: false
+    }
+});
 
 const app = express();
 const httpServer = createServer(app);
@@ -196,14 +211,17 @@ const authenticateToken = (req, res, next) => {
         if (err) {
             return res.status(403).json({ error: 'Invalid or expired token' });
         }
-        req.user = user;
+        // Fetch rolleri DB'den çekiyoruz çünkü token içinde olmayabilir
+        const dbUser = db.prepare('SELECT role FROM users WHERE id = ?').get(user.id);
+        req.user = { ...user, role: dbUser?.role || 'Kullanıcı' };
         next();
     });
 };
 
 // Super Admin Middleware
 const requireSuperAdmin = (req, res, next) => {
-    if (req.user?.email !== 'fevziye.mamak35@gmail.com') {
+    // Sadece süper admin veya Admin rolüne sahip olanlar işlem yapabilir
+    if (req.user?.email !== 'fevziye.mamak35@gmail.com' && req.user?.role !== 'Admin') {
         return res.status(403).json({ error: 'Bu işlem için yetkiniz yok.' });
     }
     next();
@@ -408,13 +426,91 @@ app.get('/api/auth/me', authenticateToken, (req, res) => {
 });
 
 // GET PUBLIC USER LIST
-app.get('/api/users', authenticateToken, (req, res) => {
+app.get('/api/users', authenticateToken, async (req, res) => {
     try {
-        const users = db.prepare('SELECT id, email, full_name, role FROM users').all();
-        res.json(users);
+        // Fetch from Supabase profiles
+        const { data, error } = await supabaseAdmin.from('profiles').select('*');
+        if (error) throw error;
+        res.json(data.map(u => ({
+            id: u.id,
+            email: u.email,
+            full_name: u.full_name,
+            role: u.role,
+            permissions: u.permissions || { deals: true, customers: true, offers: true, messages: true }
+        })));
     } catch (error) {
         console.error('List users error:', error);
         res.status(500).json({ error: 'Kullanıcılar listelenemedi' });
+    }
+});
+
+// INVITE USER (Sadece Giriş Yapmış Olanlar)
+app.post('/api/users/invite', authenticateToken, async (req, res) => {
+    try {
+        const { email, fullName, role, permissions } = req.body;
+        
+        if (!email) return res.status(400).json({ error: 'Email is required' });
+
+        // 1. Generate Invite Link from Supabase
+        const { data: authData, error: inviteError } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'invite',
+            email: email,
+            redirectTo: `${req.headers.origin}/reset-password`,
+            data: { fullName }
+        });
+
+        if (inviteError) {
+            console.error('Invite Link Generation Error:', inviteError);
+            
+            // If already registered, try recovery link
+            if (inviteError.message.includes('already registered')) {
+                const { data: recoveryData, error: recoveryError } = await supabaseAdmin.auth.admin.generateLink({
+                    type: 'recovery',
+                    email: email,
+                    redirectTo: `${req.headers.origin}/reset-password`
+                });
+
+                if (recoveryError) return res.status(500).json({ error: recoveryError.message });
+
+                // Send via local SMTP
+                await sendInviteEmail(email, recoveryData.properties.action_link, fullName);
+                
+                const { data: userData } = await supabaseAdmin.from('profiles').select('id').eq('email', email).single();
+                return res.json({ 
+                    message: 'Şifre sıfırlama bağlantısı gönderildi.', 
+                    userId: userData?.id,
+                    inviteLink: recoveryData.properties.action_link 
+                });
+            }
+
+            return res.status(500).json({ error: inviteError.message });
+        }
+
+        // Send via local SMTP
+        await sendInviteEmail(email, authData.properties.action_link, fullName);
+
+        // 2. Create/Update Profile
+        const { error: profileError } = await supabaseAdmin.from('profiles').upsert([{
+            id: authData.user.id,
+            full_name: fullName,
+            email: email.toLowerCase().trim(),
+            role: role || 'Kullanıcı',
+            permissions: permissions || { deals: true, customers: true, offers: true, messages: true }
+        }], { onConflict: 'email' });
+
+        if (profileError) {
+            console.error('Profile Error:', profileError);
+            return res.status(500).json({ error: profileError.message });
+        }
+
+        res.json({ 
+            message: 'Davet e-postası gönderildi.', 
+            userId: authData.user.id,
+            inviteLink: authData.properties.action_link
+        });
+    } catch (error) {
+        console.error('Invite handler error:', error);
+        res.status(500).json({ error: 'Davet işlemi başarısız oldu.' });
     }
 });
 

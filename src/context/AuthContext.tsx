@@ -13,6 +13,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
     login: (email: string, password: string) => Promise<boolean>;
+    loginWithOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
     register: (email: string, password: string, fullName?: string) => Promise<{ success: boolean; error?: string }>;
     logout: () => void;
 }
@@ -68,6 +69,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const loginWithOtp = async (email: string): Promise<{ success: boolean; error?: string }> => {
+        try {
+            const { error } = await supabase.auth.signInWithOtp({
+                email,
+                options: {
+                    emailRedirectTo: window.location.origin
+                }
+            });
+            if (error) throw error;
+            return { success: true };
+        } catch (error: any) {
+            console.error('OTP Giriş hatası:', error);
+            return { success: false, error: error.message };
+        }
+    };
+
     const register = async (email: string, password: string, fullName?: string): Promise<{ success: boolean; error?: string }> => {
         try {
             const { error } = await supabase.auth.signUp({
@@ -90,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, register, logout }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, loginWithOtp, register, logout }}>
             {children}
         </AuthContext.Provider>
     );

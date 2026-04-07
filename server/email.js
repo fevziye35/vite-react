@@ -62,6 +62,44 @@ export const sendResetPasswordEmail = async (email, resetLink) => {
     }
 };
 
+export const sendInviteEmail = async (email, inviteLink, fullName) => {
+    // Eğer SMTP bilgileri yoksa konsola yazdır (Geliştirme için)
+    if (!SMTP_CONFIG.auth.user || !SMTP_CONFIG.auth.pass) {
+        console.log('--- USER INVITE EMAIL (SIMULATED) ---');
+        console.log(`To: ${email}`);
+        console.log(`Link: ${inviteLink}`);
+        console.log('-----------------------------------------');
+        return true;
+    }
+
+    const mailOptions = {
+        from: '"MAKFA CRM" <noreply@alimamak.com.tr>',
+        to: email,
+        subject: 'MAKFA CRM - Giriş Daveti',
+        html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <h2 style="color: #1e293b; text-align: center;">MAKFA CRM</h2>
+                <p>Merhaba ${fullName || 'Kullanıcı'},</p>
+                <p>MAKFA CRM sistemine davet edildiniz. Aşağıdaki butona tıklayarak hesabınızı onaylayabilir ve şifrenizi belirleyebilirsiniz:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${inviteLink}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Hesabımı Onayla ve Şifremi Belirle</a>
+                </div>
+                <p>Bu bağlantı 24 saat boyunca geçerlidir.</p>
+                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+                <p style="font-size: 12px; color: #64748b; text-align: center;">Bu otomatik bir e-postadır, lütfen yanıtlamayınız.</p>
+            </div>
+        `,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        return true;
+    } catch (error) {
+        console.error('Failed to send invite email:', error);
+        throw error;
+    }
+};
+
 export const sendActivityReminderEmail = async (email, taskTitle, dueDate, timeRemainingStr, creatorName) => {
     // Geliştirme için simülasyon
     if (!SMTP_CONFIG.auth.user || !SMTP_CONFIG.auth.pass) {

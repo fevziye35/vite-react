@@ -1,6 +1,8 @@
-
-import { supabase, supabaseUrl, supabaseAnonKey } from './supabaseClient';
+import axios from 'axios';
+import { supabase } from './supabase';
 import { sendActivityMail } from '../emailNotification';
+
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 
 
@@ -1075,46 +1077,24 @@ export const userService = {
 
     create: async (userData: any) => {
         const email = userData.email?.toLowerCase().trim();
-        const password = userData.password;
-
-        if (!password) {
-            throw new Error('E-posta ve şifre zorunludur.');
+        
+        if (!email) {
+            throw new Error('E-posta zorunludur.');
         }
 
-        const { createClient } = await import('@supabase/supabase-js');
-        const tempClient = createClient(supabaseUrl, supabaseAnonKey, {
-            auth: { persistSession: false }
-        });
-
-        // 2. Register user in Supabase Auth
-        const { data: authData, error: authError } = await tempClient.auth.signUp({
+        // Backend üzerinden davet gönderiyoruz (Admin yetkisi gerekir)
+        const response = await axios.post(`${API_URL}/api/users/invite`, {
             email,
-            password,
-            options: {
-                data: { fullName: userData.fullName }
+            fullName: userData.fullName,
+            role: userData.role,
+            permissions: userData.permissions
+        }, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
             }
         });
 
-        if (authError) {
-            console.error("Auth Register Error:", authError);
-            throw authError;
-        }
-
-        // 3. Create/Upsert the profile with the correct ID from Auth
-        const { data, error: profileError } = await supabase.from('profiles').upsert([{
-            id: authData.user?.id, // CRITICAL: Link the profile to the auth user
-            full_name: userData.fullName,
-            email: email,
-            role: userData.role || 'Admin',
-            permissions: userData.permissions || { deals: true, customers: true, offers: true, messages: true }
-        }], { onConflict: 'email' }).select();
-
-        if (profileError) {
-            console.error("Profile Upsert Error:", profileError);
-            throw profileError;
-        }
-
-        return data ? data[0] : null;
+        return response.data;
     },
 
     update: async (id: string, updates: any) => {

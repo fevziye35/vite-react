@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Edit2, Trash2, UserPlus, Save, X, Lock } from 'lucide-react';
+import { Shield, Edit2, Trash2, UserPlus, Save, X, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { userService } from '../services/api';
-
+import { supabase } from '../services/supabase';
 
 export default function AdminPage() {
     const { user } = useAuth();
@@ -10,13 +10,14 @@ export default function AdminPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [lastInviteLink, setLastInviteLink] = useState('');
+    const [showInviteSuccess, setShowInviteSuccess] = useState(false);
 
     const [editingUser, setEditingUser] = useState<any>(null);
 
     // Form states
     const [formData, setFormData] = useState({
         email: '',
-        password: '',
         fullName: '',
         role: 'Admin',
         permissions: {
@@ -52,8 +53,22 @@ export default function AdminPage() {
         try {
             if (editingUser) {
                 await userService.update(editingUser.id, formData);
+                alert('Kullanıcı güncellendi.');
             } else {
-                await userService.create(formData);
+                // SİHİRLİ DEĞİŞİKLİK: Magic Link gönderiyoruz
+                const { error: otpError } = await supabase.auth.signInWithOtp({
+                    email: formData.email,
+                    options: {
+                        emailRedirectTo: 'https://crm.makfaglobal.com', 
+                    },
+                });
+
+                if (otpError) throw otpError;
+
+                // Profili de oluşturuyoruz (Kullanıcı listesinde gözükmesi için)
+                try { await userService.create(formData); } catch (e) {}
+
+                alert('Sihirli link gönderildi! Mail kutusunu kontrol edin.');
             }
             setIsAddModalOpen(false);
             setEditingUser(null);
@@ -112,7 +127,7 @@ export default function AdminPage() {
                     onClick={() => {
                         setEditingUser(null);
                         setFormData({
-                            email: '', password: '', fullName: '', role: 'Admin',
+                            email: '', fullName: '', role: 'Admin',
                             permissions: { deals: true, customers: true, offers: true, messages: true }
                         });
                         setIsAddModalOpen(true);
@@ -172,7 +187,6 @@ export default function AdminPage() {
                                                 setEditingUser(u);
                                                 setFormData({
                                                     email: u.email,
-                                                    password: '',
                                                     fullName: u.fullName,
                                                     role: u.role,
                                                     permissions: u.permissions || { deals: false, customers: false, offers: false, messages: false }
@@ -238,19 +252,6 @@ export default function AdminPage() {
 
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Şifre {editingUser && '(Değiştirmek istemiyorsanız boş bırakın)'}</label>
-                                    <div className="relative">
-                                        <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                                        <input 
-                                            type="password"
-                                            className="w-full bg-slate-50 border border-slate-200 p-4 pl-12 rounded-2xl outline-none focus:border-blue-500 transition-all font-bold text-slate-700"
-                                            value={formData.password}
-                                            onChange={e => setFormData({...formData, password: e.target.value})}
-                                            required={!editingUser}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Rol</label>
                                     <select 
                                         className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl outline-none focus:border-blue-500 transition-all font-bold text-slate-700 appearance-none"
@@ -262,6 +263,8 @@ export default function AdminPage() {
                                     </select>
                                 </div>
                             </div>
+
+
 
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Yetkiler</label>
@@ -305,6 +308,46 @@ export default function AdminPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+            {/* Success Invitation Modal */}
+            {showInviteSuccess && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-[40px] w-full max-w-md overflow-hidden shadow-2xl p-8 text-center animate-in zoom-in-95 duration-200">
+                        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600">
+                            <Check size={40} />
+                        </div>
+                        <h3 className="text-2xl font-black text-slate-900 mb-2">Davet Hazır!</h3>
+                        <p className="text-slate-500 text-sm font-medium mb-8">E-posta gönderimi tetiklendi. Ancak isterseniz aşağıdaki linki kopyalayıp doğrudan kişiye gönderebilirsiniz.</p>
+                        
+                        <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl mb-8 flex items-center gap-3">
+                            <input 
+                                readOnly 
+                                value={lastInviteLink}
+                                className="bg-transparent border-none outline-none text-[10px] font-bold text-slate-500 w-full"
+                            />
+                            <button 
+                                onClick={() => {
+                                    navigator.clipboard.writeText(lastInviteLink);
+                                    alert('Link kopyalandı!');
+                                }}
+                                className="bg-blue-600 text-white p-2 rounded-xl hover:bg-blue-700 transition-all shrink-0"
+                                title="Kopyala"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            </button>
+                        </div>
+                        
+                        <button 
+                            onClick={() => {
+                                setShowInviteSuccess(false);
+                                setLastInviteLink('');
+                            }}
+                            className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl transition-all"
+                        >
+                            Tamam, Kapat
+                        </button>
                     </div>
                 </div>
             )}
