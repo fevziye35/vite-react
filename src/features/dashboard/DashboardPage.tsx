@@ -3,7 +3,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     AreaChart, Area, PieChart, Pie, Cell
 } from 'recharts';
-import { BadgeDollarSign, Briefcase, FileText, Container, Loader2, Users, Package, Settings } from 'lucide-react';
+import { BadgeDollarSign, Briefcase, FileText, Container, Loader2, Users, Package, Settings, User } from 'lucide-react';
 import { MetricCard } from '../../components/ui/MetricCard';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -43,6 +43,7 @@ export function DashboardPage() {
         { label: 'Yeni Müşteri', icon: Users, path: '/customers', color: 'text-blue-500' },
         { label: 'Yeni Ürün', icon: Package, path: '/products', color: 'text-orange-500' },
         { label: 'Yeni Teklif', icon: FileText, path: '/offers/new', color: 'text-accent' },
+        { label: 'Profil', icon: User, path: '/profile', color: 'text-purple-500' },
         { label: 'Sistem', icon: Settings, path: '/settings', color: 'text-slate-500' },
     ];
 

@@ -1,11 +1,12 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { supabase } from '../services/supabase'; // Yeni oluşturduğumuz dosya
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '../services/supabase';
 
 interface User {
     id: string;
     email: string;
-    fullName?: string;
-    role?: string;
+    role: string;
+    fullName: string;
+    permissions: any;
 }
 
 interface AuthContextType {
@@ -14,49 +15,56 @@ interface AuthContextType {
     isLoading: boolean;
     login: (email: string, password: string) => Promise<boolean>;
     loginWithOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
-    register: (email: string, password: string, fullName?: string) => Promise<{ success: boolean; error?: string }>;
-    logout: () => void;
+    register: (email: string, fullName?: string) => Promise<{ success: boolean; error?: string }>;
+    logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Oturumu kontrol et (Bilgisayar kapansa da telefonun hatırlar)
-        const initializeAuth = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-                setUser({
-                    id: session.user.id,
-                    email: session.user.email || '',
-                    fullName: session.user.user_metadata?.fullName,
-                });
-            }
-            setIsLoading(false);
-        };
-
-        initializeAuth();
-
-        // Oturum değişikliklerini dinle
-        const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-            if (session?.user) {
-                setUser({
-                    id: session.user.id,
-                    email: session.user.email || '',
-                    fullName: session.user.user_metadata?.fullName,
-                });
+        // Initial session check
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                fetchUserProfile(session.user.id, session.user.email!);
             } else {
-                setUser(null);
+                setIsLoading(false);
             }
         });
 
-        return () => {
-            authListener.subscription.unsubscribe();
-        };
+        // Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (session) {
+                fetchUserProfile(session.user.id, session.user.email!);
+            } else {
+                setUser(null);
+                setIsLoading(false);
+            }
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
+
+    const fetchUserProfile = async (id: string, email: string) => {
+        try {
+            const { data, error } = await supabase.from('profiles').select('*').eq('id', id).single();
+            if (error) throw error;
+            setUser({
+                id,
+                email,
+                role: data.role,
+                fullName: data.full_name,
+                permissions: data.permissions
+            });
+        } catch (error) {
+            console.error('Profil çekme hatası:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const login = async (email: string, password: string): Promise<boolean> => {
         try {
@@ -74,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const { error } = await supabase.auth.signInWithOtp({
                 email,
                 options: {
-                    emailRedirectTo: window.location.origin
+                    emailRedirectTo: 'https://crm.makfaglobal.com/reset-password'
                 }
             });
             if (error) throw error;
@@ -85,13 +93,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const register = async (email: string, password: string, fullName?: string): Promise<{ success: boolean; error?: string }> => {
+    const register = async (email: string, _fullName?: string): Promise<{ success: boolean; error?: string }> => {
         try {
-            const { error } = await supabase.auth.signUp({
+            // ŞİFRESİZ GİRİŞ LİNKİ GÖNDERME (Sihirli Link)
+            // Redirect to /reset-password so user sets password immediately
+            const { error } = await supabase.auth.signInWithOtp({
                 email,
-                password,
                 options: {
-                    data: { fullName }
+                    emailRedirectTo: 'https://crm.makfaglobal.com/reset-password',
                 }
             });
             if (error) throw error;
@@ -111,12 +120,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             {children}
         </AuthContext.Provider>
     );
-}
+};
 
-export function useAuth() {
+export const useAuth = () => {
     const context = useContext(AuthContext);
     if (context === undefined) {
         throw new Error('useAuth must be used within an AuthProvider');
     }
     return context;
-}
+};

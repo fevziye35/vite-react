@@ -2,9 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, ArrowRight, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || '';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -50,19 +47,31 @@ export default function LoginPage() {
         setIsForgotLoading(true);
 
         try {
-            const { data } = await axios.post(`${API_URL}/api/auth/forgot-password`, { email: forgotEmail });
-            setForgotMessage({ text: data.message, type: 'success' });
+            const { supabase } = await import('../services/supabase');
+            const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+                redirectTo: `${window.location.origin}/reset-password`,
+            });
+            
+            if (error) throw error;
+
+            setForgotMessage({ 
+                text: 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi. Lütfen gelen kutunuzu (ve gereksiz kutusunu) kontrol edin.', 
+                type: 'success' 
+            });
+            
             setTimeout(() => {
                 setIsForgotModalOpen(false);
                 setForgotMessage({ text: '', type: '' });
                 setForgotEmail('');
-            }, 3000);
+            }, 5000);
         } catch (err: any) {
+            console.error('Forgot password error:', err);
             setForgotMessage({ 
-                text: err.response?.data?.error || 'İşlem sırasında bir hata oluştu.', 
+                text: err.message || 'İşlem sırasında bir hata oluştu.', 
                 type: 'error' 
             });
         } finally {
+            setIsForgotLoading(true);
             setIsForgotLoading(false);
         }
     };
@@ -130,7 +139,7 @@ export default function LoginPage() {
                                     onClick={() => setIsForgotModalOpen(true)}
                                     className="text-accent hover:underline font-bold"
                                 >
-                                    Şifremi Unuttum
+                                    Şifremi Unuttum / Belirle
                                 </button>
                             </div>
 
@@ -144,6 +153,16 @@ export default function LoginPage() {
                             </button>
                         </form>
                     </div>
+                </div>
+
+                <div className="mt-6 flex flex-col items-center gap-2">
+                    <p className="text-muted text-xs font-medium">Sisteme ilk kez mi giriş yapıyorsunuz?</p>
+                    <button 
+                        onClick={() => setIsForgotModalOpen(true)}
+                        className="text-accent hover:text-accent-hover font-bold text-sm bg-accent/5 px-6 py-2 rounded-full border border-accent/10 transition-all"
+                    >
+                        Şifrenizi Belirleyin
+                    </button>
                 </div>
 
                 <div className="mt-12 text-center">
@@ -168,8 +187,8 @@ export default function LoginPage() {
                             <div className="w-16 h-16 bg-blue-600/20 rounded-2xl flex items-center justify-center text-blue-500 mx-auto mb-4">
                                 <Lock size={32} />
                             </div>
-                            <h2 className="text-2xl font-black text-white tracking-tighter mb-2">Şifremi Unuttum</h2>
-                            <p className="text-slate-400 text-sm font-bold">Lütfen e-posta adresinizi girin. Şifre sıfırlama bağlantısını e-posta adresinize göndereceğiz.</p>
+                            <h2 className="text-2xl font-black text-white tracking-tighter mb-2">Şifre Belirle / Yenile</h2>
+                            <p className="text-slate-400 text-sm font-bold">Lütfen e-posta adresinizi girin. Şifrenizi belirlemeniz veya sıfırlamanız için size bir bağlantı göndereceğiz.</p>
                         </div>
 
                         {forgotMessage.text && (

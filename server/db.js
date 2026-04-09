@@ -18,6 +18,8 @@ db.exec(`
         full_name TEXT,
         role TEXT NOT NULL DEFAULT 'Viewer',
         avatar_url TEXT,
+        reset_token TEXT,
+        reset_token_expiry TEXT,
         created_at TEXT DEFAULT (datetime('now'))
     );
 
@@ -302,7 +304,9 @@ db.exec(`
 // --- MIGRATIONS ---
 const migrateUsersTable = () => {
     const columns = [
-        { name: 'permissions', type: 'TEXT DEFAULT NULL' }
+        { name: 'permissions', type: 'TEXT DEFAULT NULL' },
+        { name: 'reset_token', type: 'TEXT' },
+        { name: 'reset_token_expiry', type: 'TEXT' }
     ];
 
     const tableInfo = db.prepare("PRAGMA table_info(users)").all();

@@ -25,7 +25,9 @@ import { TasksPage } from './features/tasks/TasksPage';
 import { ShipmentsPage } from './features/shipments/ShipmentsPage';
 import { LogisticsPage } from './features/logistics/LogisticsPage';
 import { LogisticsCompaniesPage } from './features/logistics/LogisticsCompaniesPage';
-import { SettingsPage } from './features/settings/SettingsPage';
+
+
+import ProfilePage from './pages/ProfilePage';
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -69,7 +71,9 @@ function AppContent() {
           <Route path="/logistics" element={<LogisticsPage />} />
           <Route path="/logistics-companies" element={<LogisticsCompaniesPage />} />
           <Route path="/settings" element={<AdminPage />} />
-          <Route path="/profile" element={<SettingsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/sifre-kur" element={<ProfilePage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/admin" element={<Navigate to="/settings" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -1,5 +1,11 @@
 import nodemailer from 'nodemailer';
 import db from './db.js';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 // Additional static recipients for all broadcast emails
 const EXTRA_RECIPIENTS = [
@@ -13,19 +19,26 @@ const EXTRA_RECIPIENTS = [
 // Bu bilgiler kullanıcı tarafından doldurulmalıdır
 const SMTP_CONFIG = {
     host: process.env.SMTP_HOST || '',
-    port: process.env.SMTP_PORT || 587,
-    secure: false, // true for 465, false for other ports
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: process.env.SMTP_PORT === '465', // Port 465 uses SSL/TLS
     auth: {
         user: process.env.SMTP_USER || '',
         pass: process.env.SMTP_PASS || '',
     },
+    tls: {
+        rejectUnauthorized: false
+    }
 };
+
+// Check if credentials are placeholders
+const isPlaceholder = (val) => !val || val.includes('your_') || val.includes('your.') || val === '';
+const isSmtpConfigured = !isPlaceholder(SMTP_CONFIG.auth.user) && !isPlaceholder(SMTP_CONFIG.auth.pass);
 
 const transporter = nodemailer.createTransport(SMTP_CONFIG);
 
 export const sendResetPasswordEmail = async (email, resetLink) => {
     // Eğer SMTP bilgileri yoksa konsola yazdır (Geliştirme için)
-    if (!SMTP_CONFIG.auth.user || !SMTP_CONFIG.auth.pass) {
+    if (!isSmtpConfigured) {
         console.log('--- PASSWORD RESET EMAIL (SIMULATED) ---');
         console.log(`To: ${email}`);
         console.log(`Link: ${resetLink}`);
@@ -34,7 +47,7 @@ export const sendResetPasswordEmail = async (email, resetLink) => {
     }
 
     const mailOptions = {
-        from: '"MAKFA CRM" <noreply@alimamak.com.tr>',
+        from: `"MAKFA CRM" <${SMTP_CONFIG.auth.user}>`,
         to: email,
         subject: 'Şifre Sıfırlama İsteği',
         html: `
@@ -64,7 +77,7 @@ export const sendResetPasswordEmail = async (email, resetLink) => {
 
 export const sendInviteEmail = async (email, inviteLink, fullName) => {
     // Eğer SMTP bilgileri yoksa konsola yazdır (Geliştirme için)
-    if (!SMTP_CONFIG.auth.user || !SMTP_CONFIG.auth.pass) {
+    if (!isSmtpConfigured) {
         console.log('--- USER INVITE EMAIL (SIMULATED) ---');
         console.log(`To: ${email}`);
         console.log(`Link: ${inviteLink}`);
@@ -73,7 +86,7 @@ export const sendInviteEmail = async (email, inviteLink, fullName) => {
     }
 
     const mailOptions = {
-        from: '"MAKFA CRM" <noreply@alimamak.com.tr>',
+        from: `"MAKFA CRM" <${SMTP_CONFIG.auth.user}>`,
         to: email,
         subject: 'MAKFA CRM - Giriş Daveti',
         html: `
@@ -102,7 +115,7 @@ export const sendInviteEmail = async (email, inviteLink, fullName) => {
 
 export const sendActivityReminderEmail = async (email, taskTitle, dueDate, timeRemainingStr, creatorName) => {
     // Geliştirme için simülasyon
-    if (!SMTP_CONFIG.auth.user || !SMTP_CONFIG.auth.pass) {
+    if (!isSmtpConfigured) {
         console.log('--- ACTIVITY REMINDER EMAIL (SIMULATED) ---');
         console.log(`To: ${email}`);
         console.log(`Task: ${taskTitle}`);
@@ -113,7 +126,7 @@ export const sendActivityReminderEmail = async (email, taskTitle, dueDate, timeR
     }
 
     const mailOptions = {
-        from: '"MAKFA CRM" <noreply@alimamak.com.tr>',
+        from: `"MAKFA CRM" <${SMTP_CONFIG.auth.user}>`,
         to: email,
         subject: `⏰ Hatırlatma: ${taskTitle} (${timeRemainingStr} kaldı)`,
         html: `
@@ -159,7 +172,7 @@ export const sendBroadcastEmail = async (subject, html) => {
         return false;
     }
     // If SMTP not configured, simulate
-    if (!SMTP_CONFIG.auth.user || !SMTP_CONFIG.auth.pass) {
+    if (!isSmtpConfigured) {
         console.log('--- BROADCAST EMAIL (SIMULATED) ---');
         console.log(`Subject: ${subject}`);
         console.log(`HTML: ${html}`);
@@ -168,7 +181,7 @@ export const sendBroadcastEmail = async (subject, html) => {
         return true;
     }
     const mailOptions = {
-        from: '"MAKFA CRM" <noreply@alimamak.com.tr>',
+        from: `"MAKFA CRM" <${SMTP_CONFIG.auth.user}>`,
         bcc: emails,
         subject,
         html

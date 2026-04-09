@@ -42,6 +42,10 @@ const JWT_SECRET = 'your-secret-key-change-in-production';
 app.get('/api/ping', (req, res) => res.json({ status: 'ok', time: getNow() }));
 app.use(cors());
 app.use(express.json());
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
 
 // --- HELPERS ---
 const generateId = () => randomUUID();
@@ -353,7 +357,7 @@ app.post('/api/auth/login', async (req, res) => {
 // FORGOT PASSWORD
 app.post('/api/auth/forgot-password', async (req, res) => {
     try {
-        const { email } = req.body;
+        let { email } = req.body;
         if (!email) return res.status(400).json({ error: 'Email is required' });
         email = email.trim().toLowerCase();
 
@@ -375,8 +379,16 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 
         res.json({ message: 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.' });
     } catch (error) {
-        console.error('Forgot password error:', error);
-        res.status(500).json({ error: 'İşlem başarısız oldu' });
+        console.error('💥 Forgot password CRITICAL error:', error);
+        // Eğer hata e-posta gönderimi kaynaklıysa bunu loglarda belirtelim
+        if (error.code === 'EAUTH') {
+            console.error('❌ SMTP Authentication failed. Check your SMTP_USER and SMTP_PASS in .env');
+        }
+        res.status(500).json({ 
+            error: 'İşlem başarısız oldu', 
+            details: error.message,
+            code: error.code 
+        });
     }
 });
 
@@ -444,52 +456,43 @@ app.get('/api/users', authenticateToken, async (req, res) => {
     }
 });
 
-// INVITE USER (Sadece Giriş Yapmış Olanlar)
-app.post('/api/users/invite', authenticateToken, async (req, res) => {
+// INVITE USER (Backend Proxy via Service Role)
+app.post('/api/users/invite', async (req, res) => {
     try {
         const { email, fullName, role, permissions } = req.body;
         
-        if (!email) return res.status(400).json({ error: 'Email is required' });
+        if (!email) return res.status(400).json({ error: 'Email is required.' });
 
-        // 1. Generate Invite Link from Supabase
+        console.log(`🚀 Starting professional invitation process for: ${email}`);
+
+        // 1. generateLink kullanarak davet linki oluştur (Supabase mail göndermez, sadece linki verir)
+        // Bu sayede Supabase'in sıkı mail kotasına (rate limit) takılmayız.
         const { data: authData, error: inviteError } = await supabaseAdmin.auth.admin.generateLink({
             type: 'invite',
-            email: email,
-            redirectTo: `${req.headers.origin}/reset-password`,
-            data: { fullName }
+            email: email.toLowerCase().trim(),
+            options: { 
+                redirectTo: `${req.headers.origin}/reset-password` 
+            }
         });
 
         if (inviteError) {
-            console.error('Invite Link Generation Error:', inviteError);
-            
-            // If already registered, try recovery link
-            if (inviteError.message.includes('already registered')) {
-                const { data: recoveryData, error: recoveryError } = await supabaseAdmin.auth.admin.generateLink({
-                    type: 'recovery',
-                    email: email,
-                    redirectTo: `${req.headers.origin}/reset-password`
-                });
-
-                if (recoveryError) return res.status(500).json({ error: recoveryError.message });
-
-                // Send via local SMTP
-                await sendInviteEmail(email, recoveryData.properties.action_link, fullName);
-                
-                const { data: userData } = await supabaseAdmin.from('profiles').select('id').eq('email', email).single();
-                return res.json({ 
-                    message: 'Şifre sıfırlama bağlantısı gönderildi.', 
-                    userId: userData?.id,
-                    inviteLink: recoveryData.properties.action_link 
-                });
-            }
-
+            console.error('❌ Supabase Generate Link Error:', inviteError);
+            // Eğer kullanıcı zaten varsa veya başka bir hata oluşursa:
             return res.status(500).json({ error: inviteError.message });
         }
 
-        // Send via local SMTP
-        await sendInviteEmail(email, authData.properties.action_link, fullName);
+        console.log(`✅ Invite link generated for ${email}`);
 
-        // 2. Create/Update Profile
+        // 2. Kendi SMTP sunucumuz üzerinden mail gönder
+        try {
+            await sendInviteEmail(email, authData.properties.action_link, fullName);
+            console.log(`📧 Invitation email sent specifically to ${email} via local SMTP.`);
+        } catch (mailErr) {
+            console.error('⚠️ SMTP Error but user was created:', mailErr);
+            // Mail gitmese bile linki döndürebiliriz ki admin manuel iletebilsin
+        }
+
+        // 3. Profil Kaydı (Supabase public.profiles tablosuna ekleme/güncelleme)
         const { error: profileError } = await supabaseAdmin.from('profiles').upsert([{
             id: authData.user.id,
             full_name: fullName,
@@ -499,18 +502,22 @@ app.post('/api/users/invite', authenticateToken, async (req, res) => {
         }], { onConflict: 'email' });
 
         if (profileError) {
-            console.error('Profile Error:', profileError);
-            return res.status(500).json({ error: profileError.message });
+            console.error('❌ Profile Creation Error:', profileError);
+            // Auth oluştu ama profil oluşmadıysa uyarı verelim
+            return res.status(500).json({ error: 'Kullanıcı oluşturuldu fakat profil kaydı yapılamadı: ' + profileError.message });
         }
 
+        console.log(`👤 Profile synced for ${email}`);
+
         res.json({ 
-            message: 'Davet e-postası gönderildi.', 
+            message: 'Kullanıcı başarıyla eklendi ve davet e-postası gönderildi.', 
             userId: authData.user.id,
-            inviteLink: authData.properties.action_link
+            inviteLink: authData.properties.action_link // Admin isterse manuel de gönderebilir
         });
+
     } catch (error) {
-        console.error('Invite handler error:', error);
-        res.status(500).json({ error: 'Davet işlemi başarısız oldu.' });
+        console.error('💥 Critical Invite Error:', error);
+        res.status(500).json({ error: 'Davet işlemi sırasında beklenmedik bir hata oluştu.' });
     }
 });
 

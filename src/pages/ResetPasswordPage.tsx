@@ -13,13 +13,43 @@ export default function ResetPasswordPage() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [status, setStatus] = useState({ message: '', type: '' });
+    const [isSupabaseReset, setIsSupabaseReset] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!token) {
-            setStatus({ message: 'Geçersiz bağlantı. Şifre sıfırlama tokenı bulunamadı.', type: 'error' });
+        // Supabase oturumu var mı kontrol et (Davet linkiyle gelince otomatik oturum açılır)
+        const checkSession = async () => {
+            await axios.get(`${import.meta.env.VITE_SUPABASE_URL}/auth/v1/user`, {
+                headers: {
+                    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${localStorage.getItem('supabase.auth.token') || ''}`
+                }
+            }).catch(() => ({ data: { user: null } })); // Simple check or use the client
+
+            // Better: use the existing supabase client
+            const { data } = await import('../services/supabase').then(m => m.supabase.auth.getSession());
+            if (data.session) {
+                setIsSupabaseReset(true);
+                // Eğer Supabase oturumu varsa token zorunluluğunu kaldırıyoruz
+            }
+        };
+        
+        checkSession();
+
+        if (!token && !isSupabaseReset) {
+            // Token yok ama belki hash ile gelmiştir, Supabase client'ın oturumu açmasını bekleyelim
+            const timeout = setTimeout(async () => {
+                const { supabase } = await import('../services/supabase');
+                const { data } = await supabase.auth.getSession();
+                if (data.session) {
+                    setIsSupabaseReset(true);
+                } else if (!token) {
+                    setStatus({ message: 'Geçersiz veya süresi dolmuş bağlantı.', type: 'error' });
+                }
+            }, 1000);
+            return () => clearTimeout(timeout);
         }
-    }, [token]);
+    }, [token, isSupabaseReset]);
 
     const handleReset = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -37,15 +67,25 @@ export default function ResetPasswordPage() {
         setIsLoading(true);
 
         try {
-            const { data } = await axios.post(`${API_URL}/api/auth/reset-password`, { 
-                token, 
-                newPassword 
-            });
-            setStatus({ message: data.message, type: 'success' });
+            if (isSupabaseReset) {
+                // SUPABASE ÜZERİNDEN ŞİFRE GÜNCELLEME
+                const { supabase } = await import('../services/supabase');
+                const { error } = await supabase.auth.updateUser({ password: newPassword });
+                if (error) throw error;
+                setStatus({ message: 'Şifreniz başarıyla güncellendi! Giriş sayfasına yönlendiriliyorsunuz...', type: 'success' });
+            } else {
+                // YEREL BACKEND ÜZERİNDEN ŞİFRE GÜNCELLEME
+                const { data } = await axios.post(`${API_URL}/api/auth/reset-password`, { 
+                    token, 
+                    newPassword 
+                });
+                setStatus({ message: data.message, type: 'success' });
+            }
             setTimeout(() => navigate('/login'), 3000);
         } catch (err: any) {
+            console.error('Reset error:', err);
             setStatus({ 
-                message: err.response?.data?.error || 'Şifre güncellenirken bir hata oluştu.', 
+                message: err.message || err.response?.data?.error || 'Şifre güncellenirken bir hata oluştu.', 
                 type: 'error' 
             });
         } finally {
@@ -101,7 +141,7 @@ export default function ResetPasswordPage() {
                                         value={newPassword}
                                         onChange={e => setNewPassword(e.target.value)}
                                         required
-                                        disabled={!token || status.type === 'success'}
+                                        disabled={(!token && !isSupabaseReset) || status.type === 'success'}
                                     />
                                 </div>
                             </div>
@@ -119,15 +159,15 @@ export default function ResetPasswordPage() {
                                         value={confirmPassword}
                                         onChange={e => setConfirmPassword(e.target.value)}
                                         required
-                                        disabled={!token || status.type === 'success'}
+                                        disabled={(!token && !isSupabaseReset) || status.type === 'success'}
                                     />
                                 </div>
                             </div>
 
                             <button
                                 type="submit"
-                                disabled={isLoading || !token || status.type === 'success'}
-                                className={`w-full ${isLoading || !token || status.type === 'success' ? 'bg-blue-600/50 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500'} text-white font-black py-4 rounded-2xl shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] transition-all flex justify-center items-center gap-2 mt-8 text-lg group`}
+                                disabled={isLoading || (!token && !isSupabaseReset) || status.type === 'success'}
+                                className={`w-full ${isLoading || (!token && !isSupabaseReset) || status.type === 'success' ? 'bg-blue-600/50 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500'} text-white font-black py-4 rounded-2xl shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] transition-all flex justify-center items-center gap-2 mt-8 text-lg group`}
                             >
                                 {isLoading ? 'GÜNCELLENİYOR...' : 'ŞİFREYİ GÜNCELLE'}
                                 {!isLoading && status.type !== 'success' && <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />}

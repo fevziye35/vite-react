@@ -11,7 +11,8 @@ import {
     Ship,
     CheckSquare,
     ShieldCheck,
-    MessageSquare
+    MessageSquare,
+    UserCircle
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../utils/cn';
@@ -19,8 +20,8 @@ import { cn } from '../../utils/cn';
 export default function Sidebar() {
     const { logout, user } = useAuth();
     
-    // Only fevziye.mamak35@gmail.com is considered SuperAdmin
-    const isSuperAdmin = user?.email === 'fevziye.mamak35@gmail.com';
+    // Sistem yöneticisi kontrolü - Rol tabanlı yapıldı
+    const isSuperAdmin = user?.role === 'SuperAdmin' || user?.email === 'fevziye.mamak35@gmail.com';
 
     const menuItems = [
         { icon: LayoutDashboard, label: 'Gösterge Paneli', path: '/', badge: 0 },
@@ -35,6 +36,7 @@ export default function Sidebar() {
         { icon: FileText, label: 'Proformalar', path: '/proformas', badge: 0 },
         { icon: Ship, label: 'Sevkiyatlar', path: '/shipments', badge: 0 },
         { icon: Truck, label: 'Lojistik', path: '/logistics', badge: 0 },
+        { icon: UserCircle, label: 'Profil', path: '/profile', badge: 0 },
         // Only show Sistem to superadmin
         ...(isSuperAdmin ? [{ icon: ShieldCheck, label: 'Sistem', path: '/settings', badge: 0 }] : []),
     ];
