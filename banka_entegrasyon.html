@@ -1,0 +1,379 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banka Entegrasyonları</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+                            <header class="header">
+        <div class="header-left">
+            <div class="sidebar-toggle-box">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            <div class="logo-area">
+                <span class="brand-text" data-i18n="word.company_name">MAKFA GIDA ÜRÜNLERİ SANAYİ TİCARET ANONİM ŞİRKETİ</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="header-item header-lang-dropdown" onclick="toggleLanguageMenu(event)">
+                <i class="fa-solid fa-flag"></i> <span id="header-lang-text">Language</span>
+                <div class="header-lang-menu" id="header-lang-menu">
+                    <div class="header-lang-item" onclick="setLanguage('tr')"><i class="fa-solid fa-flag"></i> Türkçe</div>
+                    <div class="header-lang-item" onclick="setLanguage('en')"><i class="fa-solid fa-flag-usa"></i> English</div>
+                    <div class="header-lang-item" onclick="setLanguage('de')"><i class="fa-solid fa-flag"></i> Deutsch (Almanca)</div>
+                    <div class="header-lang-item" onclick="setLanguage('ru')"><i class="fa-solid fa-flag"></i> Русский (Русча)</div>
+                    <div class="header-lang-item" onclick="setLanguage('zh')"><i class="fa-solid fa-flag"></i> 中文 (Çince)</div>
+                </div>
+            </div>
+            <div class="header-item" style="cursor: pointer;" onclick="window.history.back()"><i class="fa-solid fa-reply"></i> <span data-i18n="header.back">Geri Dön</span></div>
+            <div class="header-item" style="cursor: pointer;" title="Ekranı Kilitle" onclick="window.location.href='kilit_ekrani.html'"><i class="fa-solid fa-lock"></i></div>
+            <div class="header-item"><i class="fa-solid fa-circle-info"></i></div>
+            
+            <!-- Branch Switcher Dropdown -->
+            <div class="header-item header-lang-dropdown" onclick="toggleBranchMenu(event)">
+                <i class="fa-solid fa-building"></i> <span id="header-branch-text">Merkez</span>
+                <div class="header-lang-menu" id="branch-dropdown-menu">
+                    <!-- Dynamic branches from JS -->
+                </div>
+            </div>
+
+            <div class="header-item" style="cursor: pointer;" onclick="window.location.href='ajanda.html'"><i class="fa-solid fa-calendar-days"></i> 2026</div>
+            <div class="header-item user-item" onclick="toggleUserMenu(event)">
+                <i class="fa-solid fa-user"></i> 
+                <span>fevziye.mamak35@gmail.com</span>
+                <div class="user-dropdown-menu" id="user-dropdown-menu">
+                    <div class="user-dropdown-item" onclick="window.location.href='profil.html'"><i class="fa-solid fa-user-gear"></i> <span data-i18n="user.profile">Profilim</span></div>
+                    <div class="user-dropdown-item" onclick="switchUser()"><i class="fa-solid fa-people-arrows"></i> <span data-i18n="user.switch">Kullanıcı Değiştir</span></div>
+                    <hr>
+                    <div class="user-dropdown-item logout" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="user.logout">Çıkış Yap</span></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <a href="index.html">
+                <img src="logo.png" alt="Logo">
+            </a>
+            <i class="fa-solid fa-bars"></i>
+        </div>
+                <ul class="sidebar-menu">
+
+            <li><a href="index.html"><i class="fa-solid fa-house"></i> <span
+                        data-i18n="sidebar.home">Giriş Ekranı</span></a></li>
+            <li><a href="satis_yap.html"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="sidebar.sales">Satış
+                        Yap</span></a></li>
+            <li><a href="cari_hesaplar.html"><i class="fa-solid fa-users"></i> <span data-i18n="sidebar.customers">Cari
+                        Hesaplar</span></a></li>
+            <li><a href="stok_kartlari.html"><i class="fa-solid fa-boxes-stacked"></i> <span
+                        data-i18n="sidebar.stock">Stok Kartları</span></a></li>
+            <li><a href="faturalar.html"><i class="fa-solid fa-file-invoice"></i> <span
+                        data-i18n="sidebar.invoices">Faturalar</span></a></li>
+            <li><a href="gelir_gider.html"><i class="fa-solid fa-chart-line"></i> <span
+                        data-i18n="sidebar.income_expense">Gelir Gider</span></a></li>
+            <li><a href="kasa.html"><i class="fa-solid fa-cash-register"></i> <span
+                        data-i18n="sidebar.cash">Kasa</span></a></li>
+            <li><a href="banka_ozet.html"><i class="fa-solid fa-building-columns"></i> <span
+                        data-i18n="sidebar.bank">Banka</span></a></li>
+            <li><a href="cek_senet.html"><i class="fa-solid fa-money-check"></i> <span
+                        data-i18n="sidebar.checks">Çek Senet</span></a></li>
+            <li><a href="taksit_takip.html"><i class="fa-solid fa-calendar-days"></i> <span
+                        data-i18n="sidebar.installments">Taksit
+                        Takip</span></a></li>
+            <li><a href="teklif_siparis.html"><i class="fa-solid fa-file-contract"></i> <span
+                        data-i18n="sidebar.offers">Teklif
+                        Sipariş</span></a></li>
+            <li><a href="doviz_ayarlari.html" id="doviz_settings_link"><i class="fa-solid fa-dollar-sign"></i> <span data-i18n="sidebar.currency">Döviz Ayarları</span></a></li>
+            
+            <li class="has-submenu">
+                <a href="javascript:void(0)" class="submenu-toggle"><i class="fa-solid fa-file-lines"></i> <span
+                        data-i18n="sidebar.reports">Raporlar</span> <i
+                          class="fa-solid fa-chevron-right ms-auto arrow"></i></a>
+                <ul class="submenu">
+                    <li><a href="cari_raporu.html"><i class="fa-solid fa-users"></i> <span data-i18n="report.cari">Cari</span></a></li>
+                    <li><a href="toplu_stok_raporu.html"><i class="fa-solid fa-box-open"></i> <span data-i18n="report.stok">Stok</span></a></li>
+                    <li><a href="taksit_rapor.html"><i class="fa-solid fa-calendar-days"></i> <span data-i18n="report.taksit">Taksit</span></a></li>
+                    <li><a href="satis_raporu.html"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="report.satis">Satış</span></a></li>
+                    <li><a href="kasa_raporu.html"><i class="fa-solid fa-cash-register"></i> <span data-i18n="report.kasa">Kasa</span></a></li>
+                    <li><a href="banka_raporu.html"><i class="fa-solid fa-building-columns"></i> <span data-i18n="report.banka">Banka</span></a></li>
+                    <li><a href="cek_raporu.html"><i class="fa-solid fa-copy"></i> <span data-i18n="sidebar.checks">Çek Senet</span></a></li>
+                    <li><a href="gun_sonu_raporu.html"><i class="fa-solid fa-file-lines"></i> <span data-i18n="report.gun_sonu">Gün Sonu Raporu</span></a></li>
+                    <li><a href="kar_zarar_analizi.html"><i class="fa-solid fa-file-lines"></i> <span data-i18n="report.kar_zarar">Kâr Zarar Analizi</span></a></li>
+                    <li><a href="gelir_gider.html"><i class="fa-solid fa-calendar-days"></i> <span data-i18n="sidebar.income_expense">Gelir Gider</span></a></li>
+                </ul>
+            </li>
+            <li><a href="mesajlar.html"><i class="fa-solid fa-envelope"></i> <span data-i18n="sidebar.messages">Mesajlar</span></a></li>
+            
+            <li class="has-submenu">
+                <a href="javascript:void(0)" class="submenu-toggle"><i class="fa-solid fa-layer-group"></i> <span
+                        data-i18n="sidebar.modules">Ek Modüller</span> <i
+                          class="fa-solid fa-chevron-right ms-auto arrow"></i></a>
+                <ul class="submenu">
+                    <li><a href="personel_takip.html"><i class="fa-solid fa-user-clock"></i> <span data-i18n="word.personel_takip">Personel Takip</span></a></li>
+                    <li><a href="ajanda.html"><i class="fa-solid fa-calendar-check"></i> <span data-i18n="word.ajanda">Ajanda</span></a></li>
+                    <li><a href="kisi_ekle.html"><i class="fa-solid fa-user-plus"></i> <span data-i18n="word.kisi_ekleme">Kişi Ekleme Paneli</span></a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Header -->
+                                    
+
+    <!-- Main Content -->
+    <main class="main-content p-0">
+        <div class="page-container">
+
+            <div class="top-section">
+                <!-- Left Panel: Bank List -->
+                <div class="left-panel">
+                    <div class="panel-header">
+                        <span><i class="fa-solid fa-building-columns"></i> Banka Listesi</span>
+                    </div>
+                    <div class="table-area">
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th class="w-50px">Seç</th>
+                                    <th class="w-30px">#</th>
+                                    <th>Banka Adı</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Example Data -->
+                                <tr>
+                                    <td><button class="badge-select">Seç</button></td>
+                                    <td>1</td>
+                                    <td>AKBANK</td>
+                                </tr>
+                                <tr>
+                                    <td><button class="badge-select">Seç</button></td>
+                                    <td>2</td>
+                                    <td>ZİRAAT BANKASI</td>
+                                </tr>
+                                <tr>
+                                    <td><button class="badge-select">Seç</button></td>
+                                    <td>3</td>
+                                    <td>GARANTİ BBVA</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Account List -->
+                <div class="right-panel">
+                    <div class="panel-header">
+                        <span><i class="fa-solid fa-building-columns"></i> Banka Hesap Listesi</span>
+                        <label class="panel-header-right-btn cursor-pointer">
+                            <input type="file" id="fileUploadInput" accept=".pdf, .xls, .xlsx" class="d-none">
+                            PDF/Excel Yükle <i class="fa-solid fa-cloud-arrow-up"></i>
+                        </label>
+                    </div>
+                    <div class="table-area">
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Seç</th>
+                                    <th>Hesap No</th>
+                                    <th>IBAN</th>
+                                    <th>Bakiye</th>
+                                    <th>Para Birimi</th>
+                                    <th>Durumu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="empty-row">
+                                    <td colspan="6" class="empty-message">Lütfen banka hareketlerini görmek için banka
+                                        seçiniz</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Section: Transactions -->
+            <div class="bottom-section">
+                <div class="filter-bar">
+                    <div class="title"><i class="fa-solid fa-building-columns"></i> Bankanın Hesap Hareket Listesi</div>
+
+                    <div class="filter-inputs">
+                        <label>Başlangıç Tarihi:</label>
+                        <input type="date" value="2026-06-20">
+                    </div>
+
+                    <div class="filter-inputs">
+                        <label>Bitiş Tarihi:</label>
+                        <input type="date" value="2026-06-20">
+                    </div>
+
+                    <button class="btn-filter">Filtrele</button>
+
+                    <div class="right-header-action transaction-list-separator">
+                        <a href="#">Tüm Banka Hareket Listeleri <i class="fa-solid fa-list-ul"></i></a>
+                    </div>
+                </div>
+
+                <div class="table-area min-h-200">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Seç</th>
+                                <th>İşlem Tarihi</th>
+                                <th><span data-i18n="mega.vergi_no">Vergi No</span></th>
+                                <th>Gönderici Adı</th>
+                                <th>Gönderici IBAN</th>
+                                <th><span data-i18n="mega.aciklama">Açıklama</span></th>
+                                <th>Tutar</th>
+                                <th>Bakiye</th>
+                                <th>Para Birimi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="empty-row">
+                                <td colspan="9" class="empty-message">Lütfen bir banka hesabı seçiniz</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="translations.js?v=1776685628940"></script>
+    <script src="script.js?v=1776685628940"></script>
+    <script>
+        // Set dates to today by default (or specific date as per screenshot if static)
+        // Leaving the static values from screenshot for now as per "create a visual representation as shown"
+        // But functionally, typically we'd set them to today
+
+        const dateInputs = document.querySelectorAll('input[type="date"]');
+        const today = new Date().toISOString().split('T')[0];
+        // Uncomment to use real today:
+        // dateInputs.forEach(input => input.value = today);
+
+        // File Upload Handler (Persistence)
+        const fileInput = document.getElementById('fileUploadInput');
+        const uploadLabel = document.querySelector('.panel-header-right-btn');
+        const defaultLabelHTML = `PDF/Excel Yükle <i class="fa-solid fa-cloud-arrow-up"></i>`;
+
+        // Check for saved file on load
+        function checkSavedFile() {
+            const savedFile = localStorage.getItem('bankIntegrationFile');
+            if (savedFile) {
+                const fileData = JSON.parse(savedFile);
+                updateUploadUI(fileData.name);
+            }
+        }
+
+        // Update UI to show uploaded file
+        function updateUploadUI(fileName) {
+            uploadLabel.classList.add('btn-green'); // Add a success style class if available or just defined styles
+            uploadLabel.style.background = '#27ae60'; // Force green color
+            uploadLabel.style.color = 'white';
+            uploadLabel.innerHTML = `<input type="file" id="fileUploadInput" accept=".pdf, .xls, .xlsx" class="d-none">
+                                     ${fileName} (Değiştir)`;
+
+            // Re-bind listener because innerHTML overwrite removes old listener
+            document.getElementById('fileUploadInput').addEventListener('change', handleFileChange);
+        }
+
+        function handleFileChange(e) {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                const fileName = file.name;
+
+                // Save metadata to localStorage
+                const fileData = {
+                    name: fileName,
+                    date: new Date().toISOString(),
+                    // In a real app we would upload the file here. 
+                    // For this mock, we just save the name to simulate persistence.
+                };
+                localStorage.setItem('bankIntegrationFile', JSON.stringify(fileData));
+
+                alert(`Dosya kaydedildi: ${fileName}`);
+                updateUploadUI(fileName);
+            }
+        }
+
+        // Initialize
+        fileInput.addEventListener('change', handleFileChange);
+        checkSavedFile();
+
+
+        // Simple interactive mock script
+        const bankSelectButtons = document.querySelectorAll('.left-panel .badge-select');
+        const accountTableBody = document.querySelector('.right-panel tbody');
+        const transactionTableBody = document.querySelector('.bottom-section tbody');
+
+        bankSelectButtons.forEach(btn => {
+            btn.addEventListener('click', function () {
+                // Mock loading accounts
+                accountTableBody.innerHTML = `
+                    <tr>
+                         <td><button class="badge-select account-select">Seç</button></td>
+                         <td>12345678</td>
+                         <td>TR12 3456 7890 1234 5678 9012 34</td>
+                         <td>150.000,00</td>
+                         <td>TRY</td>
+                         <td><span style="color:green;">Aktif</span></td>
+                    </tr>
+                     <tr>
+                         <td><button class="badge-select account-select">Seç</button></td>
+                         <td>87654321</td>
+                         <td>TR98 7654 3210 9876 5432 1098 76</td>
+                         <td>2.500,00</td>
+                         <td>USD</td>
+                         <td><span style="color:green;">Aktif</span></td>
+                    </tr>
+                `;
+
+                // Re-bind account clicks
+                document.querySelectorAll('.account-select').forEach(accBtn => {
+                    accBtn.addEventListener('click', function () {
+                        // Mock loading transactions
+                        transactionTableBody.innerHTML = `
+                             <tr>
+                                <td><input type="checkbox"></td>
+                                <td>20.06.2026</td>
+                                <td>1111111111</td>
+                                <td>Örnek Müşteri A.Ş.</td>
+                                <td>TR11...</td>
+                                <td>Fatura Ödemesi</td>
+                                <td style="color:green">10.000,00</td>
+                                <td>160.000,00</td>
+                                <td>TRY</td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>19.06.2026</td>
+                                <td>2222222222</td>
+                                <td>Hizmet Sağlayıcı Ltd.</td>
+                                <td>TR22...</td>
+                                <td>Hizmet Bedeli</td>
+                                <td style="color:red">-5.000,00</td>
+                                <td>150.000,00</td>
+                                <td>TRY</td>
+                            </tr>
+                        `;
+                    });
+                });
+            });
+        });
+
+    </script>
+
+<script src='excelExportUniversal.js'></script></body>
+
+</html>
+

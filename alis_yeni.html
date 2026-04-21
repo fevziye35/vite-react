@@ -1,0 +1,688 @@
+﻿ï»¿<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><span data-i18n="word.yeni_alis_faturasi"><span data-i18n="word.yeni_alis_faturasi">Yeni Alış Faturası</span></span></title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Sharing styles for consistency -->
+    <style>
+        .page-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .left-panel {
+            flex: 2;
+            background: #fff;
+            padding: 20px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .right-panel {
+            flex: 1;
+            background: #fff;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .tab-header {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+
+        .tab-item {
+            padding: 10px 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            font-weight: bold;
+            color: #1f3a60;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+        }
+
+        .tab-item.active {
+            background-color: #fff;
+            border-bottom: 1px solid #fff;
+            margin-bottom: -1px;
+            z-index: 2;
+        }
+
+        .right-content {
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-top: none;
+            margin-top: -16px;
+            border-radius: 0 4px 4px 4px;
+        }
+
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-label-sm {
+            display: block;
+            font-weight: bold;
+            font-size: 13px;
+            color: #1f3a60;
+            margin-bottom: 5px;
+        }
+
+        .form-input-sm {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #555;
+        }
+
+
+
+        .bottom-bar {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .barcode-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-right: none;
+            border-radius: 4px 0 0 4px;
+            font-size: 14px;
+        }
+
+        .add-product-btn {
+            background-color: #1f3a60;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .input-group-btn {
+            display: flex;
+        }
+
+        .input-group-btn input {
+            border-radius: 4px 0 0 4px;
+            border-right: none;
+        }
+
+        .input-group-btn button {
+            border: 1px solid #ccc;
+            background: #fff;
+            padding: 0 10px;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            color: #333;
+        }
+
+        .product-table-container {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .product-table th {
+            text-align: left;
+            padding: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+            border-bottom: 1px solid #eee;
+        }
+
+        .product-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .mb-15 {
+            margin-bottom: 15px;
+        }
+
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin: 15px 0;
+            font-size: 13px;
+        }
+
+        .w-15-pct {
+            width: 15%;
+        }
+
+        .w-5-pct {
+            width: 5%;
+        }
+
+        .w-10-pct {
+            width: 10%;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .empty-row-td {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+
+        .floating-action-btn {
+            position: absolute;
+            right: 0;
+            top: 0;
+            background: #9caab4;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            margin-top: -20px;
+            margin-right: -20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Settings Modal Sidebar Style */
+
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 0;
+            border: 1px solid #888;
+            width: 600px;
+            height: auto;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+            animation-name: animatetop;
+            animation-duration: 0.4s;
+            position: relative;
+        }
+
+        @keyframes animatetop {
+            from {
+                top: -300px;
+                opacity: 0
+            }
+
+            to {
+                top: 0;
+                opacity: 1
+            }
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            background-color: #fff;
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: normal;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 20px;
+            font-size: 13px;
+        }
+
+        /* .modal-footer replaced below */
+
+        .form-group-modal {
+            margin-bottom: 15px;
+        }
+
+        .form-group-modal label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .input-group-modal {
+            display: flex;
+        }
+
+        .input-group-modal input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px 0 0 4px;
+            border-right: none;
+        }
+
+        .btn-modal-action {
+            padding: 8px 15px;
+            border: 1px solid #ccc;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-modal-action:first-of-type {
+            background-color: #2c82c9;
+            color: white;
+            border: 1px solid #2c82c9;
+        }
+
+        .btn-modal-action:last-child {
+            border-radius: 0 4px 4px 0;
+        }
+
+        .btn-modal-action-clear {
+            background-color: #f0f0f0;
+            color: #333;
+            border-left: none;
+        }
+
+        .checkbox-group {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            transform: scale(1.2);
+        }
+
+        .btn-save-modal {
+            background-color: #2c82c9;
+            color: white;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-close-modal {
+            background-color: #fff;
+            color: #333;
+            padding: 8px 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            background-color: #fff;
+            border-top: 1px solid #ddd;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-close-modal,
+        .btn-save-modal {
+            width: 100%;
+            margin: 0;
+            padding: 8px 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        /* .btn-pos-settings removed */
+
+        /* btn-close-modal and btn-save-modal may have other colors */
+        .btn-close-modal {
+            background-color: #fff;
+            color: #333;
+        }
+
+        .btn-save-modal {
+            background-color: #2c82c9;
+            color: white;
+            border: 1px solid #2c82c9;
+        }
+    </style>
+</head>
+
+<body>
+                            <header class="header">
+        <div class="header-left">
+            <div class="sidebar-toggle-box">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            <div class="logo-area">
+                <span class="brand-text" data-i18n="word.company_name">MAKFA GIDA ÜRÜNLERİ SANAYİ TİCARET ANONİM ŞİRKETİ</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="header-item header-lang-dropdown" onclick="toggleLanguageMenu(event)">
+                <i class="fa-solid fa-flag"></i> <span id="header-lang-text">Language</span>
+                <div class="header-lang-menu" id="header-lang-menu">
+                    <div class="header-lang-item" onclick="setLanguage('tr')"><i class="fa-solid fa-flag"></i> Türkçe</div>
+                    <div class="header-lang-item" onclick="setLanguage('en')"><i class="fa-solid fa-flag-usa"></i> English</div>
+                    <div class="header-lang-item" onclick="setLanguage('de')"><i class="fa-solid fa-flag"></i> Deutsch (Almanca)</div>
+                    <div class="header-lang-item" onclick="setLanguage('ru')"><i class="fa-solid fa-flag"></i> Русский (Русча)</div>
+                    <div class="header-lang-item" onclick="setLanguage('zh')"><i class="fa-solid fa-flag"></i> 中文 (Çince)</div>
+                </div>
+            </div>
+            <div class="header-item" style="cursor: pointer;" onclick="window.history.back()"><i class="fa-solid fa-reply"></i> <span data-i18n="header.back">Geri Dön</span></div>
+            <div class="header-item" style="cursor: pointer;" title="Ekranı Kilitle" onclick="window.location.href='kilit_ekrani.html'"><i class="fa-solid fa-lock"></i></div>
+            <div class="header-item"><i class="fa-solid fa-circle-info"></i></div>
+            
+            <!-- Branch Switcher Dropdown -->
+            <div class="header-item header-lang-dropdown" onclick="toggleBranchMenu(event)">
+                <i class="fa-solid fa-building"></i> <span id="header-branch-text">Merkez</span>
+                <div class="header-lang-menu" id="branch-dropdown-menu">
+                    <!-- Dynamic branches from JS -->
+                </div>
+            </div>
+
+            <div class="header-item" style="cursor: pointer;" onclick="window.location.href='ajanda.html'"><i class="fa-solid fa-calendar-days"></i> 2026</div>
+            <div class="header-item user-item" onclick="toggleUserMenu(event)">
+                <i class="fa-solid fa-user"></i> 
+                <span>fevziye.mamak35@gmail.com</span>
+                <div class="user-dropdown-menu" id="user-dropdown-menu">
+                    <div class="user-dropdown-item" onclick="window.location.href='profil.html'"><i class="fa-solid fa-user-gear"></i> <span data-i18n="user.profile">Profilim</span></div>
+                    <div class="user-dropdown-item" onclick="switchUser()"><i class="fa-solid fa-people-arrows"></i> <span data-i18n="user.switch">Kullanıcı Değiştir</span></div>
+                    <hr>
+                    <div class="user-dropdown-item logout" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="user.logout">Çıkış Yap</span></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <!-- Sidebar content same as other pages -->
+        <div class="sidebar-logo">
+            <a href="index.html">
+                <img src="logo.png" alt="Logo">
+            </a>
+            <i class="fa-solid fa-bars"></i>
+        </div>
+        <ul class="sidebar-menu">
+
+            <li><a href="index.html"><i class="fa-solid fa-house"></i> <span
+                        data-i18n="sidebar.home">Giriş Ekranı</span></a></li>
+            <li><a href="satis_yap.html"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="sidebar.sales">Satış
+                        Yap</span></a></li>
+            <li><a href="cari_hesaplar.html"><i class="fa-solid fa-users"></i> <span data-i18n="sidebar.customers">Cari
+                        Hesaplar</span></a></li>
+            <li><a href="stok_kartlari.html"><i class="fa-solid fa-boxes-stacked"></i> <span
+                        data-i18n="sidebar.stock">Stok Kartları</span></a></li>
+            <li><a href="faturalar.html"><i class="fa-solid fa-file-invoice"></i> <span
+                        data-i18n="sidebar.invoices">Faturalar</span></a></li>
+            <li><a href="gelir_gider.html"><i class="fa-solid fa-chart-line"></i> <span
+                        data-i18n="sidebar.income_expense">Gelir Gider</span></a></li>
+            <li><a href="kasa.html"><i class="fa-solid fa-cash-register"></i> <span
+                        data-i18n="sidebar.cash">Kasa</span></a></li>
+            <li><a href="banka_ozet.html"><i class="fa-solid fa-building-columns"></i> <span
+                        data-i18n="sidebar.bank">Banka</span></a></li>
+            <li><a href="cek_senet.html"><i class="fa-solid fa-money-check"></i> <span
+                        data-i18n="sidebar.checks">Çek Senet</span></a></li>
+            <li><a href="taksit_takip.html"><i class="fa-solid fa-calendar-days"></i> <span
+                        data-i18n="sidebar.installments">Taksit
+                        Takip</span></a></li>
+            <li><a href="teklif_siparis.html"><i class="fa-solid fa-file-contract"></i> <span
+                        data-i18n="sidebar.offers">Teklif
+                        Sipariş</span></a></li>
+            <li><a href="doviz_ayarlari.html" id="doviz_settings_link"><i class="fa-solid fa-dollar-sign"></i> <span data-i18n="sidebar.currency">Döviz Ayarları</span></a></li>
+            
+            <li class="has-submenu">
+                <a href="javascript:void(0)" class="submenu-toggle"><i class="fa-solid fa-file-lines"></i> <span
+                        data-i18n="sidebar.reports">Raporlar</span> <i
+                          class="fa-solid fa-chevron-right ms-auto arrow"></i></a>
+                <ul class="submenu">
+                    <li><a href="cari_raporu.html"><i class="fa-solid fa-users"></i> <span data-i18n="report.cari">Cari</span></a></li>
+                    <li><a href="toplu_stok_raporu.html"><i class="fa-solid fa-box-open"></i> <span data-i18n="report.stok">Stok</span></a></li>
+                    <li><a href="taksit_rapor.html"><i class="fa-solid fa-calendar-days"></i> <span data-i18n="report.taksit">Taksit</span></a></li>
+                    <li><a href="satis_raporu.html"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="report.satis">Satış</span></a></li>
+                    <li><a href="kasa_raporu.html"><i class="fa-solid fa-cash-register"></i> <span data-i18n="report.kasa">Kasa</span></a></li>
+                    <li><a href="banka_raporu.html"><i class="fa-solid fa-building-columns"></i> <span data-i18n="report.banka">Banka</span></a></li>
+                    <li><a href="cek_raporu.html"><i class="fa-solid fa-copy"></i> <span data-i18n="sidebar.checks">Çek Senet</span></a></li>
+                    <li><a href="gun_sonu_raporu.html"><i class="fa-solid fa-file-lines"></i> <span data-i18n="report.gun_sonu">Gün Sonu Raporu</span></a></li>
+                    <li><a href="kar_zarar_analizi.html"><i class="fa-solid fa-file-lines"></i> <span data-i18n="report.kar_zarar">Kâr Zarar Analizi</span></a></li>
+                    <li><a href="gelir_gider.html"><i class="fa-solid fa-calendar-days"></i> <span data-i18n="sidebar.income_expense">Gelir Gider</span></a></li>
+                </ul>
+            </li>
+            <li><a href="mesajlar.html"><i class="fa-solid fa-envelope"></i> <span data-i18n="sidebar.messages">Mesajlar</span></a></li>
+            
+            <li class="has-submenu">
+                <a href="javascript:void(0)" class="submenu-toggle"><i class="fa-solid fa-layer-group"></i> <span
+                        data-i18n="sidebar.modules">Ek Modüller</span> <i
+                          class="fa-solid fa-chevron-right ms-auto arrow"></i></a>
+                <ul class="submenu">
+                    <li><a href="personel_takip.html"><i class="fa-solid fa-user-clock"></i> <span data-i18n="word.personel_takip">Personel Takip</span></a></li>
+                    <li><a href="ajanda.html"><i class="fa-solid fa-calendar-check"></i> <span data-i18n="word.ajanda">Ajanda</span></a></li>
+                    <li><a href="kisi_ekle.html"><i class="fa-solid fa-user-plus"></i> <span data-i18n="word.kisi_ekleme">Kişi Ekleme Paneli</span></a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Header -->
+                                    
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h2 class="page-title"><span data-i18n="word.yeni_alis_faturasi"><span data-i18n="word.yeni_alis_faturasi">Yeni Alış Faturası</span></span></h2>
+
+        <div class="main-container">
+            <!-- Left Panel: Customer Info -->
+            <div class="left-panel">
+                <div class="form-grid-2">
+                    <!-- Left Column -->
+                    <div>
+                        <div class="mb-15">
+                            <label class="form-label-sm">Ünvan</label>
+                            <input type="text" id="unvan" class="form-input-sm" value="Yeni Tedarikçi">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm">Yetkili</label>
+                            <input type="text" id="yetkili" class="form-input-sm">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm">E-posta</label>
+                            <input type="email" id="eposta" class="form-input-sm" placeholder="-">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm"><span data-i18n="mega.adres">Adres</span></label>
+                            <textarea id="adres" class="form-input-sm" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div>
+                        <div class="mb-15">
+                            <label class="form-label-sm">Vergi Dairesi</label>
+                            <input type="text" id="vergiDairesi" class="form-input-sm">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm"><span data-i18n="mega.vergi_no">Vergi No</span></label>
+                            <input type="text" id="vergiNo" class="form-input-sm" value="0">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm"><span data-i18n="mega.il">İl</span></label>
+                            <input type="text" id="il" class="form-input-sm">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm"><span data-i18n="mega.ilce">İlçe</span></label>
+                            <input type="text" id="ilce" class="form-input-sm">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm">Ülke</label>
+                            <select id="ulke" class="form-input-sm">
+                                <option value="Türkiye">Türkiye</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Invoice Info -->
+            <div class="right-panel">
+                <div class="floating-action-btn">
+                    <i class="fa-solid fa-bars"></i>
+                </div>
+                <div class="tab-header">
+                    <div class="tab-item active"><span data-i18n="mega.fatura_bilgileri">Fatura Bilgileri</span></div>
+                </div>
+                <div class="right-content">
+                    <div class="form-grid-2">
+                        <div class="mb-15">
+                            <label class="form-label-sm">Fatura Tarihi</label>
+                            <input type="text" id="faturaTarihi" class="form-input-sm">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm">Sevk Tarihi</label>
+                            <input type="text" id="sevkTarihi" class="form-input-sm">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm"><span data-i18n="mega.saat">Saat</span></label>
+                            <input type="text" id="faturaSaat" class="form-input-sm">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm">Fatura No</label>
+                            <div class="input-group-btn">
+                                <input type="text" id="faturaNo" class="form-input-sm">
+                                <button type="button" aria-label="Yeni Fatura Numarası"><i
+                                        class="fa-solid fa-plus"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2 mb-15">
+                        <div>
+                            <label class="form-label-sm">Para Birimleri</label>
+                            <select class="form-input-sm">
+                                <option>TRY</option>
+                                <option>USD</option>
+                                <option>EUR</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label-sm">Döviz Kuru</label>
+                            <input type="number" class="form-input-sm" value="1">
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-bar">
+            <input type="text" class="barcode-input" placeholder="Barkod...">
+            <button class="add-product-btn">Ürün Ekle</button>
+        </div>
+
+        <div class="product-table-container">
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th class="w-15-pct"><span data-i18n="word.ad">Ad</span></th>
+                        <th class="w-5-pct"><span data-i18n="mega.kdv">KDV</span></th>
+                        <th class="w-5-pct">ÖTV</th>
+                        <th class="w-10-pct">Birim Fiyatı</th>
+                        <th class="w-10-pct">Miktar</th>
+                        <th class="w-10-pct">Toplam</th>
+                        <th class="w-5-pct">İsk %</th>
+                        <th class="w-10-pct">İsk</th>
+                        <th class="w-10-pct">G. Toplam</th>
+                        <th class="w-15-pct text-right"><span data-i18n="word.islemler">İşlemler</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="10" class="text-center empty-row-td">Henüz ürün eklenmedi.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+
+    <script src="translations.js?v=1776685628940"></script>
+    <script src="script.js?v=1776685628940"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('tr-TR');
+            const timeStr = today.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
+            document.getElementById('faturaTarihi').value = dateStr;
+            document.getElementById('sevkTarihi').value = dateStr;
+            document.getElementById('faturaSaat').value = timeStr;
+        });
+    </script>
+
+<script src='excelExportUniversal.js'></script></body>
+
+</html>
+

@@ -1,0 +1,209 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><span data-i18n="report.cari_raporu">Cari Raporu</span></title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+</head>
+
+<body>
+                            <header class="header">
+        <div class="header-left">
+            <div class="sidebar-toggle-box">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            <div class="logo-area">
+                <span class="brand-text" data-i18n="word.company_name">MAKFA GIDA ÜRÜNLERİ SANAYİ TİCARET ANONİM ŞİRKETİ</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="header-item header-lang-dropdown" onclick="toggleLanguageMenu(event)">
+                <i class="fa-solid fa-flag"></i> <span id="header-lang-text">Language</span>
+                <div class="header-lang-menu" id="header-lang-menu">
+                    <div class="header-lang-item" onclick="setLanguage('tr')"><i class="fa-solid fa-flag"></i> Türkçe</div>
+                    <div class="header-lang-item" onclick="setLanguage('en')"><i class="fa-solid fa-flag-usa"></i> English</div>
+                    <div class="header-lang-item" onclick="setLanguage('de')"><i class="fa-solid fa-flag"></i> Deutsch (Almanca)</div>
+                    <div class="header-lang-item" onclick="setLanguage('ru')"><i class="fa-solid fa-flag"></i> Русский (Русча)</div>
+                    <div class="header-lang-item" onclick="setLanguage('zh')"><i class="fa-solid fa-flag"></i> 中文 (Çince)</div>
+                </div>
+            </div>
+            <div class="header-item" style="cursor: pointer;" onclick="window.history.back()"><i class="fa-solid fa-reply"></i> <span data-i18n="header.back">Geri Dön</span></div>
+            <div class="header-item" style="cursor: pointer;" title="Ekranı Kilitle" onclick="window.location.href='kilit_ekrani.html'"><i class="fa-solid fa-lock"></i></div>
+            <div class="header-item"><i class="fa-solid fa-circle-info"></i></div>
+            
+            <!-- Branch Switcher Dropdown -->
+            <div class="header-item header-lang-dropdown" onclick="toggleBranchMenu(event)">
+                <i class="fa-solid fa-building"></i> <span id="header-branch-text">Merkez</span>
+                <div class="header-lang-menu" id="branch-dropdown-menu">
+                    <!-- Dynamic branches from JS -->
+                </div>
+            </div>
+
+            <div class="header-item" style="cursor: pointer;" onclick="window.location.href='ajanda.html'"><i class="fa-solid fa-calendar-days"></i> 2026</div>
+            <div class="header-item user-item" onclick="toggleUserMenu(event)">
+                <i class="fa-solid fa-user"></i> 
+                <span>fevziye.mamak35@gmail.com</span>
+                <div class="user-dropdown-menu" id="user-dropdown-menu">
+                    <div class="user-dropdown-item" onclick="window.location.href='profil.html'"><i class="fa-solid fa-user-gear"></i> <span data-i18n="user.profile">Profilim</span></div>
+                    <div class="user-dropdown-item" onclick="switchUser()"><i class="fa-solid fa-people-arrows"></i> <span data-i18n="user.switch">Kullanıcı Değiştir</span></div>
+                    <hr>
+                    <div class="user-dropdown-item logout" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="user.logout">Çıkış Yap</span></div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <a href="index.html">
+                <img src="logo.png" alt="Logo" style="filter: brightness(0) invert(1);">
+            </a>
+            <i class="fa-solid fa-bars"></i>
+        </div>
+        <ul class="sidebar-menu">
+
+            <li><a href="index.html"><i class="fa-solid fa-house"></i> <span
+                        data-i18n="sidebar.home">Giriş Ekranı</span></a></li>
+            <li><a href="satis_yap.html"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="sidebar.sales">Satış
+                        Yap</span></a></li>
+            <li><a href="cari_hesaplar.html"><i class="fa-solid fa-users"></i> <span data-i18n="sidebar.customers">Cari
+                        Hesaplar</span></a></li>
+            <li><a href="stok_kartlari.html"><i class="fa-solid fa-boxes-stacked"></i> <span
+                        data-i18n="sidebar.stock">Stok Kartları</span></a></li>
+            <li><a href="faturalar.html"><i class="fa-solid fa-file-invoice"></i> <span
+                        data-i18n="sidebar.invoices">Faturalar</span></a></li>
+            <li><a href="gelir_gider.html"><i class="fa-solid fa-chart-line"></i> <span
+                        data-i18n="sidebar.income_expense">Gelir Gider</span></a></li>
+            <li><a href="kasa.html"><i class="fa-solid fa-cash-register"></i> <span
+                        data-i18n="sidebar.cash">Kasa</span></a></li>
+            <li><a href="banka_ozet.html"><i class="fa-solid fa-building-columns"></i> <span
+                        data-i18n="sidebar.bank">Banka</span></a></li>
+            <li><a href="cek_senet.html"><i class="fa-solid fa-money-check"></i> <span
+                        data-i18n="sidebar.checks">Çek Senet</span></a></li>
+            <li><a href="taksit_takip.html"><i class="fa-solid fa-calendar-days"></i> <span
+                        data-i18n="sidebar.installments">Taksit
+                        Takip</span></a></li>
+            <li><a href="teklif_siparis.html"><i class="fa-solid fa-file-contract"></i> <span
+                        data-i18n="sidebar.offers">Teklif
+                        Sipariş</span></a></li>
+            <li><a href="doviz_ayarlari.html" id="doviz_settings_link"><i class="fa-solid fa-dollar-sign"></i> <span data-i18n="sidebar.currency">Döviz Ayarları</span></a></li>
+            
+            <li class="has-submenu">
+                <a href="javascript:void(0)" class="submenu-toggle"><i class="fa-solid fa-file-lines"></i> <span
+                        data-i18n="sidebar.reports">Raporlar</span> <i
+                          class="fa-solid fa-chevron-right ms-auto arrow"></i></a>
+                <ul class="submenu">
+                    <li><a href="cari_raporu.html" class="active"><i class="fa-solid fa-users"></i> <span data-i18n="report.cari">Cari</span></a></li>
+                    <li><a href="toplu_stok_raporu.html"><i class="fa-solid fa-box-open"></i> <span data-i18n="report.stok">Stok</span></a></li>
+                    <li><a href="taksit_rapor.html"><i class="fa-solid fa-calendar-days"></i> <span data-i18n="report.taksit">Taksit</span></a></li>
+                    <li><a href="satis_raporu.html"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="report.satis">Satış</span></a></li>
+                    <li><a href="kasa_raporu.html"><i class="fa-solid fa-cash-register"></i> <span data-i18n="report.kasa">Kasa</span></a></li>
+                    <li><a href="banka_raporu.html"><i class="fa-solid fa-building-columns"></i> <span data-i18n="report.banka">Banka</span></a></li>
+                    <li><a href="cek_raporu.html"><i class="fa-solid fa-copy"></i> <span data-i18n="sidebar.checks">Çek Senet</span></a></li>
+                    <li><a href="gun_sonu_raporu.html"><i class="fa-solid fa-file-lines"></i> <span data-i18n="report.gun_sonu">Gün Sonu Raporu</span></a></li>
+                    <li><a href="kar_zarar_analizi.html"><i class="fa-solid fa-file-lines"></i> <span data-i18n="report.kar_zarar">Kâr Zarar Analizi</span></a></li>
+                    <li><a href="gelir_gider.html"><i class="fa-solid fa-calendar-days"></i> <span data-i18n="sidebar.income_expense">Gelir Gider</span></a></li>
+                </ul>
+            </li>
+            <li><a href="mesajlar.html"><i class="fa-solid fa-envelope"></i> <span data-i18n="sidebar.messages">Mesajlar</span></a></li>
+            
+            <li class="has-submenu">
+                <a href="javascript:void(0)" class="submenu-toggle"><i class="fa-solid fa-layer-group"></i> <span
+                        data-i18n="sidebar.modules">Ek Modüller</span> <i
+                          class="fa-solid fa-chevron-right ms-auto arrow"></i></a>
+                <ul class="submenu">
+                    <li><a href="personel_takip.html"><i class="fa-solid fa-user-clock"></i> <span data-i18n="word.personel_takip">Personel Takip</span></a></li>
+                    <li><a href="ajanda.html"><i class="fa-solid fa-calendar-check"></i> <span data-i18n="word.ajanda">Ajanda</span></a></li>
+                    <li><a href="kisi_ekle.html"><i class="fa-solid fa-user-plus"></i> <span data-i18n="word.kisi_ekleme">Kişi Ekleme Paneli</span></a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+
+                                    
+    
+    <main class="main-content">
+        <h2 class="page-title"><span data-i18n="report.cari_raporu">Cari Raporu</span></h2>
+
+        <div class="mb-20" style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="cari_hesaplar.html" class="btn btn-dark-blue p-20 mb-10" style="background: linear-gradient(135deg, #1f3a60 0%, #112240 100%); font-size: 15px; border: none; cursor: pointer;">
+                <i class="fa-solid fa-arrow-left"></i> <span data-i18n="report.cari_don">Cari Hesaplara Dön</span>
+            </a>
+            <button id="btnGetReport" class="btn btn-dark-blue p-20 mb-10" style="background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%); font-size: 15px; border: none; cursor: pointer;">
+                <i class="fa-solid fa-users"></i> <span data-i18n="report.hazirla">Raporu Hazırla</span>
+            </button>
+        </div>
+
+        <div class="selection-section">
+            <div class="section-header bg-gray-header">
+                <i class="fa-solid fa-file-invoice"></i> <span data-i18n="report.kriterler">Rapor Kriterleri</span>
+            </div>
+            
+            <div class="content-box">
+                <div class="filter-row" style="display: flex; gap: 40px; align-items: flex-end; background-color: #f7f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ebf0f4; flex-wrap: wrap;">
+                    
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <label style="font-size: 13px; font-weight: bold; color: #555;"><span data-i18n="report.tarih_araligi">Tarih Aralığı:</span></label>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #555; font-size: 14px; font-weight: 500;">
+                                <input type="checkbox" id="tumZamanlar" style="width: 16px; height: 16px; accent-color: #1f3a60;"> <span data-i18n="report.tum_zamanlar">Tüm Zamanlar</span>
+                            </label>
+                            <input type="date" class="form-control" id="baslangicTarihi" style="border-radius: 8px; border: 1px solid #dce0e4; padding: 8px 12px; height: 40px; width: 140px;">
+                            <span style="color: #888;">-</span>
+                            <input type="date" class="form-control" id="bitisTarihi" style="border-radius: 8px; border: 1px solid #dce0e4; padding: 8px 12px; height: 40px; width: 140px;">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <label style="font-size: 13px; font-weight: bold; color: #555;"><span data-i18n="report.cari_tipi">Cari Tipi:</span></label>
+                        <select class="form-control" id="cariTipi" style="border-radius: 8px; border: 1px solid #dce0e4; padding: 8px 12px; height: 40px; width: 220px;">
+                            <option value="all" data-i18n="report.tum_cariler">Tüm Cariler</option>
+                            <option value="alici" data-i18n="report.only_buyers">Sadece Alıcılar (Müşteri)</option>
+                            <option value="satici" data-i18n="report.only_sellers">Sadece Satıcılar (Tedarikçi)</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <div id="reportResult" style="margin-top: 30px; display: none;">
+                    <div class="table-container">
+                        <table class="customer-table w-100">
+                            <thead>
+                                <tr class="bg-gray-header">
+                                    <th class="p-15" style="border-radius: 8px 0 0 0;"><span data-i18n="report.cari_kodu">Cari Kodu</span></th>
+                                    <th><span data-i18n="report.unvan_ad_soyad">Unvan / Ad Soyad</span></th>
+                                    <th><span data-i18n="report.cari_tipi">Cari Tipi</span></th>
+                                    <th><span data-i18n="report.borc_bakiye">Borç Bakiyesi</span></th>
+                                    <th style="border-radius: 0 8px 0 0;"><span data-i18n="report.alacak_bakiye">Alacak Bakiyesi</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportTableBody">
+                                <tr>
+                                    <td colspan="5" style="padding: 40px; text-align: center; color: #888; font-style: italic;">
+                                        <span data-i18n="report.no_record">Seçilen kriterlere uygun cari hareket bulunamadı.</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+</main>
+
+    <script src="translations.js?v=1776685628940"></script>
+    <script src="script.js?v=1776685628940"></script>
+
+<script src='excelExportUniversal.js'></script><script>
+        document.getElementById('btnGetReport')?.addEventListener('click', function () {
+            const reportResult = document.getElementById('reportResult');
+            if (reportResult) reportResult.style.display = 'block';
+        });
+     </script></body>
+
+</html>
+

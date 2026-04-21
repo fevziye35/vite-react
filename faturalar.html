@@ -1,0 +1,279 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="sidebar.invoices">Faturalar</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        .toolbar { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
+        .btn-toolbar { display: flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 12px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; border: none; text-decoration: none; color: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .btn-toolbar:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .btn-primary { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); }
+        .btn-secondary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .btn-dark { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+        .btn-orange { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); }
+        .btn-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .form-group label { display: block; font-size: 0.85rem; color: #64748b; font-weight: 600; margin-bottom: 6px; }
+    </style>
+</head>
+
+<body>
+                            <header class="header">
+        <div class="header-left">
+            <div class="sidebar-toggle-box">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            <div class="logo-area">
+                <span class="brand-text" data-i18n="word.company_name">MAKFA GIDA ÜRÜNLERİ SANAYİ TİCARET ANONİM ŞİRKETİ</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="header-item header-lang-dropdown" onclick="toggleLanguageMenu(event)">
+                <i class="fa-solid fa-flag"></i> <span id="header-lang-text">Language</span>
+                <div class="header-lang-menu" id="header-lang-menu">
+                    <div class="header-lang-item" onclick="setLanguage('tr')"><i class="fa-solid fa-flag"></i> Türkçe</div>
+                    <div class="header-lang-item" onclick="setLanguage('en')"><i class="fa-solid fa-flag-usa"></i> English</div>
+                    <div class="header-lang-item" onclick="setLanguage('de')"><i class="fa-solid fa-flag"></i> Deutsch (Almanca)</div>
+                    <div class="header-lang-item" onclick="setLanguage('ru')"><i class="fa-solid fa-flag"></i> Русский (Русча)</div>
+                    <div class="header-lang-item" onclick="setLanguage('zh')"><i class="fa-solid fa-flag"></i> 中文 (Çince)</div>
+                </div>
+            </div>
+            <div class="header-item" style="cursor: pointer;" onclick="window.history.back()"><i class="fa-solid fa-reply"></i> <span data-i18n="header.back">Geri Dön</span></div>
+            <div class="header-item" style="cursor: pointer;" title="Ekranı Kilitle" onclick="window.location.href='kilit_ekrani.html'"><i class="fa-solid fa-lock"></i></div>
+            <div class="header-item"><i class="fa-solid fa-circle-info"></i></div>
+            
+            <!-- Branch Switcher Dropdown -->
+            <div class="header-item header-lang-dropdown" onclick="toggleBranchMenu(event)">
+                <i class="fa-solid fa-building"></i> <span id="header-branch-text">Merkez</span>
+                <div class="header-lang-menu" id="branch-dropdown-menu">
+                    <!-- Dynamic branches from JS -->
+                </div>
+            </div>
+
+            <div class="header-item" style="cursor: pointer;" onclick="window.location.href='ajanda.html'"><i class="fa-solid fa-calendar-days"></i> 2026</div>
+            <div class="header-item user-item" onclick="toggleUserMenu(event)">
+                <i class="fa-solid fa-user"></i> 
+                <span>fevziye.mamak35@gmail.com</span>
+                <div class="user-dropdown-menu" id="user-dropdown-menu">
+                    <div class="user-dropdown-item" onclick="window.location.href='profil.html'"><i class="fa-solid fa-user-gear"></i> <span data-i18n="user.profile">Profilim</span></div>
+                    <div class="user-dropdown-item" onclick="switchUser()"><i class="fa-solid fa-people-arrows"></i> <span data-i18n="user.switch">Kullanıcı Değiştir</span></div>
+                    <hr>
+                    <div class="user-dropdown-item logout" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="user.logout">Çıkış Yap</span></div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- Sidebar will be injected/synced by sync_sidebar.js but we include it for initial load -->
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <a href="index.html">
+                <img src="logo.png" alt="Logo">
+            </a>
+            <i class="fa-solid fa-bars"></i>
+        </div>
+        <ul class="sidebar-menu">
+
+            <li><a href="index.html"><i class="fa-solid fa-house"></i> <span
+                        data-i18n="sidebar.home">Giriş Ekranı</span></a></li>
+            <li><a href="satis_yap.html"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="sidebar.sales">Satış
+                        Yap</span></a></li>
+            <li><a href="cari_hesaplar.html"><i class="fa-solid fa-users"></i> <span data-i18n="sidebar.customers">Cari
+                        Hesaplar</span></a></li>
+            <li><a href="stok_kartlari.html"><i class="fa-solid fa-boxes-stacked"></i> <span
+                        data-i18n="sidebar.stock">Stok Kartları</span></a></li>
+            <li><a href="faturalar.html" class="active"><i class="fa-solid fa-file-invoice"></i> <span
+                        data-i18n="sidebar.invoices">Faturalar</span></a></li>
+            <li><a href="gelir_gider.html"><i class="fa-solid fa-chart-line"></i> <span
+                        data-i18n="sidebar.income_expense">Gelir Gider</span></a></li>
+            <li><a href="kasa.html"><i class="fa-solid fa-cash-register"></i> <span
+                        data-i18n="sidebar.cash">Kasa</span></a></li>
+            <li><a href="banka_ozet.html"><i class="fa-solid fa-building-columns"></i> <span
+                        data-i18n="sidebar.bank">Banka</span></a></li>
+            <li><a href="cek_senet.html"><i class="fa-solid fa-money-check"></i> <span
+                        data-i18n="sidebar.checks">Çek Senet</span></a></li>
+            <li><a href="taksit_takip.html"><i class="fa-solid fa-calendar-days"></i> <span
+                        data-i18n="sidebar.installments">Taksit
+                        Takip</span></a></li>
+            <li><a href="teklif_siparis.html"><i class="fa-solid fa-file-contract"></i> <span
+                        data-i18n="sidebar.offers">Teklif
+                        Sipariş</span></a></li>
+            <li><a href="doviz_ayarlari.html" id="doviz_settings_link"><i class="fa-solid fa-dollar-sign"></i> <span data-i18n="sidebar.currency">Döviz Ayarları</span></a></li>
+            
+            <li class="has-submenu">
+                <a href="javascript:void(0)" class="submenu-toggle"><i class="fa-solid fa-file-lines"></i> <span
+                        data-i18n="sidebar.reports">Raporlar</span> <i
+                          class="fa-solid fa-chevron-right ms-auto arrow"></i></a>
+                <ul class="submenu">
+                    <li><a href="cari_raporu.html"><i class="fa-solid fa-users"></i> <span data-i18n="report.cari">Cari</span></a></li>
+                    <li><a href="toplu_stok_raporu.html"><i class="fa-solid fa-box-open"></i> <span data-i18n="report.stok">Stok</span></a></li>
+                    <li><a href="taksit_rapor.html"><i class="fa-solid fa-calendar-days"></i> <span data-i18n="report.taksit">Taksit</span></a></li>
+                    <li><a href="satis_raporu.html"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="report.satis">Satış</span></a></li>
+                    <li><a href="kasa_raporu.html"><i class="fa-solid fa-cash-register"></i> <span data-i18n="report.kasa">Kasa</span></a></li>
+                    <li><a href="banka_raporu.html"><i class="fa-solid fa-building-columns"></i> <span data-i18n="report.banka">Banka</span></a></li>
+                    <li><a href="cek_raporu.html"><i class="fa-solid fa-copy"></i> <span data-i18n="sidebar.checks">Çek Senet</span></a></li>
+                    <li><a href="gun_sonu_raporu.html"><i class="fa-solid fa-file-lines"></i> <span data-i18n="report.gun_sonu">Gün Sonu Raporu</span></a></li>
+                    <li><a href="kar_zarar_analizi.html"><i class="fa-solid fa-file-lines"></i> <span data-i18n="report.kar_zarar">Kâr Zarar Analizi</span></a></li>
+                    <li><a href="gelir_gider.html"><i class="fa-solid fa-calendar-days"></i> <span data-i18n="sidebar.income_expense">Gelir Gider</span></a></li>
+                </ul>
+            </li>
+            <li><a href="mesajlar.html"><i class="fa-solid fa-envelope"></i> <span data-i18n="sidebar.messages">Mesajlar</span></a></li>
+            
+            <li class="has-submenu">
+                <a href="javascript:void(0)" class="submenu-toggle"><i class="fa-solid fa-layer-group"></i> <span
+                        data-i18n="sidebar.modules">Ek Modüller</span> <i
+                          class="fa-solid fa-chevron-right ms-auto arrow"></i></a>
+                <ul class="submenu">
+                    <li><a href="personel_takip.html"><i class="fa-solid fa-user-clock"></i> <span data-i18n="word.personel_takip">Personel Takip</span></a></li>
+                    <li><a href="ajanda.html"><i class="fa-solid fa-calendar-check"></i> <span data-i18n="word.ajanda">Ajanda</span></a></li>
+                    <li><a href="kisi_ekle.html"><i class="fa-solid fa-user-plus"></i> <span data-i18n="word.kisi_ekleme">Kişi Ekleme Paneli</span></a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+
+                                    
+
+    <main class="main-content">
+        <h1 class="page-title" data-i18n="sidebar.invoices">Faturalar</h1>
+
+        <div class="toolbar">
+            <a href="satis_yap.html" class="btn-toolbar btn-primary"><i class="fa-solid fa-plus"></i> <span data-i18n="mega.yeni_satis_faturasi">Yeni Satış Faturası</span></a>
+            <a href="alis_yap.html" class="btn-toolbar btn-primary"><i class="fa-solid fa-plus"></i> <span data-i18n="mega.yeni_alis_faturasi">Yeni Alış Faturası</span></a>
+            <a href="satis_irsaliye.html" class="btn-toolbar btn-secondary"><i class="fa-solid fa-truck"></i> <span data-i18n="mega.satis_irsaliyesi">Satış İrsaliyesi</span></a>
+            <a href="alis_irsaliye.html" class="btn-toolbar btn-secondary"><i class="fa-solid fa-truck"></i> <span data-i18n="mega.alis_irsaliyesi">Alış İrsaliyesi</span></a>
+            <a href="satis_iade.html" class="btn-toolbar btn-secondary"><i class="fa-solid fa-rotate-left"></i> <span data-i18n="mega.satis_iadesi">Satış İadesi</span></a>
+            <a href="alis_iade.html" class="btn-toolbar btn-secondary"><i class="fa-solid fa-rotate-right"></i> <span data-i18n="mega.alis_iadesi">Alış İadesi</span></a>
+            <a href="efatura.html" class="btn-toolbar btn-dark"><i class="fa-solid fa-file-invoice-dollar"></i> <span data-i18n="sidebar.einvoice">E-Fatura</span></a>
+            <a href="e_irsaliye.html" class="btn-toolbar btn-dark"><i class="fa-solid fa-truck-fast"></i> <span data-i18n="sidebar.ewaybill">E-İrsaliye</span></a>
+            <a href="e_smm.html" class="btn-toolbar btn-dark"><i class="fa-solid fa-file-signature"></i> <span data-i18n="sidebar.esmm">E-Smm</span></a>
+            <a href="fatura_raporu.html" class="btn-toolbar btn-orange"><i class="fa-solid fa-chart-bar"></i> <span data-i18n="word.fatura_raporu">Fatura Raporu</span></a>
+            <button class="btn-toolbar btn-green" id="btnExcelExport"><i class="fa-solid fa-file-excel"></i> <span data-i18n="word.excel_aktar">Excel'e Aktar</span></button>
+        </div>
+
+        <div class="selection-section">
+            <div class="section-header bg-gray-header"><i class="fa-solid fa-filter"></i> <span data-i18n="report.rapor_filtresi">Rapor Filtresi</span></div>
+            <div class="content-box">
+                <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+                    <div class="form-group" style="flex: 1; min-width: 180px;"><label data-i18n="mega.start_date">Başlangıç Tarihi</label><input type="date" id="baslangicTarihi" class="form-control"></div>
+                    <div class="form-group" style="flex: 1; min-width: 180px;"><label data-i18n="mega.end_date">Bitiş Tarihi</label><input type="date" id="bitisTarihi" class="form-control"></div>
+                    <div class="form-group" style="flex: 1; min-width: 180px;">
+                        <label data-i18n="mega.evrak_turu">Evrak Türü</label>
+                        <select id="faturaTipi" class="form-control">
+                            <option value="" data-i18n="mega.all">Hepsi</option>
+                            <option value="alis" data-i18n="word.alis_faturasi">Alış Faturası</option>
+                            <option value="satis" data-i18n="word.satis_faturasi">Satış Faturası</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 2; min-width: 250px;"><label data-i18n="word.tabloda_ara">Tabloda Ara</label><input type="text" id="tablodaAra" class="form-control" data-i18n-placeholder="word.tabloda_ara"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <div class="section-header bg-gray-header" style="justify-content: flex-start; gap: 10px;">
+                <i class="fa-solid fa-file-invoice"></i> <span data-i18n="word.fatura_listesi">Fatura Listesi</span>
+                <span class="badge" style="background: #ebf4ff; color: #1e3a8a; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+                    <span id="recordCount">0</span> <span data-i18n="word.kayit">Kayıt</span>
+                </span>
+            </div>
+            <div class="table-container">
+                <table class="customer-table w-100 m-0" id="faturaTable">
+                    <thead>
+                        <tr class="bg-gray-header">
+                            <th data-i18n="word.tarih">Tarih</th>
+                            <th data-i18n="word.saat">Saat</th>
+                            <th data-i18n="report.cari_kodu">Cari Kod</th>
+                            <th data-i18n="word.ayrinti">Ayrıntı / Unvan</th>
+                            <th data-i18n="mega.fatura_no">Fatura No</th>
+                            <th data-i18n="mega.evrak_turu">Evrak Türü</th>
+                            <th data-i18n="mega.odeme_sekli">Ödeme Şekli</th>
+                            <th data-i18n="word.g_toplam">Genel Toplam</th>
+                            <th class="text-center" data-i18n="word.islem">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="translations.js?v=1776685628940"></script>
+    <script src="script.js?v=1776685628940"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            const lastMonth = new Date();
+            lastMonth.setMonth(today.getMonth() - 1);
+            document.getElementById('baslangicTarihi').value = lastMonth.toISOString().split('T')[0];
+            document.getElementById('bitisTarihi').value = today.toISOString().split('T')[0];
+
+            function formatMoney(amount) { return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(amount); }
+
+            function loadInvoices() {
+                const purchaseInvoices = JSON.parse(localStorage.getItem('purchaseInvoices')) || [];
+                const salesInvoices = JSON.parse(localStorage.getItem('salesInvoices')) || [];
+                let allInvoices = [...purchaseInvoices.map(inv => ({ ...inv, type: 'alis', typeKey: 'word.alis_faturasi' })), ...salesInvoices.map(inv => ({ ...inv, type: 'satis', typeKey: 'word.satis_faturasi' }))];
+
+                const startDate = document.getElementById('baslangicTarihi').value;
+                const endDate = document.getElementById('bitisTarihi').value;
+                const search = document.getElementById('tablodaAra').value.toLowerCase();
+                const typeFilter = document.getElementById('faturaTipi').value;
+                const lang = localStorage.getItem('language') || 'tr';
+                const dict = translations[lang] || translations['tr'];
+
+                const filtered = allInvoices.filter(inv => {
+                    let d = inv.issueDate ? inv.issueDate.split('T')[0] : (inv.date || '');
+                    let t = inv.issueDate ? inv.issueDate.split('T')[1] : (inv.time || '');
+                    inv._date = d; inv._time = t;
+                    let dateMatch = (!startDate || d >= startDate) && (!endDate || d <= endDate);
+                    let typeMatch = !typeFilter || inv.type === typeFilter;
+                    let searchMatch = !search || ((inv.cariCode || '') + (inv.invoiceNo || '') + (inv.payment?.description || '')).toLowerCase().includes(search);
+                    return dateMatch && typeMatch && searchMatch;
+                }).sort((a, b) => b._date.localeCompare(a._date) || b._time.localeCompare(a._time));
+
+                const tbody = document.querySelector('#faturaTable tbody');
+                tbody.innerHTML = '';
+                if (filtered.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 40px; color: #94a3b8; font-style: italic;" data-i18n="report.no_record">${dict['report.no_record'] || 'Kayıt bulunamadı.'}</td></tr>`;
+                }
+
+                filtered.forEach(inv => {
+                    const tr = document.createElement('tr');
+                    const grandTotal = inv.totals ? inv.totals.grandTotal : (inv.grandTotal || 0);
+                    tr.innerHTML = `
+                        <td style="font-weight: 500;">${inv._date}</td>
+                        <td style="color: #64748b;">${inv._time || '-'}</td>
+                        <td style="font-weight: 600; color: #1e293b;">${inv.cariCode || '-'}</td>
+                        <td style="font-size: 0.85rem;">${inv.payment?.description || inv.descTitle || '-'}</td>
+                        <td style="font-family: monospace; font-weight: bold;">${inv.invoiceNo || '-'}</td>
+                        <td><span class="badge" style="background: ${inv.type === 'alis' ? '#fee2e2' : '#dcfce7'}; color: ${inv.type === 'alis' ? '#b91c1c' : '#166534'}; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem;" data-i18n="${inv.typeKey}">${dict[inv.typeKey] || inv.typeKey}</span></td>
+                        <td>${inv.payment?.method || inv.paymentMethod || '-'}</td>
+                        <td style="font-weight: bold; color: #1e40af;">${formatMoney(grandTotal)}</td>
+                        <td class="text-center"><button class="btn-action-sm" onclick="window.location.href='${inv.type === 'alis' ? 'alis_faturasi' : 'satis_faturasi'}.html?id=${inv.id}'"><i class="fa-solid fa-eye"></i></button></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                document.getElementById('recordCount').textContent = filtered.length;
+                applyTranslations();
+            }
+
+            document.getElementById('baslangicTarihi').addEventListener('change', loadInvoices);
+            document.getElementById('bitisTarihi').addEventListener('change', loadInvoices);
+            document.getElementById('tablodaAra').addEventListener('input', loadInvoices);
+            document.getElementById('faturaTipi').addEventListener('change', loadInvoices);
+
+            document.getElementById('btnExcelExport').addEventListener('click', () => { if (typeof exportTableToExcel === 'function') exportTableToExcel('faturaTable', 'Faturalar'); });
+
+            loadInvoices();
+        });
+    </script>
+    <script src="excelExportUniversal.js"></script>
+</body>
+</html>

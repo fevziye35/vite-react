@@ -1,0 +1,239 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cari Bakiye Raporu</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar-logo img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .sidebar-logo .fa-bars {
+            color: #555555;
+            margin-left: auto;
+            cursor: pointer;
+        }
+
+        .top-bar-item {
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+                            <header class="header">
+        <div class="header-left">
+            <div class="sidebar-toggle-box">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            <div class="logo-area">
+                <span class="brand-text" data-i18n="word.company_name">MAKFA GIDA ÜRÜNLERİ SANAYİ TİCARET ANONİM ŞİRKETİ</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="header-item header-lang-dropdown" onclick="toggleLanguageMenu(event)">
+                <i class="fa-solid fa-flag"></i> <span id="header-lang-text">Language</span>
+                <div class="header-lang-menu" id="header-lang-menu">
+                    <div class="header-lang-item" onclick="setLanguage('tr')"><i class="fa-solid fa-flag"></i> Türkçe</div>
+                    <div class="header-lang-item" onclick="setLanguage('en')"><i class="fa-solid fa-flag-usa"></i> English</div>
+                    <div class="header-lang-item" onclick="setLanguage('de')"><i class="fa-solid fa-flag"></i> Deutsch (Almanca)</div>
+                    <div class="header-lang-item" onclick="setLanguage('ru')"><i class="fa-solid fa-flag"></i> Русский (Русча)</div>
+                    <div class="header-lang-item" onclick="setLanguage('zh')"><i class="fa-solid fa-flag"></i> 中文 (Çince)</div>
+                </div>
+            </div>
+            <div class="header-item" style="cursor: pointer;" onclick="window.history.back()"><i class="fa-solid fa-reply"></i> <span data-i18n="header.back">Geri Dön</span></div>
+            <div class="header-item" style="cursor: pointer;" title="Ekranı Kilitle" onclick="window.location.href='kilit_ekrani.html'"><i class="fa-solid fa-lock"></i></div>
+            <div class="header-item"><i class="fa-solid fa-circle-info"></i></div>
+            
+            <!-- Branch Switcher Dropdown -->
+            <div class="header-item header-lang-dropdown" onclick="toggleBranchMenu(event)">
+                <i class="fa-solid fa-building"></i> <span id="header-branch-text">Merkez</span>
+                <div class="header-lang-menu" id="branch-dropdown-menu">
+                    <!-- Dynamic branches from JS -->
+                </div>
+            </div>
+
+            <div class="header-item" style="cursor: pointer;" onclick="window.location.href='ajanda.html'"><i class="fa-solid fa-calendar-days"></i> 2026</div>
+            <div class="header-item user-item" onclick="toggleUserMenu(event)">
+                <i class="fa-solid fa-user"></i> 
+                <span>fevziye.mamak35@gmail.com</span>
+                <div class="user-dropdown-menu" id="user-dropdown-menu">
+                    <div class="user-dropdown-item" onclick="window.location.href='profil.html'"><i class="fa-solid fa-user-gear"></i> <span data-i18n="user.profile">Profilim</span></div>
+                    <div class="user-dropdown-item" onclick="switchUser()"><i class="fa-solid fa-people-arrows"></i> <span data-i18n="user.switch">Kullanıcı Değiştir</span></div>
+                    <hr>
+                    <div class="user-dropdown-item logout" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="user.logout">Çıkış Yap</span></div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <img src="logo.png" alt="Logo">
+            <i class="fa-solid fa-bars"></i>
+        </div>
+                <ul class="sidebar-menu">
+
+            <li><a href="index.html"><i class="fa-solid fa-house"></i> <span
+                        data-i18n="sidebar.home">Giriş Ekranı</span></a></li>
+            <li><a href="satis_yap.html"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="sidebar.sales">Satış
+                        Yap</span></a></li>
+            <li><a href="cari_hesaplar.html"><i class="fa-solid fa-users"></i> <span data-i18n="sidebar.customers">Cari
+                        Hesaplar</span></a></li>
+            <li><a href="stok_kartlari.html"><i class="fa-solid fa-boxes-stacked"></i> <span
+                        data-i18n="sidebar.stock">Stok Kartları</span></a></li>
+            <li><a href="faturalar.html"><i class="fa-solid fa-file-invoice"></i> <span
+                        data-i18n="sidebar.invoices">Faturalar</span></a></li>
+            <li><a href="gelir_gider.html"><i class="fa-solid fa-chart-line"></i> <span
+                        data-i18n="sidebar.income_expense">Gelir Gider</span></a></li>
+            <li><a href="kasa.html"><i class="fa-solid fa-cash-register"></i> <span
+                        data-i18n="sidebar.cash">Kasa</span></a></li>
+            <li><a href="banka_ozet.html"><i class="fa-solid fa-building-columns"></i> <span
+                        data-i18n="sidebar.bank">Banka</span></a></li>
+            <li><a href="cek_senet.html"><i class="fa-solid fa-money-check"></i> <span
+                        data-i18n="sidebar.checks">Çek Senet</span></a></li>
+            <li><a href="taksit_takip.html"><i class="fa-solid fa-calendar-days"></i> <span
+                        data-i18n="sidebar.installments">Taksit
+                        Takip</span></a></li>
+            <li><a href="teklif_siparis.html"><i class="fa-solid fa-file-contract"></i> <span
+                        data-i18n="sidebar.offers">Teklif
+                        Sipariş</span></a></li>
+            <li><a href="doviz_ayarlari.html" id="doviz_settings_link"><i class="fa-solid fa-dollar-sign"></i> <span data-i18n="sidebar.currency">Döviz Ayarları</span></a></li>
+            
+            <li class="has-submenu">
+                <a href="javascript:void(0)" class="submenu-toggle"><i class="fa-solid fa-file-lines"></i> <span
+                        data-i18n="sidebar.reports">Raporlar</span> <i
+                          class="fa-solid fa-chevron-right ms-auto arrow"></i></a>
+                <ul class="submenu">
+                    <li><a href="cari_raporu.html"><i class="fa-solid fa-users"></i> <span data-i18n="report.cari">Cari</span></a></li>
+                    <li><a href="toplu_stok_raporu.html"><i class="fa-solid fa-box-open"></i> <span data-i18n="report.stok">Stok</span></a></li>
+                    <li><a href="taksit_rapor.html"><i class="fa-solid fa-calendar-days"></i> <span data-i18n="report.taksit">Taksit</span></a></li>
+                    <li><a href="satis_raporu.html"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="report.satis">Satış</span></a></li>
+                    <li><a href="kasa_raporu.html"><i class="fa-solid fa-cash-register"></i> <span data-i18n="report.kasa">Kasa</span></a></li>
+                    <li><a href="banka_raporu.html"><i class="fa-solid fa-building-columns"></i> <span data-i18n="report.banka">Banka</span></a></li>
+                    <li><a href="cek_raporu.html"><i class="fa-solid fa-copy"></i> <span data-i18n="sidebar.checks">Çek Senet</span></a></li>
+                    <li><a href="gun_sonu_raporu.html"><i class="fa-solid fa-file-lines"></i> <span data-i18n="report.gun_sonu">Gün Sonu Raporu</span></a></li>
+                    <li><a href="kar_zarar_analizi.html"><i class="fa-solid fa-file-lines"></i> <span data-i18n="report.kar_zarar">Kâr Zarar Analizi</span></a></li>
+                    <li><a href="gelir_gider.html"><i class="fa-solid fa-calendar-days"></i> <span data-i18n="sidebar.income_expense">Gelir Gider</span></a></li>
+                </ul>
+            </li>
+            <li><a href="mesajlar.html"><i class="fa-solid fa-envelope"></i> <span data-i18n="sidebar.messages">Mesajlar</span></a></li>
+            
+            <li class="has-submenu">
+                <a href="javascript:void(0)" class="submenu-toggle"><i class="fa-solid fa-layer-group"></i> <span
+                        data-i18n="sidebar.modules">Ek Modüller</span> <i
+                          class="fa-solid fa-chevron-right ms-auto arrow"></i></a>
+                <ul class="submenu">
+                    <li><a href="personel_takip.html"><i class="fa-solid fa-user-clock"></i> <span data-i18n="word.personel_takip">Personel Takip</span></a></li>
+                    <li><a href="ajanda.html"><i class="fa-solid fa-calendar-check"></i> <span data-i18n="word.ajanda">Ajanda</span></a></li>
+                    <li><a href="kisi_ekle.html"><i class="fa-solid fa-user-plus"></i> <span data-i18n="word.kisi_ekleme">Kişi Ekleme Paneli</span></a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+    <!-- Header -->
+                                    
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navigation Bar -->
+        <div class="top-bar">
+            <a href="javascript:history.back()" id="btnBack"><i class="fa-solid fa-arrow-left"></i><span data-i18n="header.back">Geri Dön</span></a>
+            <span><i class="fa-solid fa-lock"></i></span>
+            <span id="btnBranch" class="top-bar-item"><i class="fa-solid fa-building"></i> Merkez</span>
+            <span id="btnYear" class="top-bar-item"><i class="fa-solid fa-calendar"></i> 2025</span>
+            <span id="btnAdmin" class="top-bar-item"><i class="fa-solid fa-user"></i> fevzi</span>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="action-bar">
+            <div class="action-row">
+                <button id="btnEmail" class="btn-orange"><i class="fa-solid fa-envelope"></i> E-Mail Gönder</button>
+                <input type="email" id="emailInput" class="input-field" placeholder="E-posta adresi girin...">
+            </div>
+            <div class="action-row">
+                <button id="btnSelectCustomer" class="btn-teal">Cariden Seç</button>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button id="btnSave" title="Kaydet"><i class="fa-solid fa-floppy-disk"></i></button>
+            <button id="btnPrint" title="Yazdır"><i class="fa-solid fa-print"></i></button>
+            <button id="btnFind" title="Ara"><i class="fa-solid fa-magnifying-glass"></i></button>
+            <button id="btnRefresh" title="Yenile"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+
+        <!-- Report Container -->
+        <div id="reportContainer" class="report-container">
+            <div class="report-year">2025</div>
+            <div class="report-header">
+                <span class="report-title">CARİ BAKİYE RAPORU</span>
+                <div id="companyName" class="report-company">Firma : ali mamak ithalat</div>
+            </div>
+
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th><span data-i18n="word.unvan">ÜNVAN</span></th>
+                        <th><span data-i18n="word.yetkili">YETKİLİ</span></th>
+                        <th>BORÇ</th>
+                        <th>ALACAK</th>
+                        <th><span data-i18n="mega.toplam">TOPLAM</span></th>
+                        <th><span data-i18n="word.bakiye">BAKİYE</span></th>
+                        <th>DURUM</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="total-row">
+                        <td><span data-i18n="mega.toplam">TOPLAM</span></td>
+                        <td></td>
+                        <td>0,00 ?</td>
+                        <td>0,00 ?</td>
+                        <td>0,00 ?</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // E-Mail Gönder
+        document.getElementById('btnEmail').addEventListener('click', function () {
+            const email = document.getElementById('emailInput').value;
+            if (!email) { alert('Lütfen e-posta adresi girin!'); return; }
+            window.location.href = `mailto:${email}?subject=Cari Bakiye Raporu`;
+        });
+
+        // Kaydet (Save)
+        document.getElementById('btnSave').addEventListener('click', function () {
+            const reportContent = document.getElementById('reportContainer').innerText;
+            const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'cari_bakiye_raporu.txt';
+            link.click();
+            alert('Rapor kaydedildi!');
+        });
+
+        // Yazdır (Print)
+        document.getElementById('btnPrint').addEventListener('click', function () { window.print(); });
+
+        // Yenile (Refresh)
+        document.getElementById('btnRefresh').addEventListener('click', function () { location.reload(); });
+    </script>
+    <script src="translations.js?v=1776685628940"></script>
+    <script src="script.js?v=1776685628940"></script>
+
+<script src='excelExportUniversal.js'></script></body>
+
+</html>
+
+

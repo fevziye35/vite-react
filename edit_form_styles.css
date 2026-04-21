@@ -1,0 +1,56 @@
+/* --- EDIT PAGE FORM STYLES --- */
+.edit-form-container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.form-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.form-label {
+    width: 150px;
+    font-weight: bold;
+    color: #333;
+}
+
+.form-value {
+    flex: 1;
+    color: #555;
+    padding: 8px 0;
+}
+
+.form-control {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%;
+}
+
+.form-actions {
+    text-align: right;
+    margin-top: 20px;
+}
+
+.btn-save {
+    background-color: var(--btn-dark-blue);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.hr-form {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 20px 0;
+}

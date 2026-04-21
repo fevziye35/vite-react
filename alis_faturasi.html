@@ -1,0 +1,1870 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="word.alis_faturasi">Alış Faturası</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .page-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .left-panel {
+            flex: 2;
+            background: #fff;
+            padding: 20px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .right-panel {
+            flex: 1;
+            background: #fff;
+            border-radius: 4px;
+            /* border: 1px solid #ddd; */
+            /* Right panel looks like it has tabs and card style */
+        }
+
+        .tab-header {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+
+        .tab-item {
+            padding: 10px 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            font-weight: bold;
+            color: #1f3a60;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+        }
+
+        .tab-item.active {
+            background-color: #f7f9fa;
+            /* slightly different to show active state if needed */
+        }
+
+        .right-content {
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-top: none;
+            margin-top: -16px;
+            /* pull up to connect with tab */
+            border-radius: 0 4px 4px 4px;
+        }
+
+        /* Form Grid Layouts */
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-label-sm {
+            display: block;
+            font-weight: bold;
+            font-size: 13px;
+            color: #1f3a60;
+            margin-bottom: 5px;
+        }
+
+        .form-input-sm {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+
+
+        .bottom-bar {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 0;
+            /* Connected input and button */
+        }
+
+        .barcode-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-right: none;
+            border-radius: 4px 0 0 4px;
+            font-size: 14px;
+        }
+
+        .add-product-btn {
+            background-color: #1f3a60;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .add-product-btn:hover {
+            background-color: #2c5282;
+        }
+
+        /* Input Group for Invoice No */
+        .input-group-btn {
+            display: flex;
+        }
+
+        .input-group-btn input {
+            border-radius: 4px 0 0 4px;
+            border-right: none;
+        }
+
+        .input-group-btn button {
+            border: 1px solid #ccc;
+            background: #fff;
+            padding: 0 10px;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            color: #333;
+        }
+
+        /* Product Table */
+        .product-table-container {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .product-table th {
+            text-align: left;
+            padding: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+            border-bottom: 1px solid #eee;
+        }
+
+        .product-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* Footer Section */
+        .footer-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .footer-left {
+            flex: 1;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .footer-right {
+            flex: 2;
+            background: #fff;
+            /* border: 1px solid #ddd; */
+            /* border-radius: 4px; */
+            /* padding: 15px; */
+        }
+
+        /* Totals Table */
+        .totals-table {
+            width: 100%;
+            font-size: 13px;
+        }
+
+        .totals-table td {
+            padding: 8px 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .totals-table td:first-child {
+            font-weight: bold;
+            color: #333;
+            width: 40%;
+        }
+
+        .totals-table td:last-child {
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .totals-tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .totals-tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 13px;
+            border-right: 1px solid #ddd;
+            background: #f9f9f9;
+        }
+
+        .totals-tab.active {
+            background: #fff;
+            font-weight: bold;
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
+        }
+
+        /* Footer Right Form */
+        .footer-right-content {
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .description-grid {
+            margin-bottom: 15px;
+        }
+
+        .save-btn-container {
+            text-align: right;
+            margin-top: 20px;
+        }
+
+        .btn-save-lg {
+            background-color: #1f3a60;
+            color: white;
+            padding: 10px 30px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-desc-save {
+            background-color: #5d6d7e;
+            color: white;
+            padding: 5px 15px;
+            border: none;
+            border-radius: 3px;
+            float: right;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        .payment-row {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            clear: both;
+        }
+
+        .payment-col {
+            flex: 1;
+        }
+
+        /* Manual Entry Form Styles */
+        .manual-product-form {
+            background-color: #f7f9fa;
+            /* Light grey background */
+            padding: 15px;
+            border: 1px solid #ddd;
+            margin-top: 10px;
+            border-top: none;
+            /* Connect to bar */
+        }
+
+        .manual-form-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 5px;
+            font-size: 12px;
+            margin-bottom: 20px;
+        }
+
+        .manual-col {
+            overflow: hidden;
+        }
+
+        .manual-col strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .manual-form-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .right-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-dark-blue-sm {
+            background-color: #1f3a60;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-dark-blue-sm:hover {
+            background-color: #2c5282;
+        }
+
+        .input-group-joined {
+            display: flex;
+        }
+
+        .input-joined-left {
+            border-right: 0;
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .btn-joined-right {
+            border-radius: 0 4px 4px 0;
+        }
+
+        .modal-lg {
+            width: 80%;
+            max-width: 900px;
+        }
+
+        .close-modal-btn {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .w-80-px {
+            width: 80px;
+        }
+
+        .stock-table-scroll {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+                            <header class="header">
+        <div class="header-left">
+            <div class="sidebar-toggle-box">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            <div class="logo-area">
+                <span class="brand-text" data-i18n="word.company_name">MAKFA GIDA ÜRÜNLERİ SANAYİ TİCARET ANONİM ŞİRKETİ</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="header-item header-lang-dropdown" onclick="toggleLanguageMenu(event)">
+                <i class="fa-solid fa-flag"></i> <span id="header-lang-text">Language</span>
+                <div class="header-lang-menu" id="header-lang-menu">
+                    <div class="header-lang-item" onclick="setLanguage('tr')"><i class="fa-solid fa-flag"></i> Türkçe</div>
+                    <div class="header-lang-item" onclick="setLanguage('en')"><i class="fa-solid fa-flag-usa"></i> English</div>
+                    <div class="header-lang-item" onclick="setLanguage('de')"><i class="fa-solid fa-flag"></i> Deutsch (Almanca)</div>
+                    <div class="header-lang-item" onclick="setLanguage('ru')"><i class="fa-solid fa-flag"></i> Русский (Русча)</div>
+                    <div class="header-lang-item" onclick="setLanguage('zh')"><i class="fa-solid fa-flag"></i> 中文 (Çince)</div>
+                </div>
+            </div>
+            <div class="header-item" style="cursor: pointer;" onclick="window.history.back()"><i class="fa-solid fa-reply"></i> <span data-i18n="header.back">Geri Dön</span></div>
+            <div class="header-item" style="cursor: pointer;" title="Ekranı Kilitle" onclick="window.location.href='kilit_ekrani.html'"><i class="fa-solid fa-lock"></i></div>
+            <div class="header-item"><i class="fa-solid fa-circle-info"></i></div>
+            
+            <!-- Branch Switcher Dropdown -->
+            <div class="header-item header-lang-dropdown" onclick="toggleBranchMenu(event)">
+                <i class="fa-solid fa-building"></i> <span id="header-branch-text">Merkez</span>
+                <div class="header-lang-menu" id="branch-dropdown-menu">
+                    <!-- Dynamic branches from JS -->
+                </div>
+            </div>
+
+            <div class="header-item" style="cursor: pointer;" onclick="window.location.href='ajanda.html'"><i class="fa-solid fa-calendar-days"></i> 2026</div>
+            <div class="header-item user-item" onclick="toggleUserMenu(event)">
+                <i class="fa-solid fa-user"></i> 
+                <span>fevziye.mamak35@gmail.com</span>
+                <div class="user-dropdown-menu" id="user-dropdown-menu">
+                    <div class="user-dropdown-item" onclick="window.location.href='profil.html'"><i class="fa-solid fa-user-gear"></i> <span data-i18n="user.profile">Profilim</span></div>
+                    <div class="user-dropdown-item" onclick="switchUser()"><i class="fa-solid fa-people-arrows"></i> <span data-i18n="user.switch">Kullanıcı Değiştir</span></div>
+                    <hr>
+                    <div class="user-dropdown-item logout" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="user.logout">Çıkış Yap</span></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <a href="index.html">
+                <img src="logo.png" alt="Logo">
+            </a>
+            <i class="fa-solid fa-bars"></i>
+        </div>
+        <ul class="sidebar-menu">
+
+            <li><a href="index.html"><i class="fa-solid fa-house"></i> <span
+                        data-i18n="sidebar.home">Giriş Ekranı</span></a></li>
+            <li><a href="satis_yap.html"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="sidebar.sales">Satış
+                        Yap</span></a></li>
+            <li><a href="cari_hesaplar.html"><i class="fa-solid fa-users"></i> <span data-i18n="sidebar.customers">Cari
+                        Hesaplar</span></a></li>
+            <li><a href="stok_kartlari.html"><i class="fa-solid fa-boxes-stacked"></i> <span
+                        data-i18n="sidebar.stock">Stok Kartları</span></a></li>
+            <li><a href="faturalar.html"><i class="fa-solid fa-file-invoice"></i> <span
+                        data-i18n="sidebar.invoices">Faturalar</span></a></li>
+            <li><a href="gelir_gider.html"><i class="fa-solid fa-chart-line"></i> <span
+                        data-i18n="sidebar.income_expense">Gelir Gider</span></a></li>
+            <li><a href="kasa.html"><i class="fa-solid fa-cash-register"></i> <span
+                        data-i18n="sidebar.cash">Kasa</span></a></li>
+            <li><a href="banka_ozet.html"><i class="fa-solid fa-building-columns"></i> <span
+                        data-i18n="sidebar.bank">Banka</span></a></li>
+            <li><a href="cek_senet.html"><i class="fa-solid fa-money-check"></i> <span
+                        data-i18n="sidebar.checks">Çek Senet</span></a></li>
+            <li><a href="taksit_takip.html"><i class="fa-solid fa-calendar-days"></i> <span
+                        data-i18n="sidebar.installments">Taksit
+                        Takip</span></a></li>
+            <li><a href="teklif_siparis.html"><i class="fa-solid fa-file-contract"></i> <span
+                        data-i18n="sidebar.offers">Teklif
+                        Sipariş</span></a></li>
+            <li><a href="doviz_ayarlari.html" id="doviz_settings_link"><i class="fa-solid fa-dollar-sign"></i> <span data-i18n="sidebar.currency">Döviz Ayarları</span></a></li>
+            
+            <li class="has-submenu">
+                <a href="javascript:void(0)" class="submenu-toggle"><i class="fa-solid fa-file-lines"></i> <span
+                        data-i18n="sidebar.reports">Raporlar</span> <i
+                          class="fa-solid fa-chevron-right ms-auto arrow"></i></a>
+                <ul class="submenu">
+                    <li><a href="cari_raporu.html"><i class="fa-solid fa-users"></i> <span data-i18n="report.cari">Cari</span></a></li>
+                    <li><a href="toplu_stok_raporu.html"><i class="fa-solid fa-box-open"></i> <span data-i18n="report.stok">Stok</span></a></li>
+                    <li><a href="taksit_rapor.html"><i class="fa-solid fa-calendar-days"></i> <span data-i18n="report.taksit">Taksit</span></a></li>
+                    <li><a href="satis_raporu.html"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="report.satis">Satış</span></a></li>
+                    <li><a href="kasa_raporu.html"><i class="fa-solid fa-cash-register"></i> <span data-i18n="report.kasa">Kasa</span></a></li>
+                    <li><a href="banka_raporu.html"><i class="fa-solid fa-building-columns"></i> <span data-i18n="report.banka">Banka</span></a></li>
+                    <li><a href="cek_raporu.html"><i class="fa-solid fa-copy"></i> <span data-i18n="sidebar.checks">Çek Senet</span></a></li>
+                    <li><a href="gun_sonu_raporu.html"><i class="fa-solid fa-file-lines"></i> <span data-i18n="report.gun_sonu">Gün Sonu Raporu</span></a></li>
+                    <li><a href="kar_zarar_analizi.html"><i class="fa-solid fa-file-lines"></i> <span data-i18n="report.kar_zarar">Kâr Zarar Analizi</span></a></li>
+                    <li><a href="gelir_gider.html"><i class="fa-solid fa-calendar-days"></i> <span data-i18n="sidebar.income_expense">Gelir Gider</span></a></li>
+                </ul>
+            </li>
+            <li><a href="mesajlar.html"><i class="fa-solid fa-envelope"></i> <span data-i18n="sidebar.messages">Mesajlar</span></a></li>
+            
+            <li class="has-submenu">
+                <a href="javascript:void(0)" class="submenu-toggle"><i class="fa-solid fa-layer-group"></i> <span
+                        data-i18n="sidebar.modules">Ek Modüller</span> <i
+                          class="fa-solid fa-chevron-right ms-auto arrow"></i></a>
+                <ul class="submenu">
+                    <li><a href="personel_takip.html"><i class="fa-solid fa-user-clock"></i> <span data-i18n="word.personel_takip">Personel Takip</span></a></li>
+                    <li><a href="ajanda.html"><i class="fa-solid fa-calendar-check"></i> <span data-i18n="word.ajanda">Ajanda</span></a></li>
+                    <li><a href="kisi_ekle.html"><i class="fa-solid fa-user-plus"></i> <span data-i18n="word.kisi_ekleme">Kişi Ekleme Paneli</span></a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Header -->
+                                    
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h2 class="page-title" data-i18n="word.alis_faturasi">Alış Faturası</h2>
+
+        <div class="main-container">
+            <!-- Left Panel: Customer Info -->
+            <div class="left-panel">
+                <div class="form-grid-2">
+                    <!-- Left Column of Left Panel -->
+                    <div>
+                        <div class="mb-15">
+                            <label class="form-label-sm" data-i18n="word.unvan">Ünvan</label>
+                            <input type="text" id="unvan" class="form-input-sm" value="ali">
+                            <!-- Dummy value matching image -->
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm" data-i18n="word.yetkili">Yetkili</label>
+                            <input type="text" id="yetkili" class="form-input-sm">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm" data-i18n="mega.eposta">E-posta</label>
+                            <input type="email" id="eposta" class="form-input-sm" placeholder="-">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm"><span data-i18n="mega.adres">Adres</span></label>
+                            <textarea id="adres" class="form-input-sm" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Right Column of Left Panel -->
+                    <div>
+                        <div class="mb-15">
+                            <label class="form-label-sm" data-i18n="mega.vergi_dairesi">Vergi Dairesi</label>
+                            <input type="text" id="vergiDairesi" class="form-input-sm">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm"><span data-i18n="mega.vergi_no">Vergi No</span></label>
+                            <input type="text" id="vergiNo" class="form-input-sm" value="0">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm"><span data-i18n="mega.il">İl</span></label>
+                            <input type="text" id="il" class="form-input-sm">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm"><span data-i18n="mega.ilce">İlçe</span></label>
+                            <input type="text" id="ilce" class="form-input-sm">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm" data-i18n="word.ulke">Ülke</label>
+                            <select id="ulke" class="form-input-sm">
+                                <option value="Türkiye">Türkiye</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Invoice Info -->
+            <div class="right-panel">
+                <div class="tab-header">
+                    <div class="tab-item active"><span data-i18n="mega.fatura_bilgileri">Fatura Bilgileri</span></div>
+                </div>
+                <div class="right-content">
+                    <div class="form-grid-2">
+                        <div class="mb-15">
+                            <label class="form-label-sm" data-i18n="mega.fatura_tarihi">Fatura Tarihi</label>
+                            <input type="date" id="faturaTarihi" class="form-input-sm">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm" data-i18n="word.sevk_tarihi">Sevk Tarihi</label>
+                            <input type="date" id="sevkTarihi" class="form-input-sm">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm"><span data-i18n="mega.saat">Saat</span></label>
+                            <input type="time" id="faturaSaat" class="form-input-sm">
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm" data-i18n="mega.fatura_no">Fatura No</label>
+                            <div class="input-group-btn">
+                                <input type="text" id="faturaNo" class="form-input-sm">
+                                <button type="button" id="btnGenerateInvoiceNo" aria-label="Yeni Fatura Numarası"><i
+                                        class="fa-solid fa-plus"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="maliyetCheck">
+                        <label for="maliyetCheck" data-i18n="word.maliyet_stok">Maliyet ortalamasını stoklara işle</label>
+                    </div>
+                    <div class="checkbox-group mb-15">
+                        <input type="checkbox" id="fiyatCheck" checked>
+                        <label for="fiyatCheck" data-i18n="word.alis_fiyat_stok">Alış fiyatını stoklara işle</label>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="mb-15">
+                            <label class="form-label-sm" data-i18n="word.para_birimleri">Para Birimleri</label>
+                            <select class="form-input-sm">
+                                <option>TRY</option>
+                                <option>USD</option>
+                                <option>EUR</option>
+                            </select>
+                        </div>
+                        <div class="mb-15">
+                            <label class="form-label-sm" data-i18n="word.doviz_kuru">Döviz Kuru</label>
+                            <input type="number" class="form-input-sm" value="1">
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-bar">
+            <!-- Modified: Barcode input and button wrapper -->
+            <input type="text" class="barcode-input" placeholder="Barkod..." data-i18n-placeholder="word.barkod">
+            <button class="add-product-btn" id="btnToggleManualForm" data-i18n="word.urun_ekle">Ürün Ekle</button>
+        </div>
+
+        <!-- NEW: Manual Product Entry Form -->
+        <div id="manualProductForm" class="manual-product-form d-none">
+            <div class="manual-form-grid">
+                <!-- Headers -->
+                <div class="manual-col"><strong data-i18n="word.urun_hizmet">Ürün/Hizmet</strong></div>
+                <div class="manual-col"><strong data-i18n="word.miktar">Miktar</strong></div>
+                <div class="manual-col"><strong data-i18n="word.birim">Birim</strong></div>
+                <div class="manual-col"><strong data-i18n="word.birim_fiyat">Birim Fiyat</strong></div>
+                <div class="manual-col"><strong><span data-i18n="mega.kdv">KDV</span></strong></div>
+                <div class="manual-col"><strong data-i18n="word.kdv_durumu">KDV Durumu</strong></div>
+                <div class="manual-col"><strong data-i18n="word.iskonto_oran">İskonto (%)</strong></div>
+                <div class="manual-col"><strong data-i18n="word.iskonto">İskonto</strong></div>
+                <div class="manual-col"><strong data-i18n="word.otv">ÖTV</strong></div>
+                <div class="manual-col"><strong data-i18n="word.otv_durumu">ÖTV Durumu</strong></div>
+                <div class="manual-col"><strong data-i18n="word.toplam">Toplam</strong></div>
+                <div class="manual-col"><strong data-i18n="word.genel_toplam">Genel Toplam</strong></div>
+
+                <!-- Inputs -->
+                <div class="manual-col"><input type="text" id="manualName" class="form-input-sm"
+                        placeholder="Ürün Ara..." data-i18n-placeholder="word.stok_bul"></div>
+                <div class="manual-col"><input type="number" id="manualQty" class="form-input-sm" value="1"></div>
+                <div class="manual-col">
+                    <select id="manualUnit" class="form-input-sm">
+                        <option>Adet</option>
+                        <option>Kg</option>
+                        <option>Ton</option>
+                        <option>Container</option>
+                        <option>Carton</option>
+                        <option>Box</option>
+                        <option>Net Ton</option>
+                        <option>Gross Ton</option>
+                    </select>
+                </div>
+                <div class="manual-col"><input type="number" id="manualPrice" class="form-input-sm" value="0"></div>
+                <div class="manual-col"><input type="number" id="manualKdv" class="form-input-sm" value="0" step="any">
+                </div>
+                <div class="manual-col">
+                    <select id="manualKdvStatus" class="form-input-sm">
+                        <option value="dahil">Kdv Dahil</option>
+                        <option value="haric">Kdv Hariç</option>
+                    </select>
+                </div>
+                <div class="manual-col"><input type="number" id="manualDiscRate" class="form-input-sm" value="0"></div>
+                <div class="manual-col">
+                    <select id="manualDiscType" class="form-input-sm">
+                        <option>Yüzde</option>
+                        <option>Tutar</option>
+                    </select>
+                </div>
+                <div class="manual-col"><input type="number" id="manualOtv" class="form-input-sm" value="0"></div>
+                <div class="manual-col">
+                    <select id="manualOtvStatus" class="form-input-sm">
+                        <option>Ötv Dahil</option>
+                        <option>Ötv Hariç</option>
+                    </select>
+                </div>
+                <div class="manual-col"><input type="number" id="manualTotal" class="form-input-sm" readonly></div>
+                <div class="manual-col"><input type="number" id="manualGrandTotal" class="form-input-sm" readonly></div>
+            </div>
+
+            <div class="manual-form-actions">
+                <button id="btnOpenStockModal" class="btn-dark-blue-sm"><i class="fa-solid fa-search"></i> Stok
+                    Bul</button>
+                <div class="right-actions">
+                    <label class="fs-13"><span data-i18n="word.depo_seciniz">Depo Seçiniz:</span></label>
+                    <select id="manualWarehouseSelect" class="form-input-sm w-150-px">
+                        <option data-i18n="word.merkez">Merkez</option>
+                        <option>Şube 1</option>
+                    </select>
+                    <button id="btnAddManual" class="btn-dark-blue-sm" data-i18n="word.ekle"><i class="fa-solid fa-plus"></i> Ekle</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Table Headers -->
+        <div class="product-table-container">
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th class="w-15-pct"><span data-i18n="word.ad">Ad</span></th>
+                        <th class="w-5-pct"><span data-i18n="mega.kdv">KDV</span></th>
+                        <th class="w-5-pct" data-i18n="word.otv">ÖTV</th>
+                        <th class="w-10-pct" data-i18n="word.birim_fiyat">Birim Fiyatı</th>
+                        <th class="w-10-pct" data-i18n="word.miktar">Miktar</th>
+                        <th class="w-10-pct" data-i18n="word.toplam">Toplam</th>
+                        <th class="w-5-pct" data-i18n="word.isk_yuzde">İsk %</th>
+                        <th class="w-10-pct" data-i18n="word.iskonto">İsk</th>
+                        <th class="w-10-pct" data-i18n="word.g_toplam_kisa">G. Toplam</th>
+                        <th class="w-15-pct text-right"><span data-i18n="word.islemler">İşlemler</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Empty Body -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer Section -->
+        <div class="footer-container">
+            <!-- Footer Left: Totals -->
+            <div class="footer-left">
+                <div class="totals-tabs">
+                    <div class="totals-tab active" data-i18n="word.tutarlar">Tutarlar</div>
+                    <div class="totals-tab" data-i18n="word.toplu_iskonto">Toplu İskonto</div>
+                </div>
+                <table class="totals-table">
+                    <tr>
+                        <td data-i18n="word.toplam">Toplam</td>
+                        <td>0.0 ₺</td>
+                    </tr>
+                    <tr>
+                        <td data-i18n="word.iskonto">İskonto</td>
+                        <td>0.0 ₺</td>
+                    </tr>
+                    <tr>
+                        <td data-i18n="word.ara_toplam">Ara Toplam</td>
+                        <td>0.0 ₺</td>
+                    </tr>
+                    <tr>
+                        <td><span data-i18n="mega.kdv">KDV</span> <span data-i18n="word.tutar">Tutar</span></td>
+                        <td>0.0 ₺</td>
+                    </tr>
+                    <tr>
+                        <td><span data-i18n="word.otv">ÖTV</span> <span data-i18n="word.tutar">Tutar</span></td>
+                        <td>0.0 ₺</td>
+                    </tr>
+                    <tr>
+                        <td><span data-i18n="word.diger_vergiler">Diğer Vergiler</span> <span data-i18n="word.tutar">Tutar</span></td>
+                        <td id="totalOtherTax">0.00 ₺</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span data-i18n="word.tevkifat">Tevkifat</span>
+                        </td>
+                        <td>
+                            <select id="tevkifatSelect" class="form-input-sm w-100-px d-inline-block">
+                                <option value="0" data-i18n="word.yok">Yok</option>
+                                <option value="0" data-i18n="word.yok">Yok</option>
+                                <option value="3">3/10</option>
+                                <option value="5">5/10</option>
+                                <option value="7">7/10</option>
+                                <option value="9">9/10</option>
+                            </select>
+                            <span id="tevkifatAmount">0.00 ₺</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td data-i18n="word.oran">Oran</td>
+                        <td id="tevkifatRateDisplay">-</td>
+                    </tr>
+                    <tr>
+                        <td class="border-top-2-ddd" data-i18n="word.genel_toplam">G. Toplam</td>
+                        <td class="border-top-2-ddd" id="grandTotalDisplay">0.00 ₺</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Footer Right: Description & Payment -->
+            <div class="footer-right">
+                <div class="footer-right-content">
+                    <div class="form-grid-2">
+                        <div>
+                            <label class="form-label-sm" data-i18n="word.baslik">Açıklama Başlığı</label>
+                            <input type="text" id="descTitle" class="form-input-sm">
+                        </div>
+                        <div>
+                            <label class="form-label-sm" data-i18n="word.aciklamalar">Açıklamalar</label>
+                            <select id="descSelect" class="form-input-sm">
+                                <option data-i18n="word.seciniz">Seçiniz...</option>
+                                <option>Genel Açıklama</option>
+                                <option>Ödeme Notu</option>
+                                <option>Teslimat Notu</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-20">
+                        <label class="form-label-sm"><span data-i18n="mega.aciklama">Açıklama</span></label>
+                        <textarea id="descText" class="form-input-sm" rows="3"></textarea>
+                    </div>
+
+                    <div class="overflow-hidden">
+                        <button class="btn-desc-save" data-i18n="word.aciklama_kaydet">Açıklama Kaydet</button>
+                    </div>
+
+                    <div class="payment-row">
+                        <div class="payment-col">
+                            <label class="form-label-sm" data-i18n="word.odenen">Ödenen</label>
+                            <input type="number" id="paymentAmount" class="form-input-sm" value="0.00" step="any">
+                        </div>
+                        <div class="payment-col">
+                            <label class="form-label-sm" data-i18n="word.depo_seciniz">Depo Seçiniz</label>
+                            <select id="warehouseSelect" class="form-input-sm">
+                                <option>Merkez</option>
+                                <option>Şube 1</option>
+                            </select>
+                        </div>
+                        <div class="payment-col">
+                            <label class="form-label-sm" data-i18n="word.kasa_seciniz">Kasa Seçiniz</label>
+                            <select id="safeSelect" class="form-input-sm">
+                                <option data-i18n="word.merkez_kasa">Merkez Kasa</option>
+                                <option>Şube Kasa</option>
+                            </select>
+                        </div>
+                        <div class="payment-col">
+                            <label class="form-label-sm" data-i18n="word.odeme_sekli">Ödeme Şekli</label>
+                            <select id="paymentMethod" class="form-input-sm">
+                                <option data-i18n="word.nakit">Nakit</option>
+                                <option data-i18n="word.kredi_karti">Kredi Kartı</option>
+                                <option data-i18n="word.havale_eft">Havale/EFT</option>
+                                <option data-i18n="word.cek">Çek</option>
+                                <option data-i18n="word.senet">Senet</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="save-btn-container">
+            <button class="btn-save-lg">
+                <i class="fa-solid fa-save"></i> <span data-i18n="mega.kaydet">Kaydet</span>
+            </button>
+        </div>
+
+        <br><br>
+    </div>
+
+    <!-- Stock Finder Modal -->
+    <div id="stockModal" class="modal">
+        <div class="modal-content modal-lg">
+            <span class="close-modal close-modal-btn">&times;</span>
+            <h2 class="page-title">Stok Bul</h2>
+
+            <div class="mb-15">
+                <input type="text" id="stockSearchInput" class="form-input-sm w-100"
+                    placeholder="Ürün adı, kodu veya barkod ile ara...">
+            </div>
+
+            <div class="stock-table-scroll">
+                <table class="product-table">
+                    <thead>
+                        <tr>
+                            <th class="w-80-px">Seçim</th>
+                            <th>Ürün Adı</th>
+                            <th>Stok Kodu</th>
+                            <th>Barkod</th>
+                            <th>Fiyat</th>
+                            <th>Bakiye</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stockTableBody">
+                        <!-- Dynamic Content -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="text-right mt-20">
+                <button id="btnCloseModal" class="btn btn-secondary">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="translations.js?v=1776685628940"></script>
+    <script src="script.js?v=1776685628940"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initial setup: Extract params from URL and populate
+            const urlParams = new URLSearchParams(window.location.search);
+            const cariId = urlParams.get('cari_id');
+
+            if (cariId) {
+                const consumers = JSON.parse(localStorage.getItem('customers')) || [];
+                const customer = consumers.find(c => c.id == cariId);
+
+                if (customer) {
+                    document.getElementById('unvan').value = customer.cariAdi || '';
+                    document.getElementById('yetkili').value = customer.yetkili || '';
+                    document.getElementById('eposta').value = customer.email || '';
+                    document.getElementById('adres').value = customer.adres || '';
+
+                    document.getElementById('vergiDairesi').value = customer.vergiAdresi || '';
+                    document.getElementById('vergiNo').value = customer.vergiNo || '';
+
+                    document.getElementById('il').value = customer.il || '';
+                    document.getElementById('ilce').value = customer.ilce || '';
+                    document.getElementById('ulke').value = customer.ulke || 'Türkiye';
+                }
+            } else {
+                // Fallback or legacy "unvan" param support
+                const unvan = urlParams.get('unvan');
+                if (unvan) document.getElementById('unvan').value = unvan;
+            }
+
+            // Set default dates to Today
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`;
+
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const timeStr = `${hours}:${minutes}`;
+
+            document.getElementById('faturaTarihi').value = todayStr;
+            document.getElementById('sevkTarihi').value = todayStr;
+            document.getElementById('faturaSaat').value = timeStr;
+
+            // Invoice Number Generation
+            document.getElementById('btnGenerateInvoiceNo').addEventListener('click', function () {
+                const prefix = 'INV';
+                const randomNum = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+                const invoiceNo = `${prefix}-${year}${month}-${randomNum}`;
+                document.getElementById('faturaNo').value = invoiceNo;
+            });
+
+            // Explicitly Clear Table and Form on Load to prevent browser restore
+            const productTableBody = document.querySelector('.product-table tbody');
+            if (productTableBody) productTableBody.innerHTML = '';
+
+            // Reset Totals
+            updateFooterTotals();
+
+            // Initialize functionality
+            loadDraft(); // Load draft if exists
+            updateFooterTotals(); // Initial calc               
+
+            // Country List Population
+            const countries = [
+                "Türkiye", "ABD", "Afganistan", "Almanya", "Andorra", "Angola", "Antigua ve Barbuda", "Arjantin", "Arnavutluk",
+                "Avustralya", "Avusturya", "Azerbaycan", "Bahamalar", "Bahreyn", "Bangladeş", "Barbados", "Belçika", "Belize",
+                "Benin", "Beyaz Rusya", "Bhutan", "Birleşik Arap Emirlikleri", "Birleşik Krallık", "Bolivya", "Bosna Hersek",
+                "Botsvana", "Brezilya", "Brunei", "Bulgaristan", "Burkina Faso", "Burundi", "Cezayir", "Cibuti", "Çad", "Çekya",
+                "Çin", "Danimarka", "Doğu Timor", "Dominik Cumhuriyeti", "Dominika", "Ekvador", "Ekvator Ginesi", "El Salvador",
+                "Endonezya", "Eritre", "Ermenistan", "Estonya", "Etiyopya", "Fas", "Fiji", "Fildişi Sahili", "Filipinler",
+                "Filistin", "Finlandiya", "Fransa", "Gabon", "Gambiya", "Gana", "Gine", "Gine Bissau", "Grenada", "Guyana",
+                "Guatemala", "Güney Afrika", "Güney Kore", "Güney Sudan", "Gürcistan", "Haiti", "Hırvatistan", "Hindistan",
+                "Hollanda", "Honduras", "Irak", "İran", "İrlanda", "İspanya", "İsrail", "İsveç", "İsviçre", "İtalya", "İzlanda",
+                "Jamaika", "Japonya", "Kamboçya", "Kamerun", "Kanada", "Karadağ", "Katar", "Kazakistan", "Kenya", "Kırgızistan",
+                "Kıbrıs", "Kiribati", "Kolombiya", "Komorlar", "Kongo", "Kongo Demokratik Cumhuriyeti", "Kosova", "Kosta Rika",
+                "Kuveyt", "Kuzey Kore", "Kuzey Makedonya", "Küba", "Laos", "Lesotho", "Letonya", "Liberya", "Libya",
+                "Lihtenştayn", "Litvanya", "Lübnan", "Lüksemburg", "Macaristan", "Madagaskar", "Malavi", "Maldivler",
+                "Malezya", "Mali", "Malta", "Marshall Adaları", "Mauritius", "Meksika", "Mısır", "Mikronezya", "Moğolistan",
+                "Moldova", "Monako", "Moritanya", "Mozambik", "Myanmar", "Namibya", "Nauru", "Nepal", "Nijer", "Nijerya",
+                "Nikaragua", "Norveç", "Orta Afrika Cumhuriyeti", "Özbekistan", "Pakistan", "Palau", "Panama", "Papua Yeni Gine",
+                "Paraguay", "Peru", "Polonya", "Portekiz", "Romanya", "Ruanda", "Rusya", "Saint Kitts ve Nevis", "Saint Lucia",
+                "Saint Vincent ve Grenadinler", "Samoa", "San Marino", "Sao Tome ve Principe", "Senegal", "Seyşeller",
+                "Sırbistan", "Sierra Leone", "Singapur", "Slovakya", "Slovenya", "Solomon Adaları", "Somali", "Sri Lanka",
+                "Sudan", "Surinam", "Suriye", "Suudi Arabistan", "Svaziland", "Şili", "Tacikistan", "Tanzanya", "Tayland",
+                "Tayvan", "Togo", "Tonga", "Trinidad ve Tobago", "Tunus", "Tuvalu", "Türkmenistan", "Uganda", "Ukrayna",
+                "Umman", "Uruguay", "Ürdün", "Vanuatu", "Vatikan", "Venezuela", "Vietnam", "Yemen", "Yeni Zelanda",
+                "Yeşil Burun Adaları", "Yunanistan", "Zambiya", "Zimbabve"
+            ];
+
+            const ulkeSelect = document.getElementById('ulke');
+            // Clear existing options
+            ulkeSelect.innerHTML = '';
+
+            countries.forEach(country => {
+                const option = document.createElement('option');
+                option.value = country;
+                option.textContent = country;
+                if (country === 'Türkiye') option.selected = true;
+                ulkeSelect.appendChild(option);
+            });
+
+            // Invoice Number Generation
+            document.getElementById('btnGenerateInvoiceNo').addEventListener('click', function () {
+                const prefix = 'INV';
+                const randomNum = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+                const invoiceNo = `${prefix}-${year}${month}-${randomNum}`;
+                document.getElementById('faturaNo').value = invoiceNo;
+            });
+
+            // --- Product Addition via Barcode ---
+            const barcodeInput = document.querySelector('.barcode-input');
+            const addProductBtn = document.querySelector('.add-product-btn');
+            // productTableBody declared above
+
+            function addProductLine(barcode) {
+                if (!barcode) return;
+
+                const stockCards = JSON.parse(localStorage.getItem('stockCards')) || [];
+                const product = stockCards.find(p => p.barcode === barcode.trim());
+
+                if (product) {
+                    // Logic to add row
+                    const rowId = Date.now();
+                    const quantity = 1;
+                    const price = product.buyPrice || 0;
+                    const kdv = product.kdv || 0;
+                    const otv = 0; // Default 0 as per analysis
+                    const discountRate = 0;
+
+                    // Calculations
+                    const total = price * quantity;
+                    const discountAmount = total * (discountRate / 100);
+                    const taxBase = total - discountAmount;
+                    const kdvAmount = taxBase * (kdv / 100);
+                    const grandTotal = taxBase + kdvAmount + otv;
+
+                    const rowCode = `
+                        <tr data-row-id="${rowId}">
+                            <td>${product.name}</td>
+                            <td>${kdv}</td>
+                            <td>${otv}</td>
+                            <td>${formatCurrencyVal(price)}</td>
+                            <td>${quantity}</td>
+                            <td class="row-total">${formatCurrencyVal(total)}</td>
+                            <td>${discountRate}</td>
+                            <td class="row-disc-amount">${formatCurrencyVal(discountAmount)}</td>
+                            <td class="row-grand-total">${formatCurrencyVal(grandTotal)}</td>
+                            <td class="text-right">
+                                <button class="btn btn-secondary btn-sm btn-edit-row"><i class="fa-solid fa-pen"></i> <span data-i18n="mega.duzenle">Düzenle</span></button>
+                                <button class="btn btn-danger btn-sm btn-delete-row"><i class="fa-solid fa-trash"></i> Sil</button>
+                            </td>
+                        </tr>
+                    `;
+                    productTableBody.insertAdjacentHTML('beforeend', rowCode);
+
+                    // Clear input
+                    barcodeInput.value = '';
+                    barcodeInput.focus();
+
+                    // Optional: Recalculate footer totals (stub)
+                    updateFooterTotals();
+                    saveDraft(); // Auto-save
+                } else {
+                    alert('Ürün bulunamadı!');
+                    barcodeInput.select();
+                }
+            }
+
+            // Event Listeners
+            // Toggle Manual Form on "Add Product" Click if no barcode
+            addProductBtn.addEventListener('click', () => {
+                const barcode = barcodeInput.value.trim();
+                if (barcode) {
+                    addProductLine(barcode);
+                    // UX Improvement: Keep focus on input for next scan
+                    barcodeInput.focus();
+                } else {
+                    const form = document.getElementById('manualProductForm');
+                    form.classList.toggle('d-none');
+                    // Focus manual form first input if shown
+                    if (!form.classList.contains('d-none')) {
+                        document.getElementById('manualName').focus();
+                    }
+                }
+            });
+
+            // Manual Form Logic
+            const manualInputs = document.querySelectorAll('#manualProductForm input, #manualProductForm select');
+            manualInputs.forEach(input => {
+                input.addEventListener('input', calculateManualTotals);
+            });
+
+            function calculateManualTotals() {
+                const qty = parseFloat(document.getElementById('manualQty').value) || 0;
+                const price = parseFloat(document.getElementById('manualPrice').value) || 0;
+                const kdv = parseFloat(document.getElementById('manualKdv').value) || 0;
+                const kdvInfo = document.getElementById('manualKdvStatus').value; // dahil/haric
+                const otv = parseFloat(document.getElementById('manualOtv').value) || 0;
+
+                // Discount
+                const discVal = parseFloat(document.getElementById('manualDiscRate').value) || 0;
+                const discType = document.getElementById('manualDiscType').value;
+
+                let baseTotal = qty * price;
+                let taxBase = baseTotal;
+
+                // Apply Discount
+                let discAmount = 0;
+                if (discType === 'Tutar') {
+                    discAmount = discVal;
+                } else {
+                    discAmount = baseTotal * (discVal / 100);
+                }
+                taxBase = baseTotal - discAmount;
+
+                // User Logic: 
+                // Dahil -> Add Tax on top (Price increases)
+                // Haric -> No Tax added (Price remains same)
+                let kdvAmount = 0;
+                if (kdvInfo === 'dahil') {
+                    kdvAmount = taxBase * (kdv / 100);
+                } else {
+                    kdvAmount = 0;
+                }
+
+                const grandTotal = taxBase + kdvAmount + otv;
+
+                document.getElementById('manualTotal').value = baseTotal.toFixed(2);
+                document.getElementById('manualGrandTotal').value = grandTotal.toFixed(2);
+            }
+
+            const btnAddManual = document.getElementById('btnAddManual');
+            if (btnAddManual) {
+                btnAddManual.addEventListener('click', () => {
+                    // Prevent double click
+                    btnAddManual.disabled = true;
+                    setTimeout(() => { btnAddManual.disabled = false; }, 500);
+
+                    const name = document.getElementById('manualName').value;
+                    const qty = parseFloat(document.getElementById('manualQty').value) || 0;
+                    const price = parseFloat(document.getElementById('manualPrice').value) || 0;
+                    let kdv = parseFloat(document.getElementById('manualKdv').value) || 0;
+                    const kdvInfo = document.getElementById('manualKdvStatus').value;
+                    const warehouse = document.getElementById('manualWarehouseSelect').value;
+
+                    if (!name) {
+                        alert('Lütfen ürün ismi giriniz');
+                        btnAddManual.disabled = false;
+                        return;
+                    }
+
+                    // User Logic: Haric means 'No Tax' -> Set Rate to 0 for the row
+                    if (kdvInfo !== 'dahil') {
+                        kdv = 0;
+                    }
+
+                    const tableBody = document.querySelector('.product-table tbody');
+                    const rowId = Date.now();
+
+                    const discVal = parseFloat(document.getElementById('manualDiscRate').value) || 0;
+                    const discType = document.getElementById('manualDiscType').value;
+                    const otv = parseFloat(document.getElementById('manualOtv').value) || 0;
+
+                    // Determine rate based on type
+                    let discRate = 0;
+                    const totalVal = price * qty;
+
+                    if (discType === 'Tutar') {
+                        if (totalVal !== 0) {
+                            discRate = (discVal / totalVal) * 100;
+                        }
+                    } else {
+                        discRate = discVal;
+                    }
+
+                    // Calc derived
+                    const discAmt = totalVal * (discRate / 100);
+                    const taxBase = totalVal - discAmt;
+
+                    // User Logic: Dahil=Add, Haric=None
+                    let kdvAmt = 0;
+                    if (kdvInfo === 'dahil') {
+                        kdvAmt = taxBase * (kdv / 100);
+                    }
+                    // else kdvAmt = 0
+                    const grandTotal = taxBase + kdvAmt + otv;
+
+                    const rowCode = `
+                        <tr data-row-id="${rowId}">
+                            <td>${name}</td>
+                            <td>${kdv}</td>
+                            <td>${otv}</td>
+                            <td>${formatCurrencyVal(price)}</td>
+                            <td>${qty}</td>
+                            <td class="row-total">${formatCurrencyVal(totalVal)}</td>
+                            <td>${discRate.toFixed(2)}</td>
+                            <td class="row-disc-amount">${formatCurrencyVal(discAmt)}</td>
+                            <td class="row-grand-total">${formatCurrencyVal(grandTotal)}</td>
+                            <td class="text-right">
+                                <button class="btn btn-secondary btn-sm btn-edit-row"><i class="fa-solid fa-pen"></i> <span data-i18n="mega.duzenle">Düzenle</span></button>
+                                <button class="btn btn-danger btn-sm btn-delete-row"><i class="fa-solid fa-trash"></i> Sil</button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.insertAdjacentHTML('beforeend', rowCode);
+                    updateFooterTotals();
+                    saveDraft(); // Auto-save
+
+                    // Reset and hide form
+                    document.getElementById('manualProductForm').classList.add('d-none');
+                    document.getElementById('manualName').value = '';
+                    document.getElementById('manualPrice').value = '0';
+
+                    // Re-enable button (redundant with timeout but safe)
+                    btnAddManual.disabled = false;
+                });
+            }
+
+            barcodeInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addProductLine(barcodeInput.value);
+                }
+            });
+
+            // Allow recalculation on input change
+            productTableBody.addEventListener('input', (e) => {
+                if (e.target.matches('.row-qty, .row-price, .row-kdv, .row-otv, .row-disc-rate')) {
+                    const row = e.target.closest('tr');
+                    recalculateRow(row);
+                    updateFooterTotals();
+                }
+            });
+
+            function recalculateRow(row) {
+                const qty = parseFloat(row.querySelector('.row-qty').value) || 0;
+                const price = parseFloat(row.querySelector('.row-price').value) || 0;
+                const kdv = parseFloat(row.querySelector('.row-kdv').value) || 0;
+                const otv = parseFloat(row.querySelector('.row-otv').value) || 0;
+                const discRate = parseFloat(row.querySelector('.row-disc-rate').value) || 0;
+
+                const total = price * qty;
+                const discountAmount = total * (discRate / 100);
+                const taxBase = total - discountAmount;
+                const kdvAmount = taxBase * (kdv / 100);
+                const grandTotal = taxBase + kdvAmount + otv;
+
+                row.querySelector('.row-total').textContent = total.toFixed(2);
+                row.querySelector('.row-disc-amount').textContent = discountAmount.toFixed(2);
+                row.querySelector('.row-grand-total').textContent = grandTotal.toFixed(2);
+            }
+
+            function updateFooterTotals() {
+                // Determine totals from all rows
+                let totalAmount = 0;
+                let totalDiscount = 0;
+                let subTotal = 0;
+                let totalKdv = 0;
+                let totalOtv = 0;
+                let grandTotalAll = 0;
+
+                const rows = productTableBody.querySelectorAll('tr');
+                rows.forEach(row => {
+                    let qty, price, kdv, otv, discRate;
+
+                    // Check if edit mode (inputs exist)
+                    const qtyInput = row.querySelector('.row-edit-qty');
+                    if (qtyInput) {
+                        qty = parseFloat(qtyInput.value) || 0;
+                        price = parseFloat(row.querySelector('.row-edit-price').value) || 0;
+                        kdv = parseFloat(row.querySelector('.row-edit-kdv').value) || 0;
+                        otv = parseFloat(row.querySelector('.row-edit-otv').value) || 0;
+                        discRate = parseFloat(row.querySelector('.row-edit-disc-rate').value) || 0;
+                    } else {
+                        // Read-only mode (text content)
+                        // Indices: 0:Name, 1:KDV, 2:OTV, 3:Price, 4:Qty, 6:DiscRate
+                        const cells = row.children;
+                        kdv = parseFloat(cells[1].textContent) || 0;
+                        otv = parseFloat(cells[2].textContent) || 0;
+                        price = parseFloat(cells[3].textContent) || 0;
+                        qty = parseFloat(cells[4].textContent) || 0;
+                        discRate = parseFloat(cells[6].textContent) || 0;
+                    }
+
+                    const rowTotal = price * qty;
+                    // Discount Calculation: Check logic. 
+                    // Note: Manual entry uses logic based on 'Tutar' vs 'Yüzde'. 
+                    // Here we approximate based on Rate for footer summary. 
+                    // Ideally read 'row-disc-amount' directly if accurate?
+                    // Let's rely on calculating consistent with row creation.
+                    const rowDisc = rowTotal * (discRate / 100);
+                    const rowTaxBase = rowTotal - rowDisc;
+                    const rowKdv = rowTaxBase * (kdv / 100);
+
+                    totalAmount += rowTotal;
+                    totalDiscount += rowDisc;
+                    subTotal += rowTaxBase;
+                    totalKdv += rowKdv;
+                    totalOtv += otv;
+                });
+
+                // Tevkifat Logic
+                const tevkifatRatePart = parseInt(document.getElementById('tevkifatSelect').value) || 0;
+                let tevkifatAmt = 0;
+                let tevkifatRateStr = '-';
+
+                if (tevkifatRatePart > 0) {
+                    tevkifatAmt = totalKdv * (tevkifatRatePart / 10);
+                    tevkifatRateStr = `${tevkifatRatePart}/10`;
+                }
+
+                // Other Tax (Placeholder)
+                const otherTax = 0;
+
+                // Grand Total = SubTotal + KDV + OTV 
+                // Note: Tevkifat generally reduces the *payable* amount, but the Invoice Total (G. Toplam) usually remains the full liability unless specified otherwise.
+                // However, visually typically G. Toplam is the final figure. 
+                // If Tevkifat is subtracted here:
+                // grandTotalAll = subTotal + totalKdv + totalOtv - tevkifatAmt;
+                // Let's keep Standard: G. Toplam is valid invoice total. Tevkifat is info.
+                grandTotalAll = subTotal + totalKdv + totalOtv;
+
+                // Update Footer Cells
+                const footerTable = document.querySelector('.totals-table');
+                if (footerTable) {
+                    footerTable.rows[0].cells[1].textContent = formatCurrency(totalAmount);
+                    footerTable.rows[1].cells[1].textContent = formatCurrency(totalDiscount);
+                    footerTable.rows[2].cells[1].textContent = formatCurrency(subTotal);
+                    footerTable.rows[3].cells[1].textContent = formatCurrency(totalKdv);
+                    footerTable.rows[4].cells[1].textContent = formatCurrency(totalOtv);
+
+                    document.getElementById('totalOtherTax').textContent = formatCurrency(otherTax);
+                    document.getElementById('tevkifatAmount').textContent = formatCurrency(tevkifatAmt);
+                    document.getElementById('tevkifatRateDisplay').textContent = tevkifatRateStr;
+                    document.getElementById('grandTotalDisplay').textContent = formatCurrency(grandTotalAll);
+                }
+
+                // Auto-fill Payment Amount (Fill-in Request)
+                const payInput = document.getElementById('paymentAmount');
+                if (payInput) {
+                    // Only auto-fill if user hasn't manually edited it significantly, or just always sync?
+                    // User request "fill in", implies default sync.
+                    payInput.value = grandTotalAll.toFixed(2);
+                }
+            }
+
+            function formatCurrencyVal(val) {
+                return parseFloat(val).toFixed(2);
+            }
+
+            function formatCurrency(val) {
+                return parseFloat(val).toFixed(2) + ' ₺';
+            }
+
+            // Row Action functionality
+            productTableBody.addEventListener('click', function (e) {
+                // Delete
+                if (e.target.closest('.btn-delete-row')) {
+                    const row = e.target.closest('tr');
+                    row.remove();
+                    updateFooterTotals();
+                    saveDraft(); // Auto-save
+                }
+
+                // Edit
+                if (e.target.closest('.btn-edit-row')) {
+                    const row = e.target.closest('tr');
+                    enableEditMode(row);
+                }
+
+                // Save (after edit)
+                if (e.target.closest('.btn-save-row')) {
+                    const row = e.target.closest('tr');
+                    saveRowChanges(row);
+                }
+            });
+
+            // Input delegation
+            productTableBody.addEventListener('input', function (e) {
+                if (e.target.classList.contains('row-edit-qty') ||
+                    e.target.classList.contains('row-edit-price') ||
+                    e.target.classList.contains('row-edit-kdv') ||
+                    e.target.classList.contains('row-edit-otv') ||
+                    e.target.classList.contains('row-edit-disc-rate')) {
+                    handleForwardCalc(e.target.closest('tr'));
+                }
+                else if (e.target.classList.contains('row-edit-total')) {
+                    handleTotalChange(e.target.closest('tr'));
+                }
+                else if (e.target.classList.contains('row-edit-disc-amount')) {
+                    handleDiscAmountChange(e.target.closest('tr'));
+                }
+                else if (e.target.classList.contains('row-edit-grand-total')) {
+                    handleGrandTotalChange(e.target.closest('tr'));
+                }
+            });
+
+            function enableEditMode(row) {
+                // Get current values
+                const name = row.children[0].textContent;
+                const kdv = parseFloat(row.children[1].textContent) || 0;
+                const otv = parseFloat(row.children[2].textContent) || 0;
+                const price = parseFloat(row.children[3].textContent) || 0;
+                const qty = parseFloat(row.children[4].textContent) || 0;
+                const discRate = parseFloat(row.children[6].textContent) || 0;
+
+                // Calc initial derived to be safe for display
+                const total = price * qty;
+                const discountAmount = total * (discRate / 100);
+                const taxBase = total - discountAmount;
+                const kdvAmount = taxBase * (kdv / 100);
+                const grandTotal = taxBase + kdvAmount + otv;
+
+                // Replace cells with inputs
+                row.innerHTML = `
+                    <td>${name}</td>
+                    <td><input type="number" class="form-input-sm row-edit-kdv" value="${kdv}" style="width: 50px;" step="any"></td>
+                    <td><input type="number" class="form-input-sm row-edit-otv" value="${otv}" style="width: 50px;" step="any"></td>
+                    <td><input type="number" class="form-input-sm row-edit-price" value="${price}" style="width: 70px;" step="any"></td>
+                    <td><input type="number" class="form-input-sm row-edit-qty" value="${qty}" style="width: 50px;" step="any"></td>
+                    <td><input type="number" class="form-input-sm row-edit-total" value="${total.toFixed(2)}" style="width: 70px;" step="any"></td>
+                    <td><input type="number" class="form-input-sm row-edit-disc-rate" value="${discRate}" style="width: 50px;" step="any"></td>
+                    <td><input type="number" class="form-input-sm row-edit-disc-amount" value="${discountAmount.toFixed(2)}" style="width: 70px;" step="any"></td>
+                    <td><input type="number" class="form-input-sm row-edit-grand-total" value="${grandTotal.toFixed(2)}" style="width: 80px;" step="any"></td>
+                    <td class="text-right">
+                         <button class="btn btn-success btn-sm btn-save-row"><i class="fa-solid fa-check"></i> <span data-i18n="mega.kaydet">Kaydet</span></button>
+                    </td>
+                `;
+            }
+
+            function getRowValues(row) {
+                return {
+                    kdv: parseFloat(row.querySelector('.row-edit-kdv').value) || 0,
+                    otv: parseFloat(row.querySelector('.row-edit-otv').value) || 0,
+                    price: parseFloat(row.querySelector('.row-edit-price').value) || 0,
+                    qty: parseFloat(row.querySelector('.row-edit-qty').value) || 0,
+                    discRate: parseFloat(row.querySelector('.row-edit-disc-rate').value) || 0,
+                    total: parseFloat(row.querySelector('.row-edit-total').value) || 0,
+                    discAmt: parseFloat(row.querySelector('.row-edit-disc-amount').value) || 0,
+                    grandTotal: parseFloat(row.querySelector('.row-edit-grand-total').value) || 0
+                };
+            }
+
+            function updateRowInputs(row, vals) {
+                // Update inputs ensuring 2 decimal fixed for monetary values
+                // Only update fields that are derived or reversed, but to be safe we sync all except current target (handled by browser focus). 
+                // But simplified: update all. Browser usually keeps focus if values change slightly.
+
+                row.querySelector('.row-edit-kdv').value = vals.kdv;
+                row.querySelector('.row-edit-otv').value = vals.otv;
+                row.querySelector('.row-edit-price').value = vals.price.toFixed(2);
+                row.querySelector('.row-edit-qty').value = vals.qty;
+                row.querySelector('.row-edit-total').value = vals.total.toFixed(2);
+                row.querySelector('.row-edit-disc-rate').value = vals.discRate.toFixed(2);
+                row.querySelector('.row-edit-disc-amount').value = vals.discAmt.toFixed(2);
+                row.querySelector('.row-edit-grand-total').value = vals.grandTotal.toFixed(2);
+            }
+
+            function handleForwardCalc(row) {
+                const v = getRowValues(row);
+
+                v.total = v.price * v.qty;
+                v.discAmt = v.total * (v.discRate / 100);
+                const taxBase = v.total - v.discAmt;
+                const kdvAmt = taxBase * (v.kdv / 100);
+                v.grandTotal = taxBase + kdvAmt + v.otv;
+
+                updateRowInputs(row, v);
+            }
+
+            function handleTotalChange(row) {
+                const v = getRowValues(row);
+                if (v.qty !== 0) {
+                    v.price = v.total / v.qty;
+                }
+                handleForwardCalc(row);
+            }
+
+            function handleDiscAmountChange(row) {
+                const v = getRowValues(row);
+                if (v.total !== 0) {
+                    v.discRate = (v.discAmt / v.total) * 100;
+                }
+                handleForwardCalc(row);
+            }
+
+            function handleGrandTotalChange(row) {
+                const v = getRowValues(row);
+                // GT = (Price*Qty - Price*Qty*Disc%) * (1+KDV%) + OTV
+                // GT - OTV = TaxBase * (1+KDV%)
+                // TaxBase = (GT - OTV) / (1+KDV%)
+                const taxBase = (v.grandTotal - v.otv) / (1 + (v.kdv / 100));
+
+                // TaxBase = Total * (1 - Disc%)
+                // Total = TaxBase / (1 - Disc%)
+
+                if ((1 - v.discRate / 100) !== 0) {
+                    v.total = taxBase / (1 - (v.discRate / 100));
+                }
+
+                // Price = Total / Qty
+                if (v.qty !== 0) {
+                    v.price = v.total / v.qty;
+                }
+
+                handleForwardCalc(row);
+            }
+
+            function saveRowChanges(row) {
+                const v = getRowValues(row);
+                const name = row.children[0].textContent;
+
+                // Revert to read-only
+                row.innerHTML = `
+                    <td>${name}</td>
+                    <td>${v.kdv}</td>
+                    <td>${v.otv}</td>
+                    <td>${formatCurrencyVal(v.price)}</td>
+                    <td>${v.qty}</td>
+                    <td class="row-total">${formatCurrencyVal(v.total)}</td>
+                    <td>${v.discRate}</td>
+                    <td class="row-disc-amount">${formatCurrencyVal(v.discAmt)}</td>
+                    <td class="row-grand-total">${formatCurrencyVal(v.grandTotal)}</td>
+                    <td class="text-right">
+                        <button class="btn btn-secondary btn-sm btn-edit-row"><i class="fa-solid fa-pen"></i> <span data-i18n="mega.duzenle">Düzenle</span></button>
+                        <button class="btn btn-danger btn-sm btn-delete-row"><i class="fa-solid fa-trash"></i> Sil</button>
+                    </td>
+                `;
+
+                updateFooterTotals();
+                saveDraft(); // Auto-save
+            }
+
+            // --- Stock Finder Modal Logic ---
+            const modal = document.getElementById('stockModal');
+            const btnOpenStock = document.getElementById('btnOpenStockModal');
+            const spanClose = document.querySelector('.close-modal');
+            const btnCloseModal = document.getElementById('btnCloseModal');
+            const tableBodyStock = document.getElementById('stockTableBody');
+            const searchInput = document.getElementById('stockSearchInput');
+
+            function renderStockTable(filter = '') {
+                const stockCards = JSON.parse(localStorage.getItem('stockCards')) || [];
+                tableBodyStock.innerHTML = '';
+
+                const filtered = stockCards.filter(s => {
+                    const term = filter.toLowerCase();
+                    return (s.name || '').toLowerCase().includes(term) ||
+                        (s.code || '').toLowerCase().includes(term) ||
+                        (s.barcode || '').toLowerCase().includes(term);
+                });
+
+                filtered.forEach(stock => {
+                    const row = document.createElement('tr');
+                    const balance = stock.balance || 0;
+
+                    row.innerHTML = `
+                        <td><button class="btn btn-sm btn-info btn-select-stock" data-barcode="${stock.barcode}">Seç</button></td>
+                        <td>${stock.name}</td>
+                        <td>${stock.code || '-'}</td>
+                        <td>${stock.barcode || ''}</td>
+                        <td>${formatCurrencyVal(stock.buyPrice || 0)}</td>
+                        <td>${balance} Adet</td>
+                    `;
+                    tableBodyStock.appendChild(row);
+                });
+            }
+
+            if (btnOpenStock) {
+                btnOpenStock.addEventListener('click', () => {
+                    document.getElementById('stockModal').style.display = 'block';
+                    renderStockTable();
+                });
+            }
+
+            if (spanClose) spanClose.addEventListener('click', () => modal.style.display = 'none');
+            if (btnCloseModal) btnCloseModal.addEventListener('click', () => modal.style.display = 'none');
+
+            window.addEventListener('click', (e) => {
+                if (e.target == modal) modal.style.display = 'none';
+            });
+
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    renderStockTable(e.target.value);
+                });
+            }
+
+            if (tableBodyStock) {
+                tableBodyStock.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('btn-select-stock')) {
+                        const barcode = e.target.getAttribute('data-barcode');
+                        const stockCards = JSON.parse(localStorage.getItem('stockCards')) || [];
+                        const stock = stockCards.find(s => s.barcode === barcode);
+
+                        if (stock) {
+                            // Populate Manual Form
+                            document.getElementById('manualName').value = stock.name;
+                            document.getElementById('manualPrice').value = stock.buyPrice || 0;
+                            document.getElementById('manualKdv').value = stock.kdv || 0;
+
+                            // Auto-set Warehouse if matches
+                            const warehouseSelect = document.getElementById('manualWarehouseSelect');
+                            const footerWarSelect = document.getElementById('warehouseSelect');
+
+                            if (warehouseSelect && stock.warehouse) {
+                                // Try to set value. If option doesn't exist, it won't change/will default.
+                                warehouseSelect.value = stock.warehouse;
+                            }
+
+                            // Sync Top Warehouse to Footer Warehouse immediately on stock selection
+                            if (footerWarSelect && stock.warehouse) {
+                                footerWarSelect.value = stock.warehouse;
+                            }
+
+                            // Trigger Calculation
+                            calculateManualTotals();
+                            modal.style.display = 'none';
+                        }
+                    }
+                });
+            }
+
+            // Sync Manual Warehouse Change to Footer Warehouse
+            const topWarehouse = document.getElementById('manualWarehouseSelect');
+            if (topWarehouse) {
+                topWarehouse.addEventListener('change', (e) => {
+                    const footerWarSelect = document.getElementById('warehouseSelect');
+                    if (footerWarSelect) {
+                        footerWarSelect.value = e.target.value;
+                    }
+                });
+            }
+
+            // Fix Discount Logic: Ensure Change triggers calc
+            const manualSelects = document.querySelectorAll('#manualProductForm select');
+            manualSelects.forEach(s => s.addEventListener('change', calculateManualTotals));
+
+            // Auto-fill Payment Amount
+            const paymentInput = document.getElementById('paymentAmount');
+
+            // Footer Event Listeners
+            const tevkifatSelect = document.getElementById('tevkifatSelect');
+            if (tevkifatSelect) {
+                tevkifatSelect.addEventListener('change', updateFooterTotals);
+            }
+
+            const descSelect = document.getElementById('descSelect');
+            // --- Description Logic ---
+            const btnSaveDesc = document.querySelector('.btn-desc-save');
+
+            function loadDescriptions() {
+                const descriptions = JSON.parse(localStorage.getItem('savedDescriptions')) || [];
+                // Clear dynamic options (keep first 'Seçiniz...')
+                const defaultOption = descSelect.options[0];
+                descSelect.innerHTML = '';
+                descSelect.appendChild(defaultOption);
+
+                // Add Standard Options (if not in storage, add them) if we want defaults. 
+                // Or just append stored ones. Let's append stored ones.
+                const standard = ["Genel Açıklama", "Ödeme Notu", "Teslimat Notu"];
+                standard.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt;
+                    option.textContent = opt;
+                    descSelect.appendChild(option);
+                });
+
+                descriptions.forEach(desc => {
+                    const option = document.createElement('option');
+                    option.value = desc.title; // OR desc.text? Common UX: Value is text or ID. 
+                    // Based on existing logic: `val = e.target.value; descText.value = val + ...`
+                    // So Value should be the TITLE or the CONTENT?
+                    // Existing logic: `val + ' ile ilgili notlar...'` implies Value is a Title/Subject.
+                    option.value = desc.title;
+                    option.textContent = desc.title;
+                    descSelect.appendChild(option);
+                });
+            }
+
+            if (btnSaveDesc) {
+                btnSaveDesc.addEventListener('click', () => {
+                    const title = document.getElementById('descTitle').value.trim();
+                    const text = document.getElementById('descText').value.trim();
+
+                    if (!title) {
+                        alert('Lütfen bir açıklama başlığı giriniz.');
+                        return;
+                    }
+
+                    const descriptions = JSON.parse(localStorage.getItem('savedDescriptions')) || [];
+                    // Check duplicate
+                    const existingIndex = descriptions.findIndex(d => d.title === title);
+                    if (existingIndex > -1) {
+                        descriptions[existingIndex] = { title, text }; // Update
+                    } else {
+                        descriptions.push({ title, text }); // Add
+                    }
+
+                    localStorage.setItem('savedDescriptions', JSON.stringify(descriptions));
+                    alert('Açıklama şablonu başarıyla kaydedildi!');
+                    loadDescriptions(); // Refresh dropdown
+                });
+            }
+
+            if (descSelect) {
+                // Initialize
+                loadDescriptions();
+
+                descSelect.addEventListener('change', (e) => {
+                    const val = e.target.value;
+                    if (val !== 'Seçiniz...') {
+                        // Check if it's a saved custom description
+                        const descriptions = JSON.parse(localStorage.getItem('savedDescriptions')) || [];
+                        const saved = descriptions.find(d => d.title === val);
+
+                        if (saved) {
+                            document.getElementById('descText').value = saved.text;
+                        } else {
+                            // Fallback for standard/hardcoded options or if logic differs
+                            document.getElementById('descText').value = val + ' ile ilgili notlar...';
+                        }
+
+                        // Also auto-fill Title if empty?
+                        if (!document.getElementById('descTitle').value) {
+                            document.getElementById('descTitle').value = val;
+                        }
+                    }
+                });
+            }
+
+            // Helper to parse currency strings (e.g. "1.234,56 ?" -> 1234.56)
+            function parseCurrency(str) {
+                if (!str) return 0;
+                if (typeof str === 'number') return str;
+                let clean = str.replace(/[?\s]/g, '');
+                clean = clean.replace(/\./g, '').replace(',', '.');
+                return parseFloat(clean) || 0;
+            }
+
+            // Save Invoice Logic
+            const btnSave = document.querySelector('.btn-save-lg');
+            if (btnSave) {
+                btnSave.addEventListener('click', () => {
+                    // Gather Header Info
+                    const cariCode = document.getElementById('unvan').value || 'Cari Yok';
+                    const dateVal = document.getElementById('faturaTarihi').value;
+                    const timeVal = document.getElementById('faturaSaat').value || '00:00';
+                    const issueDate = `${dateVal}T${timeVal}`;
+
+                    // Gather Rows
+                    const rows = [];
+                    document.querySelectorAll('.product-table tbody tr').forEach(tr => {
+                        const cols = tr.children;
+                        rows.push({
+                            name: cols[0].textContent,
+                            kdvRate: parseCurrency(cols[1].textContent),
+                            otv: parseCurrency(cols[2].textContent),
+                            price: parseCurrency(cols[3].textContent),
+                            qty: parseCurrency(cols[4].textContent),
+                            total: parseCurrency(cols[5].textContent),
+                            discRate: parseCurrency(cols[6].textContent),
+                            discAmt: parseCurrency(cols[7].textContent),
+                            grandTotal: parseCurrency(cols[8].textContent)
+                        });
+                    });
+
+                    // Gather Footer
+                    const totalAmount = parseCurrency(document.querySelector('.totals-table tr:nth-child(1) td:nth-child(2)').textContent);
+                    const grandTotal = parseCurrency(document.getElementById('grandTotalDisplay').textContent);
+
+                    // Gather Payment
+                    const paymentAmt = parseCurrency(document.getElementById('paymentAmount').value);
+                    const warehouse = document.getElementById('warehouseSelect').value;
+                    const safe = document.getElementById('safeSelect').value;
+                    const method = document.getElementById('paymentMethod').value;
+                    const description = document.getElementById('descText').value;
+
+                    const invoiceData = {
+                        id: Date.now(),
+                        cariCode: cariCode,
+                        issueDate: issueDate,
+                        items: rows,
+                        totals: {
+                            subTotal: totalAmount,
+                            grandTotal: grandTotal
+                        },
+                        payment: {
+                            amount: paymentAmt,
+                            warehouse: warehouse,
+                            safe: safe,
+                            method: method,
+                            description: description
+                        }
+                    };
+
+                    // Save to LocalStorage
+                    const invoices = JSON.parse(localStorage.getItem('purchaseInvoices')) || [];
+                    invoices.push(invoiceData);
+                    localStorage.setItem('purchaseInvoices', JSON.stringify(invoices));
+                    localStorage.removeItem('purchaseInvoiceDraft'); // Clear draft
+
+                    alert('Fatura Başarıyla Kaydedildi!');
+                    window.location.href = 'alis_faturasi.html'; // Refresh or Redirect
+                });
+            }
+
+            // --- Draft Logic ---
+            function saveDraft() {
+                const rows = [];
+                const tableRows = document.querySelectorAll('.product-table tbody tr');
+                tableRows.forEach(tr => {
+                    if (tr.querySelector('input')) return; // Skip currently editing rows
+
+                    const cols = tr.children;
+                    rows.push({
+                        name: cols[0].textContent,
+                        kdv: parseFloat(cols[1].textContent) || 0,
+                        otv: parseFloat(cols[2].textContent) || 0,
+                        price: parseCurrency(cols[3].textContent),
+                        qty: parseFloat(cols[4].textContent) || 0,
+                        discRate: parseFloat(cols[6].textContent) || 0,
+                    });
+                });
+                if (rows.length > 0) {
+                    localStorage.setItem('purchaseInvoiceDraft', JSON.stringify(rows));
+                } else {
+                    localStorage.removeItem('purchaseInvoiceDraft');
+                }
+            }
+
+            function loadDraft() {
+                const draft = JSON.parse(localStorage.getItem('purchaseInvoiceDraft'));
+                if (draft && Array.isArray(draft) && draft.length > 0) {
+                    const tableBody = document.querySelector('.product-table tbody');
+                    tableBody.innerHTML = '';
+
+                    draft.forEach(item => {
+                        const rowId = Date.now() + Math.random();
+                        const total = item.price * item.qty;
+                        const discountAmount = total * (item.discRate / 100);
+                        const taxBase = total - discountAmount;
+                        const kdvAmount = taxBase * (item.kdv / 100);
+                        const grandTotal = taxBase + kdvAmount + item.otv;
+
+                        const rowCode = `
+                        <tr data-row-id="${rowId}">
+                            <td>${item.name}</td>
+                            <td>${item.kdv}</td>
+                            <td>${item.otv}</td>
+                            <td>${formatCurrencyVal(item.price)}</td>
+                            <td>${item.qty}</td>
+                            <td class="row-total">${formatCurrencyVal(total)}</td>
+                            <td>${item.discRate}</td>
+                            <td class="row-disc-amount">${formatCurrencyVal(discountAmount)}</td>
+                            <td class="row-grand-total">${formatCurrencyVal(grandTotal)}</td>
+                            <td class="text-right">
+                                <button class="btn btn-secondary btn-sm btn-edit-row"><i class="fa-solid fa-pen"></i> <span data-i18n="mega.duzenle">Düzenle</span></button>
+                                <button class="btn btn-danger btn-sm btn-delete-row"><i class="fa-solid fa-trash"></i> Sil</button>
+                            </td>
+                        </tr>
+                        `;
+                        tableBody.insertAdjacentHTML('beforeend', rowCode);
+                    });
+                    updateFooterTotals();
+                }
+            }
+
+            // Initialize Draft Check
+            loadDraft();
+
+        });
+    </script>
+
+<script src='excelExportUniversal.js'></script></body>
+
+</html>

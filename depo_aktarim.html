@@ -1,0 +1,397 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depo Aktarım</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+                            <header class="header">
+        <div class="header-left">
+            <div class="sidebar-toggle-box">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            <div class="logo-area">
+                <span class="brand-text" data-i18n="word.company_name">MAKFA GIDA ÜRÜNLERİ SANAYİ TİCARET ANONİM ŞİRKETİ</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="header-item header-lang-dropdown" onclick="toggleLanguageMenu(event)">
+                <i class="fa-solid fa-flag"></i> <span id="header-lang-text">Language</span>
+                <div class="header-lang-menu" id="header-lang-menu">
+                    <div class="header-lang-item" onclick="setLanguage('tr')"><i class="fa-solid fa-flag"></i> Türkçe</div>
+                    <div class="header-lang-item" onclick="setLanguage('en')"><i class="fa-solid fa-flag-usa"></i> English</div>
+                    <div class="header-lang-item" onclick="setLanguage('de')"><i class="fa-solid fa-flag"></i> Deutsch (Almanca)</div>
+                    <div class="header-lang-item" onclick="setLanguage('ru')"><i class="fa-solid fa-flag"></i> Русский (Русча)</div>
+                    <div class="header-lang-item" onclick="setLanguage('zh')"><i class="fa-solid fa-flag"></i> 中文 (Çince)</div>
+                </div>
+            </div>
+            <div class="header-item" style="cursor: pointer;" onclick="window.history.back()"><i class="fa-solid fa-reply"></i> <span data-i18n="header.back">Geri Dön</span></div>
+            <div class="header-item" style="cursor: pointer;" title="Ekranı Kilitle" onclick="window.location.href='kilit_ekrani.html'"><i class="fa-solid fa-lock"></i></div>
+            <div class="header-item"><i class="fa-solid fa-circle-info"></i></div>
+            
+            <!-- Branch Switcher Dropdown -->
+            <div class="header-item header-lang-dropdown" onclick="toggleBranchMenu(event)">
+                <i class="fa-solid fa-building"></i> <span id="header-branch-text">Merkez</span>
+                <div class="header-lang-menu" id="branch-dropdown-menu">
+                    <!-- Dynamic branches from JS -->
+                </div>
+            </div>
+
+            <div class="header-item" style="cursor: pointer;" onclick="window.location.href='ajanda.html'"><i class="fa-solid fa-calendar-days"></i> 2026</div>
+            <div class="header-item user-item" onclick="toggleUserMenu(event)">
+                <i class="fa-solid fa-user"></i> 
+                <span>fevziye.mamak35@gmail.com</span>
+                <div class="user-dropdown-menu" id="user-dropdown-menu">
+                    <div class="user-dropdown-item" onclick="window.location.href='profil.html'"><i class="fa-solid fa-user-gear"></i> <span data-i18n="user.profile">Profilim</span></div>
+                    <div class="user-dropdown-item" onclick="switchUser()"><i class="fa-solid fa-people-arrows"></i> <span data-i18n="user.switch">Kullanıcı Değiştir</span></div>
+                    <hr>
+                    <div class="user-dropdown-item logout" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="user.logout">Çıkış Yap</span></div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <img src="logo.png" alt="Logo">
+            <i class="fa-solid fa-bars"></i>
+        </div>
+        <ul class="sidebar-menu">
+
+            <li><a href="index.html"><i class="fa-solid fa-house"></i> <span
+                        data-i18n="sidebar.home">Giriş Ekranı</span></a></li>
+            <li><a href="satis_yap.html"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="sidebar.sales">Satış
+                        Yap</span></a></li>
+            <li><a href="cari_hesaplar.html"><i class="fa-solid fa-users"></i> <span data-i18n="sidebar.customers">Cari
+                        Hesaplar</span></a></li>
+            <li><a href="stok_kartlari.html"><i class="fa-solid fa-boxes-stacked"></i> <span
+                        data-i18n="sidebar.stock">Stok Kartları</span></a></li>
+            <li><a href="faturalar.html"><i class="fa-solid fa-file-invoice"></i> <span
+                        data-i18n="sidebar.invoices">Faturalar</span></a></li>
+            <li><a href="gelir_gider.html"><i class="fa-solid fa-chart-line"></i> <span
+                        data-i18n="sidebar.income_expense">Gelir Gider</span></a></li>
+            <li><a href="kasa.html"><i class="fa-solid fa-cash-register"></i> <span
+                        data-i18n="sidebar.cash">Kasa</span></a></li>
+            <li><a href="banka_ozet.html"><i class="fa-solid fa-building-columns"></i> <span
+                        data-i18n="sidebar.bank">Banka</span></a></li>
+            <li><a href="cek_senet.html"><i class="fa-solid fa-money-check"></i> <span
+                        data-i18n="sidebar.checks">Çek Senet</span></a></li>
+            <li><a href="taksit_takip.html"><i class="fa-solid fa-calendar-days"></i> <span
+                        data-i18n="sidebar.installments">Taksit
+                        Takip</span></a></li>
+            <li><a href="teklif_siparis.html"><i class="fa-solid fa-file-contract"></i> <span
+                        data-i18n="sidebar.offers">Teklif
+                        Sipariş</span></a></li>
+            <li><a href="doviz_ayarlari.html" id="doviz_settings_link"><i class="fa-solid fa-dollar-sign"></i> <span data-i18n="sidebar.currency">Döviz Ayarları</span></a></li>
+            
+            <li class="has-submenu">
+                <a href="javascript:void(0)" class="submenu-toggle"><i class="fa-solid fa-file-lines"></i> <span
+                        data-i18n="sidebar.reports">Raporlar</span> <i
+                          class="fa-solid fa-chevron-right ms-auto arrow"></i></a>
+                <ul class="submenu">
+                    <li><a href="cari_raporu.html"><i class="fa-solid fa-users"></i> <span data-i18n="report.cari">Cari</span></a></li>
+                    <li><a href="toplu_stok_raporu.html"><i class="fa-solid fa-box-open"></i> <span data-i18n="report.stok">Stok</span></a></li>
+                    <li><a href="taksit_rapor.html"><i class="fa-solid fa-calendar-days"></i> <span data-i18n="report.taksit">Taksit</span></a></li>
+                    <li><a href="satis_raporu.html"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="report.satis">Satış</span></a></li>
+                    <li><a href="kasa_raporu.html"><i class="fa-solid fa-cash-register"></i> <span data-i18n="report.kasa">Kasa</span></a></li>
+                    <li><a href="banka_raporu.html"><i class="fa-solid fa-building-columns"></i> <span data-i18n="report.banka">Banka</span></a></li>
+                    <li><a href="cek_raporu.html"><i class="fa-solid fa-copy"></i> <span data-i18n="sidebar.checks">Çek Senet</span></a></li>
+                    <li><a href="gun_sonu_raporu.html"><i class="fa-solid fa-file-lines"></i> <span data-i18n="report.gun_sonu">Gün Sonu Raporu</span></a></li>
+                    <li><a href="kar_zarar_analizi.html"><i class="fa-solid fa-file-lines"></i> <span data-i18n="report.kar_zarar">Kâr Zarar Analizi</span></a></li>
+                    <li><a href="gelir_gider.html"><i class="fa-solid fa-calendar-days"></i> <span data-i18n="sidebar.income_expense">Gelir Gider</span></a></li>
+                </ul>
+            </li>
+            <li><a href="mesajlar.html"><i class="fa-solid fa-envelope"></i> <span data-i18n="sidebar.messages">Mesajlar</span></a></li>
+            
+            <li class="has-submenu">
+                <a href="javascript:void(0)" class="submenu-toggle"><i class="fa-solid fa-layer-group"></i> <span
+                        data-i18n="sidebar.modules">Ek Modüller</span> <i
+                          class="fa-solid fa-chevron-right ms-auto arrow"></i></a>
+                <ul class="submenu">
+                    <li><a href="personel_takip.html"><i class="fa-solid fa-user-clock"></i> <span data-i18n="word.personel_takip">Personel Takip</span></a></li>
+                    <li><a href="ajanda.html"><i class="fa-solid fa-calendar-check"></i> <span data-i18n="word.ajanda">Ajanda</span></a></li>
+                    <li><a href="kisi_ekle.html"><i class="fa-solid fa-user-plus"></i> <span data-i18n="word.kisi_ekleme">Kişi Ekleme Paneli</span></a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Header -->
+                                    
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- View Title will be set by JS -->
+        <h2 id="pageTitle">Depo Aktarım</h2>
+        <button class="fab-menu" aria-label="Menü"><i class="fa-solid fa-bars"></i></button>
+
+        <!-- SEARCH / REPORT VIEW CONTAINER -->
+        <div id="reportContainer">
+            <div class="content-box">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="tumZamanlar">
+                    <label for="tumZamanlar">Tüm Zamanlar</label>
+                </div>
+                <hr class="divider">
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label for="baslangicTarihi">Başlangıç Tarihi</label>
+                        <input type="date" id="baslangicTarihi" class="form-control" value="2026-01-22">
+                    </div>
+                    <div class="form-group">
+                        <label for="bitisTarihi">Bitiş Tarihi</label>
+                        <input type="date" id="bitisTarihi" class="form-control" value="2026-01-22">
+                    </div>
+                </div>
+                <button class="btn btn-warning" id="btnGetir"><i class="fa-solid fa-list"></i> Depo Aktarım</button>
+                <hr class="divider">
+                <div id="tableContainer">
+                    <table id="aktarimTable" class="hidden">
+                        <thead>
+                            <tr>
+                                <th><span data-i18n="mega.tarih">Tarih</span></th>
+                                <th>Evrak No</th>
+                                <th>Stok Adı</th>
+                                <th>Kaynak Depo</th>
+                                <th>Hedef Depo</th>
+                                <th>Miktar</th>
+                                <th>Birim</th>
+                                <th><span data-i18n="mega.aciklama">Açıklama</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="aktarimBody">
+                            <!-- Dynamic content will be loaded here -->
+                        </tbody>
+                    </table>
+                    <div id="noData" class="no-data hidden">
+                        Gösterilecek kayıt bulunmamaktadır.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TRANSFER FORM CONTAINER -->
+        <div id="transferContainer" class="d-none">
+            <!-- Stock Info Section -->
+            <div class="content-box mb-5">
+                <div class="stock-info-row">
+                    <span class="info-label-bold">Stok Adı :</span>
+                    <span id="transferStockName">Loading...</span>
+                </div>
+                <!-- Line break or spacing if needed -->
+                <div class="stock-info-row mt-2">
+                    <span class="info-label-bold">Barkod :</span>
+                    <span id="transferStockBarcode">-</span>
+                </div>
+            </div>
+
+            <!-- Transfer Form -->
+            <h3 class="form-section-title">Depodan Depoya Aktarım</h3>
+            <div class="content-box">
+
+                <div class="form-group">
+                    <label for="transferDate">Tarih :</label>
+                    <input type="date" id="transferDate" class="form-control-full">
+                </div>
+
+                <div class="form-group">
+                    <label for="sourceWarehouse">Çıkan Depo:</label>
+                    <select id="sourceWarehouse" class="form-control-full">
+                        <option value="Merkez">Merkez</option>
+                        <option value="Şube 1">Şube 1</option>
+                        <option value="Depo 1">Depo 1</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="targetWarehouse">Giren Depo :</label>
+                    <select id="targetWarehouse" class="form-control-full">
+                        <option value="Merkez">Merkez</option>
+                        <option value="Şube 1">Şube 1</option>
+                        <option value="Depo 1">Depo 1</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="transferDesc">Açıklama :</label>
+                    <textarea id="transferDesc" class="form-control-full" rows="3">Depolar Arası Değişim</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="transferQty">Miktar :</label>
+                    <input type="number" id="transferQty" class="form-control-full" placeholder="0">
+                </div>
+            </div>
+
+            <div class="actions-row mt-3">
+                <button class="btn btn-green" id="btnSaveTransfer"><i class="fa-solid fa-save"></i> <span data-i18n="mega.kaydet">Kaydet</span></button>
+            </div>
+        </div>
+
+        <a href="stok_kartlari.html" class="btn btn-dark back-link"><i class="fa-solid fa-arrow-left"></i> Stok
+            Kartlarına Dön</a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Check for ID parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const stockId = urlParams.get('id');
+
+            if (stockId) {
+                initTransferMode(stockId);
+            } else {
+                initReportMode();
+            }
+        });
+
+        function initTransferMode(id) {
+            // Toggle Views
+            document.getElementById('reportContainer').style.display = 'none';
+            document.getElementById('transferContainer').style.display = 'block';
+            document.getElementById('transferContainer').classList.remove('d-none'); // Ensure class doesn't conflict
+            document.getElementById('pageTitle').style.display = 'none'; // Hide main title as form has its own header structure or we can adapt
+
+            // Or better, keep title but change text if needed. User image shows "Depodan Depoya Aktarım" as a sub-header inside.
+            // Let's hide the top H2 to match the clean look of the image if it implies full page takeover,
+            // but usually we keep navigation. The image starts with stock info.
+
+            // Load Stock Data
+            const stocks = JSON.parse(localStorage.getItem('stockCards')) || [];
+            const stock = stocks.find(s => s.id == id);
+
+            if (stock) {
+                document.getElementById('transferStockName').textContent = stock.name;
+                document.getElementById('transferStockBarcode').textContent = stock.barcode;
+            } else {
+                alert('Stok bulunamadı!');
+            }
+
+            // Set Date
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('transferDate');
+            if (dateInput) dateInput.value = today; // Using form-control-full styled input (if exists in css) or fallback
+
+            // Save Handler
+            document.getElementById('btnSaveTransfer').addEventListener('click', function () {
+                const qty = document.getElementById('transferQty').value;
+                const src = document.getElementById('sourceWarehouse').value;
+                const tgt = document.getElementById('targetWarehouse').value;
+                const desc = document.getElementById('transferDesc').value;
+                const date = document.getElementById('transferDate').value;
+
+                if (!qty || qty <= 0) {
+                    alert('Lütfen geçerli bir miktar giriniz.');
+                    return;
+                }
+                if (src === tgt) {
+                    alert('Çıkan ve Giren depo aynı olamaz.');
+                    return;
+                }
+
+                // Create movement record (mock logic as per plan)
+                // ADD TRANSACTION RECORD
+                addStockTransaction({
+                    stockId: id,
+                    date: date,
+                    type: 'DEPO TRANSFERİ',
+                    desc: `${desc} (${src} -> ${tgt})`,
+                    warehouse: src, // Use source warehouse for listing
+                    amount: qty
+                });
+
+                alert('Transfer başarıyla kaydedildi:
+' +
+                    'Stok: ' + (stock ? stock.name : 'Unknown') + '
+' +
+                    'Miktar: ' + qty + '
+' +
+                    'Kaynak: ' + src + ' -> Hedef: ' + tgt);
+
+                // Redirect back to details
+                window.location.href = 'stok_detay.html?id=' + id;
+            });
+        }
+
+        function initReportMode() {
+            // Existing Report Logic
+            document.getElementById('reportContainer').style.display = 'block';
+            document.getElementById('transferContainer').style.display = 'none';
+
+            // Initialize with today's date
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('baslangicTarihi').value = today;
+            document.getElementById('bitisTarihi').value = today;
+
+            // Toggle date inputs based on checkbox
+            document.getElementById('tumZamanlar').addEventListener('change', function () {
+                const dateInputs = document.querySelectorAll('#baslangicTarihi, #bitisTarihi');
+
+                dateInputs.forEach(input => {
+                    input.disabled = this.checked;
+                    input.style.opacity = this.checked ? '0.5' : '1';
+                });
+            });
+
+            // Get warehouse transfers (Mock Data)
+            // Get warehouse transfers (Mock Data)
+            document.getElementById('btnGetir').addEventListener('click', function () {
+                const table = document.getElementById('aktarimTable');
+                const noData = document.getElementById('noData');
+                const tbody = document.getElementById('aktarimBody');
+
+                // Get filtered dates (just for show)
+                const startDate = document.getElementById('baslangicTarihi').value;
+
+                // Sample Realistic Data
+                const sampleData = [
+                    { tarih: startDate, evrak: 'TRF-2026001', stok: 'Buğday Ekmek', kaynak: 'Merkez Depo', hedef: 'Şube 1', miktar: '50', birim: 'Adet', aciklama: 'Günlük Sevkiyat' },
+                    { tarih: startDate, evrak: 'TRF-2026002', stok: 'Çamlıca Beyaz', kaynak: 'Merkez Depo', hedef: 'Depo 1', miktar: '20', birim: 'Koli', aciklama: 'Stok Düzenleme' },
+                    { tarih: startDate, evrak: 'TRF-2026003', stok: 'Domates', kaynak: 'Şube 1', hedef: 'Merkez Depo', miktar: '15', birim: 'Kg', aciklama: 'İade' },
+                    { tarih: startDate, evrak: 'TRF-2026004', stok: 'İçim Peynir', kaynak: 'Merkez Depo', hedef: 'Şube 1', miktar: '100', birim: 'Adet', aciklama: 'Promosyon' },
+                    { tarih: startDate, evrak: 'TRF-2026005', stok: 'Çubuk Kraker', kaynak: 'Depo 1', hedef: 'Şube 1', miktar: '200', birim: 'Paket', aciklama: 'Raf Tamamlama' }
+                ];
+
+                // Clear existing data
+                tbody.innerHTML = '';
+
+                // Populate Table
+                if (sampleData.length > 0) {
+                    sampleData.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.tarih}</td>
+                            <td>${item.evrak}</td>
+                            <td>${item.stok}</td>
+                            <td>${item.kaynak}</td>
+                            <td>${item.hedef}</td>
+                            <td>${item.miktar}</td>
+                            <td>${item.birim}</td>
+                            <td>${item.aciklama}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+
+                    table.style.display = 'table';
+                    noData.style.display = 'none';
+                    table.classList.remove('hidden');
+                } else {
+                    table.style.display = 'none';
+                    noData.style.display = 'block';
+                }
+            });
+        }
+    </script>
+    <script src="translations.js?v=1776685628940"></script>
+    <script src="script.js?v=1776685628940"></script>
+
+<script src='excelExportUniversal.js'></script></body>
+
+</html>
+
+

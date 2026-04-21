@@ -1,0 +1,135 @@
+import os
+
+with open('translations.js', 'r', encoding='utf-8') as f:
+    js = f.read()
+
+additions = {
+    "'tr': {": """        'mega.add_stock_card': 'Stok Kartı Ekle',
+        'mega.otomatik_barkod': 'Otomatik Barkod',
+        'mega.barkod_turu': 'Barkod Türü:',
+        'mega.standart_urun': 'Standart Ürün',
+        'mega.son_eklenen': 'Son Eklenen',
+        'mega.stok_kodu': 'Stok Kodu',
+        'mega.stok_rafi': 'Stok Rafı',
+        'mega.grup_label': 'Grup:',
+        'mega.marka_label': 'Marka:',
+        'mega.depo_label': 'Depo:',
+        'mega.alis_fiyati': 'Alış Fiyatı:',
+        'mega.alis_doviz_turu': 'Alış Döviz Türü:',
+        'mega.satis_fiyati_label': 'Satış Fiyatı:',
+        'mega.satis_doviz_turu': 'Satış Döviz Türü:',
+        'mega.kdv_orani': 'KDV Oranı:',
+        'mega.kdv_durumu': 'KDV Durumu:',
+        'mega.dahil': 'Dahil',
+        'mega.haric': 'Hariç',
+        'mega.temel_gida': 'Temel Gıda',
+        'mega.icecek': 'İçecek',
+        'mega.temizlik': 'Temizlik',
+""",
+    "'en': {": """        'mega.add_stock_card': 'Add Stock Card',
+        'mega.otomatik_barkod': 'Auto Barcode',
+        'mega.barkod_turu': 'Barcode Type:',
+        'mega.standart_urun': 'Standard Product',
+        'mega.son_eklenen': 'Last Added',
+        'mega.stok_kodu': 'Stock Code',
+        'mega.stok_rafi': 'Stock Shelf',
+        'mega.grup_label': 'Group:',
+        'mega.marka_label': 'Brand:',
+        'mega.depo_label': 'Warehouse:',
+        'mega.alis_fiyati': 'Purchase Price:',
+        'mega.alis_doviz_turu': 'Purchase Currency:',
+        'mega.satis_fiyati_label': 'Sales Price:',
+        'mega.satis_doviz_turu': 'Sales Currency:',
+        'mega.kdv_orani': 'VAT Rate:',
+        'mega.kdv_durumu': 'VAT Status:',
+        'mega.dahil': 'Included',
+        'mega.haric': 'Excluded',
+        'mega.temel_gida': 'Basic Food',
+        'mega.icecek': 'Beverage',
+        'mega.temizlik': 'Cleaning',
+""",
+    "'de': {": """        'mega.add_stock_card': 'Lagerkarte hinzufügen',
+        'mega.otomatik_barkod': 'Auto-Barcode',
+        'mega.barkod_turu': 'Barcode-Typ:',
+        'mega.standart_urun': 'Standardprodukt',
+        'mega.son_eklenen': 'Zuletzt hinzugefügt',
+        'mega.stok_kodu': 'Lagercode',
+        'mega.stok_rafi': 'Lagerregal',
+        'mega.grup_label': 'Gruppe:',
+        'mega.marka_label': 'Marke:',
+        'mega.depo_label': 'Lager:',
+        'mega.alis_fiyati': 'Einkaufspreis:',
+        'mega.alis_doviz_turu': 'Einkaufswährung:',
+        'mega.satis_fiyati_label': 'Verkaufspreis:',
+        'mega.satis_doviz_turu': 'Verkaufswährung:',
+        'mega.kdv_orani': 'MwSt-Satz:',
+        'mega.kdv_durumu': 'MwSt-Status:',
+        'mega.dahil': 'Inklusive',
+        'mega.haric': 'Exklusive',
+        'mega.temel_gida': 'Grundnahrungsmittel',
+        'mega.icecek': 'Getränke',
+        'mega.temizlik': 'Reinigung',
+""",
+    "'ru': {": """        'mega.add_stock_card': 'Добавить учетную карточку',
+        'mega.otomatik_barkod': 'Автоматический штрих-код',
+        'mega.barkod_turu': 'Тип штрих-кода:',
+        'mega.standart_urun': 'Стандартный продукт',
+        'mega.son_eklenen': 'Последнее добавленное',
+        'mega.stok_kodu': 'Код товара',
+        'mega.stok_rafi': 'Полка товара',
+        'mega.grup_label': 'Группа:',
+        'mega.marka_label': 'Марка:',
+        'mega.depo_label': 'Склад:',
+        'mega.alis_fiyati': 'Цена покупки:',
+        'mega.alis_doviz_turu': 'Валюта покупки:',
+        'mega.satis_fiyati_label': 'Цена продажи:',
+        'mega.satis_doviz_turu': 'Валюта продажи:',
+        'mega.kdv_orani': 'НДС По ставке:',
+        'mega.kdv_durumu': 'Статус НДС:',
+        'mega.dahil': 'Включено',
+        'mega.haric': 'Исключено',
+        'mega.temel_gida': 'Основные продукты питания',
+        'mega.icecek': 'Напитки',
+        'mega.temizlik': 'Очистка',
+""",
+    "'zh': {": """        'mega.add_stock_card': '添加库存卡',
+        'mega.otomatik_barkod': '自动条形码',
+        'mega.barkod_turu': '条形码类型:',
+        'mega.standart_urun': '标准产品',
+        'mega.son_eklenen': '最后添加',
+        'mega.stok_kodu': '库存代码',
+        'mega.stok_rafi': '库存货架',
+        'mega.grup_label': '组别:',
+        'mega.marka_label': '品牌:',
+        'mega.depo_label': '仓库:',
+        'mega.alis_fiyati': '进价:',
+        'mega.alis_doviz_turu': '进价货币:',
+        'mega.satis_fiyati_label': '售价:',
+        'mega.satis_doviz_turu': '售价货币:',
+        'mega.kdv_orani': '增值税率:',
+        'mega.kdv_durumu': '增值税状态:',
+        'mega.dahil': '包含',
+        'mega.haric': '不包含',
+        'mega.temel_gida': '基础食品',
+        'mega.icecek': '饮料',
+        'mega.temizlik': '清洁',
+"""
+}
+
+if "'mega.add_stock_card'" not in js:
+    for target, extra in additions.items():
+        js = js.replace(target, target + "\n" + extra)
+    
+    with open('translations.js', 'w', encoding='utf-8') as f:
+        f.write(js)
+    print("Injected into translations.js")
+else:
+    print("Already in translations.js")
+
+with open('stok_yeni.html', 'r', encoding='utf-8') as f:
+    html = f.read()
+import re
+html = re.sub(r'translations\.js\?v=\d+', 'translations.js?v=200', html)
+with open('stok_yeni.html', 'w', encoding='utf-8') as f:
+    f.write(html)
+print("Bumped version to v=200")

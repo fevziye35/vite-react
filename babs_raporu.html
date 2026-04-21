@@ -1,0 +1,365 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BA/BS Raporu</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar-logo img { max-width: 100%; height: auto; }
+        .sidebar-logo .fa-bars { color: #555555; margin-left: auto; cursor: pointer; }
+
+        .report-header {
+            color: #1a2d4c; font-size: 28px; font-weight: 700; margin-bottom: 30px;
+        }
+        .selection-section {
+            background: #f8fbff; border-radius: 28px; padding: 30px;
+            box-shadow: 0 24px 60px rgba(15,23,42,0.07); margin-bottom: 40px;
+        }
+        .section-header {
+            display: inline-flex; align-items: center; gap: 12px;
+            padding: 18px 22px; border-radius: 20px; background: #e8efff;
+            color: #102a43; font-weight: 700; margin-bottom: 24px;
+            box-shadow: inset 0 0 0 1px rgba(15,23,42,0.04);
+        }
+        .content-box {
+            background: white; border-radius: 24px; padding: 24px;
+            border: 1px solid rgba(15,23,42,0.08);
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { color: #475569; font-size: 13px; font-weight: 600; margin-bottom: 8px; display: block; }
+        .form-group select {
+            width: 100%; background-color: #f8fafc; border: 1px solid #cbd5e0 !important;
+            border-radius: 10px; padding: 10px 14px; font-size: 14px; color: #1a2d4c;
+        }
+        .btn-report {
+            padding: 12px 24px; font-weight: 600; border-radius: 12px;
+            background-color: #2563eb; color: white;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            display: inline-flex; align-items: center; gap: 8px;
+            border: none; cursor: pointer; margin-top: 12px;
+        }
+        .btn-report:hover { background-color: #1d4ed8; transform: translateY(-1px); }
+
+        .report-table th, .report-table td { padding: 10px; }
+        .report-table thead tr { background: #f0f4ff; }
+        .report-table thead th { text-align: left; border-bottom: 2px solid #dde3f0; }
+        .report-table thead th:nth-child(4),
+        .report-table thead th:nth-child(5) { text-align: right; }
+        .report-table tbody tr { border-bottom: 1px solid #eef2ff; }
+        .report-table tbody td:nth-child(4),
+        .report-table tbody td:nth-child(5) { text-align: right; }
+        .report-table tfoot tr { background: #f8faff; font-weight: 700; }
+        .report-table tfoot td { border-top: 2px solid #dde3f0; }
+        .report-table tfoot td:nth-child(2),
+        .report-table tfoot td:nth-child(3) { text-align: right; }
+    </style>
+</head>
+
+<body>
+                            <header class="header">
+        <div class="header-left">
+            <div class="sidebar-toggle-box">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            <div class="logo-area">
+                <span class="brand-text" data-i18n="word.company_name">MAKFA GIDA ÜRÜNLERİ SANAYİ TİCARET ANONİM ŞİRKETİ</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="header-item header-lang-dropdown" onclick="toggleLanguageMenu(event)">
+                <i class="fa-solid fa-flag"></i> <span id="header-lang-text">Language</span>
+                <div class="header-lang-menu" id="header-lang-menu">
+                    <div class="header-lang-item" onclick="setLanguage('tr')"><i class="fa-solid fa-flag"></i> Türkçe</div>
+                    <div class="header-lang-item" onclick="setLanguage('en')"><i class="fa-solid fa-flag-usa"></i> English</div>
+                    <div class="header-lang-item" onclick="setLanguage('de')"><i class="fa-solid fa-flag"></i> Deutsch (Almanca)</div>
+                    <div class="header-lang-item" onclick="setLanguage('ru')"><i class="fa-solid fa-flag"></i> Русский (Русча)</div>
+                    <div class="header-lang-item" onclick="setLanguage('zh')"><i class="fa-solid fa-flag"></i> 中文 (Çince)</div>
+                </div>
+            </div>
+            <div class="header-item" style="cursor: pointer;" onclick="window.history.back()"><i class="fa-solid fa-reply"></i> <span data-i18n="header.back">Geri Dön</span></div>
+            <div class="header-item" style="cursor: pointer;" title="Ekranı Kilitle" onclick="window.location.href='kilit_ekrani.html'"><i class="fa-solid fa-lock"></i></div>
+            <div class="header-item"><i class="fa-solid fa-circle-info"></i></div>
+            
+            <!-- Branch Switcher Dropdown -->
+            <div class="header-item header-lang-dropdown" onclick="toggleBranchMenu(event)">
+                <i class="fa-solid fa-building"></i> <span id="header-branch-text">Merkez</span>
+                <div class="header-lang-menu" id="branch-dropdown-menu">
+                    <!-- Dynamic branches from JS -->
+                </div>
+            </div>
+
+            <div class="header-item" style="cursor: pointer;" onclick="window.location.href='ajanda.html'"><i class="fa-solid fa-calendar-days"></i> 2026</div>
+            <div class="header-item user-item" onclick="toggleUserMenu(event)">
+                <i class="fa-solid fa-user"></i> 
+                <span>fevziye.mamak35@gmail.com</span>
+                <div class="user-dropdown-menu" id="user-dropdown-menu">
+                    <div class="user-dropdown-item" onclick="window.location.href='profil.html'"><i class="fa-solid fa-user-gear"></i> <span data-i18n="user.profile">Profilim</span></div>
+                    <div class="user-dropdown-item" onclick="switchUser()"><i class="fa-solid fa-people-arrows"></i> <span data-i18n="user.switch">Kullanıcı Değiştir</span></div>
+                    <hr>
+                    <div class="user-dropdown-item logout" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="user.logout">Çıkış Yap</span></div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <img src="logo.png" alt="Logo">
+            <i class="fa-solid fa-bars"></i>
+        </div>
+        <ul class="sidebar-menu">
+
+            <li><a href="index.html"><i class="fa-solid fa-house"></i> <span
+                        data-i18n="sidebar.home">Giriş Ekranı</span></a></li>
+            <li><a href="satis_yap.html"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="sidebar.sales">Satış
+                        Yap</span></a></li>
+            <li><a href="cari_hesaplar.html"><i class="fa-solid fa-users"></i> <span data-i18n="sidebar.customers">Cari
+                        Hesaplar</span></a></li>
+            <li><a href="stok_kartlari.html"><i class="fa-solid fa-boxes-stacked"></i> <span
+                        data-i18n="sidebar.stock">Stok Kartları</span></a></li>
+            <li><a href="faturalar.html"><i class="fa-solid fa-file-invoice"></i> <span
+                        data-i18n="sidebar.invoices">Faturalar</span></a></li>
+            <li><a href="gelir_gider.html"><i class="fa-solid fa-chart-line"></i> <span
+                        data-i18n="sidebar.income_expense">Gelir Gider</span></a></li>
+            <li><a href="kasa.html"><i class="fa-solid fa-cash-register"></i> <span
+                        data-i18n="sidebar.cash">Kasa</span></a></li>
+            <li><a href="banka_ozet.html"><i class="fa-solid fa-building-columns"></i> <span
+                        data-i18n="sidebar.bank">Banka</span></a></li>
+            <li><a href="cek_senet.html"><i class="fa-solid fa-money-check"></i> <span
+                        data-i18n="sidebar.checks">Çek Senet</span></a></li>
+            <li><a href="taksit_takip.html"><i class="fa-solid fa-calendar-days"></i> <span
+                        data-i18n="sidebar.installments">Taksit
+                        Takip</span></a></li>
+            <li><a href="teklif_siparis.html"><i class="fa-solid fa-file-contract"></i> <span
+                        data-i18n="sidebar.offers">Teklif
+                        Sipariş</span></a></li>
+            <li><a href="doviz_ayarlari.html" id="doviz_settings_link"><i class="fa-solid fa-dollar-sign"></i> <span data-i18n="sidebar.currency">Döviz Ayarları</span></a></li>
+            
+            <li class="has-submenu">
+                <a href="javascript:void(0)" class="submenu-toggle"><i class="fa-solid fa-file-lines"></i> <span
+                        data-i18n="sidebar.reports">Raporlar</span> <i
+                          class="fa-solid fa-chevron-right ms-auto arrow"></i></a>
+                <ul class="submenu">
+                    <li><a href="cari_raporu.html"><i class="fa-solid fa-users"></i> <span data-i18n="report.cari">Cari</span></a></li>
+                    <li><a href="toplu_stok_raporu.html"><i class="fa-solid fa-box-open"></i> <span data-i18n="report.stok">Stok</span></a></li>
+                    <li><a href="taksit_rapor.html"><i class="fa-solid fa-calendar-days"></i> <span data-i18n="report.taksit">Taksit</span></a></li>
+                    <li><a href="satis_raporu.html"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="report.satis">Satış</span></a></li>
+                    <li><a href="kasa_raporu.html"><i class="fa-solid fa-cash-register"></i> <span data-i18n="report.kasa">Kasa</span></a></li>
+                    <li><a href="banka_raporu.html"><i class="fa-solid fa-building-columns"></i> <span data-i18n="report.banka">Banka</span></a></li>
+                    <li><a href="cek_raporu.html"><i class="fa-solid fa-copy"></i> <span data-i18n="sidebar.checks">Çek Senet</span></a></li>
+                    <li><a href="gun_sonu_raporu.html"><i class="fa-solid fa-file-lines"></i> <span data-i18n="report.gun_sonu">Gün Sonu Raporu</span></a></li>
+                    <li><a href="kar_zarar_analizi.html"><i class="fa-solid fa-file-lines"></i> <span data-i18n="report.kar_zarar">Kâr Zarar Analizi</span></a></li>
+                    <li><a href="gelir_gider.html"><i class="fa-solid fa-calendar-days"></i> <span data-i18n="sidebar.income_expense">Gelir Gider</span></a></li>
+                </ul>
+            </li>
+            <li><a href="mesajlar.html"><i class="fa-solid fa-envelope"></i> <span data-i18n="sidebar.messages">Mesajlar</span></a></li>
+            
+            <li class="has-submenu">
+                <a href="javascript:void(0)" class="submenu-toggle"><i class="fa-solid fa-layer-group"></i> <span
+                        data-i18n="sidebar.modules">Ek Modüller</span> <i
+                          class="fa-solid fa-chevron-right ms-auto arrow"></i></a>
+                <ul class="submenu">
+                    <li><a href="personel_takip.html"><i class="fa-solid fa-user-clock"></i> <span data-i18n="word.personel_takip">Personel Takip</span></a></li>
+                    <li><a href="ajanda.html"><i class="fa-solid fa-calendar-check"></i> <span data-i18n="word.ajanda">Ajanda</span></a></li>
+                    <li><a href="kisi_ekle.html"><i class="fa-solid fa-user-plus"></i> <span data-i18n="word.kisi_ekleme">Kişi Ekleme Paneli</span></a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Header -->
+                                    
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h2 class="report-header"><span data-i18n="mega.babs_raporu">BA/BS Raporu</span></h2>
+
+        <div class="selection-section">
+            <div class="section-header">
+                <i class="fa-solid fa-file-lines"></i>
+                <span data-i18n="report.rapor_filtresi">Rapor Filtresi</span>
+            </div>
+
+            <div class="content-box">
+                <div class="form-group">
+                    <label><span data-i18n="report.yil_seciniz">Yıl Seçiniz</span></label>
+                    <select id="yearSelect">
+                        <option value="2023">2023</option>
+                        <option value="2024">2024</option>
+                        <option value="2025" selected>2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><span data-i18n="report.ay_seciniz">Ay Seçiniz</span></label>
+                    <select id="monthSelect">
+                        <option value="1" data-i18n="month.1">Ocak</option>
+                        <option value="2" data-i18n="month.2">Şubat</option>
+                        <option value="3" data-i18n="month.3">Mart</option>
+                        <option value="4" data-i18n="month.4">Nisan</option>
+                        <option value="5" data-i18n="month.5">Mayıs</option>
+                        <option value="6" data-i18n="month.6">Haziran</option>
+                        <option value="7" data-i18n="month.7">Temmuz</option>
+                        <option value="8" data-i18n="month.8">Ağustos</option>
+                        <option value="9" data-i18n="month.9">Eylül</option>
+                        <option value="10" data-i18n="month.10">Ekim</option>
+                        <option value="11" data-i18n="month.11">Kasım</option>
+                        <option value="12" data-i18n="month.12">Aralık</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><span data-i18n="report.tur_seciniz">Listelemek istediğiniz türü seçiniz</span></label>
+                    <select id="typeSelect">
+                        <option value="ba" data-i18n="report.ba_form">BA Bildirim Mutabakat Formu</option>
+                        <option value="bs" data-i18n="report.bs_form">BS Bildirim Mutabakat Formu</option>
+                        <option value="both" data-i18n="report.babs_both">BA ve BS Bildirim Formu</option>
+                    </select>
+                </div>
+
+                <button class="btn-report" id="btnGenerateReport" onclick="generateReport()">
+                    <i class="fa-solid fa-bars"></i> <span data-i18n="mega.babs_raporu">BA/BS Raporu</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Report Result Area -->
+        <div id="reportResult" style="display:none; margin-top:30px;">
+            <div class="selection-section">
+                <div id="reportTitle" style="font-size:18px; font-weight:700; color:#1a2d4c; margin-bottom:20px;"></div>
+                <div class="content-box">
+                    <table id="reportTable" class="report-table" style="width:100%; border-collapse:collapse;">
+                        <thead>
+                            <tr>
+                                <th>Sıra No</th>
+                                <th>Vergi No / TC No</th>
+                                <th>Unvan</th>
+                                <th>Belge Sayısı</th>
+                                <th>Toplam Tutar (₺)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3" id="totalLabel">TOPLAM</td>
+                                <td id="totalCount">0</td>
+                                <td id="totalAmount">0,00</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <div id="noDataMsg" style="display:none; text-align:center; color:#94a3b8; padding:30px; font-size:15px;">
+                        <i class="fa-solid fa-inbox" style="font-size:32px; margin-bottom:10px; display:block;"></i>
+                        <span>Seçilen kriterlere uygun kayıt bulunamadı.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="translations.js?v=1776685628940"></script>
+    <script src="script.js?v=1776685628940"></script>
+    <script>
+        function generateReport() {
+            const year  = parseInt(document.getElementById('yearSelect').value);
+            const month = parseInt(document.getElementById('monthSelect').value);
+            const type  = document.getElementById('typeSelect').value;
+            const lang  = localStorage.getItem('language') || 'tr';
+
+            // Helper: get translation
+            function t(key, fallback) {
+                try {
+                    if (typeof translations !== 'undefined' && translations[lang] && translations[lang][key]) {
+                        return translations[lang][key];
+                    }
+                } catch(e) {}
+                return fallback;
+            }
+
+            let invoices = [];
+            if (type === 'ba' || type === 'both') {
+                const purchase = JSON.parse(localStorage.getItem('purchaseInvoices') || '[]');
+                purchase.forEach(inv => { inv._type = 'BA'; });
+                invoices = invoices.concat(purchase);
+            }
+            if (type === 'bs' || type === 'both') {
+                const sales = JSON.parse(localStorage.getItem('salesInvoices') || '[]');
+                sales.forEach(inv => { inv._type = 'BS'; });
+                invoices = invoices.concat(sales);
+            }
+
+            const filtered = invoices.filter(inv => {
+                const d = new Date(inv.issueDate || inv.date || '');
+                return d.getFullYear() === year && (d.getMonth() + 1) === month;
+            });
+
+            const groups = {};
+            filtered.forEach(inv => {
+                const key = inv.customerName || inv.supplierName || inv.cariAdi || t('word.bilinmiyor','Bilinmiyor');
+                if (!groups[key]) {
+                    groups[key] = { name: key, taxNo: inv.taxNo || inv.vergiNo || '-', count: 0, total: 0 };
+                }
+                groups[key].count++;
+                const raw = (inv.total || '0').toString().replace(/\./g, '').replace(',', '.');
+                groups[key].total += parseFloat(raw) || 0;
+            });
+
+            const tbody   = document.getElementById('reportTableBody');
+            const noData  = document.getElementById('noDataMsg');
+            const tbl     = document.getElementById('reportTable');
+            tbody.innerHTML = '';
+            const keys = Object.keys(groups);
+
+            // Update "no data" message text dynamically
+            noData.querySelector('span').textContent = t('report.no_record', 'Seçilen kriterlere uygun kayıt bulunamadı.');
+
+            // Update table footer "TOPLAM" label
+            document.getElementById('totalLabel').textContent = t('mega.total', 'TOPLAM');
+
+            if (keys.length === 0) {
+                noData.style.display = 'block';
+                tbl.style.display    = 'none';
+                document.getElementById('totalCount').textContent  = '0';
+                document.getElementById('totalAmount').textContent = '0,00';
+            } else {
+                noData.style.display = 'none';
+                tbl.style.display    = 'table';
+                let totalCount = 0, totalAmount = 0;
+                keys.forEach((key, idx) => {
+                    const g = groups[key];
+                    totalCount  += g.count;
+                    totalAmount += g.total;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${idx + 1}</td>
+                        <td>${g.taxNo}</td>
+                        <td>${g.name}</td>
+                        <td>${g.count}</td>
+                        <td>${g.total.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                document.getElementById('totalCount').textContent  = totalCount;
+                document.getElementById('totalAmount').textContent = totalAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2});
+            }
+
+            // Localized type labels using existing translation keys
+            const typeKeyMap = { ba: 'report.ba_form', bs: 'report.bs_form', both: 'report.babs_both' };
+            const typeLabel = t(typeKeyMap[type], type.toUpperCase());
+
+            // Localized month name using existing month keys
+            const monthLabel = t(`month.${month}`, month.toString());
+
+            document.getElementById('reportTitle').innerHTML =
+                `<i class="fa-solid fa-file-lines" style="color:#2563eb; margin-right:8px;"></i>${typeLabel} — ${monthLabel} ${year}`;
+
+            document.getElementById('reportResult').style.display = 'block';
+            document.getElementById('reportResult').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+<script src='excelExportUniversal.js'></script></body>
+
+</html>

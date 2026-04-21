@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Banka Hareketleri - MAKFA</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Banka Hareketleri</h1>
+    <div id="hareketler-listesi">Yükleniyor...</div>
+
+    <script>
+        // DÜZELTİLMİŞ URL: Sondaki /rest/v1/ silindi
+        const SUPABASE_URL = 'https://sgfsutxadpilfnyjyope.supabase.co'; 
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnZnN1dHhhZHBpbGZueWp5b3BlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NTcyMTUsImV4cCI6MjA5MjMzMzIxNX0.kc8Fkr6_MAKvhh_V3N5FCcM7t1P_Qti-UYO3c8w03wY'; 
+        
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function verileriGetir() {
+            try {
+                const { data, error } = await _supabase
+                    .from('banka_hareketleri')
+                    .select('*')
+                    .eq('banka_id', '60961200-58d1-447d-93ba-4007c20545dc');
+
+                const listeDiv = document.getElementById('hareketler-listesi');
+                
+                if (error) {
+                    console.error("Hata:", error);
+                    listeDiv.innerHTML = "Bir hata oluştu: " + error.message;
+                    return;
+                }
+
+                if (data && data.length > 0) {
+                    let html = '<table border="1" cellpadding="10"><tr><th>Açıklama</th><th>Borç</th></tr>';
+                    data.forEach(islem => {
+                        html += `<tr><td>${islem.aciklama}</td><td>${islem.borc} TL</td></tr>`;
+                    });
+                    html += '</table>';
+                    listeDiv.innerHTML = html;
+                } else {
+                    listeDiv.innerHTML = "Bağlantı sağlandı ama bu bankaya ait hareket bulunamadı.";
+                }
+            } catch (err) {
+                console.error("Bağlantı Hatası:", err);
+                document.getElementById('hareketler-listesi').innerHTML = "Sunucuya bağlanılamadı.";
+            }
+        }
+
+        verileriGetir();
+    </script>
+</body>
+</html>
